@@ -18,5 +18,6 @@ This project runs a realtime multiplayer version of the classic retro game, Spac
 4. In the `server.js` file, update the `ABLY_API_KEY` variable with your own API Key, preferably via a .env file
 5. Again in the `server.js` file, update `process.env.PORT` to use a port number of your choice directly or add a `PORT` variable in your .env file
 6. You can also update the `MIN_PLAYERS_TO_START_GAME` if you'd like to have more than three people play the game
+7. To run the game use the command node --experimental-worker server.js
 
 Please [reach out to me on Twitter](https://www.twitter.com/Srushtika) for any questions.
