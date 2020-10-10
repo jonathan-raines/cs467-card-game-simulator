@@ -1,0 +1,25 @@
+{
+  "name": "cs467-card-game-simulator",
+  "version": "1.0.0",
+  "description": "Browser based card game simulator for CS467 capstone",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jonathan-raines/cs467-card-game-simulator.git"
+  },
+  "author": "Jonathan Raines, Thomas Sugimoto, Phillip Wellheuser",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jonathan-raines/cs467-card-game-simulator/issues"
+  },
+  "homepage": "https://github.com/jonathan-raines/cs467-card-game-simulator#readme",
+  "dependencies": {
+    "ably": "^1.2.3",
+    "express": "^4.17.1",
+    "nodemon": "^2.0.4",
+    "p2": "^0.7.1"
+  }
+}
