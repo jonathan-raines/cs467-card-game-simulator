@@ -4,7 +4,8 @@
   "description": "Browser based card game simulator for CS467 capstone",
   "main": "index.js",
   "scripts": {
-    "test": "node invaderTest/server.js"
+    "test": "node invaderTest/server.js",
+    "start": "node invaderTest/server.js"
   },
   "repository": {
     "type": "git",
