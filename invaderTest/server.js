@@ -83,7 +83,7 @@ app.get("/gameover", (request, response) => {
   response.sendFile(__dirname + "/views/gameover.html");
 });
 
-const listener = app.listen(process.env.PORT, () => {
+const listener = app.listen(process.env.PORT || 4355, () => {
   console.log("Your app is listening on port " + listener.address().port);
 });
 
