@@ -7,12 +7,22 @@ const {
   MessageChannel,
 } = require("worker_threads");
 
-const envConfig = require("dotenv").config();
+//TEST1 removal of .env
+const ABLY_API_KEY= "IaXH5w.GTvYag:kT4BngX_OTbdQ4Ib"
+const BASE_SERVER_URL="http://localhost:5000"
+const PORT=4355
+//TEST1 removal of .env
+
+//TEST1 removal of .env
+//const envConfig = require("dotenv").config();
+//TEST1 removal of .env 
 const express = require("express");
 const Ably = require("ably");
 const p2 = require("p2");
 const app = express();
-const ABLY_API_KEY = process.env.ABLY_API_KEY;
+//TEST1 removal of .env
+//const ABLY_API_KEY = process.env.ABLY_API_KEY;
+//TEST1 removal of .env
 const globalGameName = "main-game-thread";
 const GAME_ROOM_CAPACITY = 6;
 let globalChannel;
