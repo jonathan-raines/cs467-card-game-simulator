@@ -1,1 +1,1 @@
-web: node invaderTest/server.js
+web: bash invaderTest/run.sh
