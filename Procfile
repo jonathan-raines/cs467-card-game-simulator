@@ -1,1 +1,1 @@
-web: bash invaderTest/run.sh
+web: bash run.sh
