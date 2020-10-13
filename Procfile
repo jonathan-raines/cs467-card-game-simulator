@@ -1,1 +1,1 @@
-web: bash run.sh
+web: node --inspect server.js
