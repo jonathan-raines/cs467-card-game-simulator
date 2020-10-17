@@ -22,7 +22,6 @@ const config = {
 
 function preload() {
   this.load.image('ship', 'assets/spaceShips_001.png');
-  this.load.image('star', 'assets/star_gold.png');
 }
 
 function create() {
@@ -34,7 +33,6 @@ function create() {
     red: 0
   };
 
-  this.star = this.physics.add.image(randomPosition(700), randomPosition(500), 'star');
   this.physics.add.collider(this.players);
 
   this.physics.add.overlap(this.players, this.star, function (star, player) {
@@ -45,7 +43,6 @@ function create() {
     }
     self.star.setPosition(randomPosition(700), randomPosition(500));
     io.emit('updateScore', self.scores);
-    io.emit('starLocation', { x: self.star.x, y: self.star.y });
   });
 
   io.on('connection', function (socket) {
@@ -69,8 +66,6 @@ function create() {
     socket.emit('currentPlayers', players);
     // update all other players of the new player
     socket.broadcast.emit('newPlayer', players[socket.id]);
-    // send the star object to the new player
-    socket.emit('starLocation', { x: self.star.x, y: self.star.y });
     // send the current scores
     socket.emit('updateScore', self.scores);
 

@@ -17,7 +17,6 @@ var game = new Phaser.Game(config);
 function preload() {
   this.load.image('ship', 'assets/spaceShips_001.png');
   this.load.image('otherPlayer', 'assets/enemyBlack5.png');
-  this.load.image('star', 'assets/star_gold.png');
 }
 
 function create() {
@@ -99,15 +98,6 @@ function create() {
     self.redScoreText.setText('Red: ' + scores.red);
   });
 
-  this.socket.on('starLocation', function (starLocation) {
-    if (!self.star) {
-      self.star = self.add.image(starLocation.x, starLocation.y, 'star');
-    } else {
-      self.star.setPosition(starLocation.x, starLocation.y);
-    }
-  });
-
-
   this.cursors = this.input.keyboard.createCursorKeys();
   this.leftKeyPressed = false;
   this.rightKeyPressed = false;
@@ -141,8 +131,7 @@ function update() {
 
 function displayPlayers(self, playerInfo, sprite) {
   const player = self.add.sprite(playerInfo.x, playerInfo.y, sprite).setOrigin(0.5, 0.5).setDisplaySize(53, 40);
-  if (playerInfo.team === 'blue') player.setTint(0x0000ff);
-  else player.setTint(0xff0000);
+
   player.playerId = playerInfo.playerId;
   self.players.add(player);
 }
