@@ -28,22 +28,7 @@ function create() {
   const self = this;
   this.players = this.physics.add.group();
 
-  this.scores = {
-    blue: 0,
-    red: 0
-  };
-
   this.physics.add.collider(this.players);
-
-  this.physics.add.overlap(this.players, this.star, function (star, player) {
-    if (players[player.playerId].team === 'red') {
-      self.scores.red += 10;
-    } else {
-      self.scores.blue += 10;
-    }
-    self.star.setPosition(randomPosition(700), randomPosition(500));
-    io.emit('updateScore', self.scores);
-  });
 
   io.on('connection', function (socket) {
     console.log('a user connected');
@@ -53,7 +38,6 @@ function create() {
       x: Math.floor(Math.random() * 700) + 50,
       y: Math.floor(Math.random() * 500) + 50,
       playerId: socket.id,
-      team: (Math.floor(Math.random() * 2) == 0) ? 'red' : 'blue',
       input: {
         left: false,
         right: false,
@@ -66,8 +50,6 @@ function create() {
     socket.emit('currentPlayers', players);
     // update all other players of the new player
     socket.broadcast.emit('newPlayer', players[socket.id]);
-    // send the current scores
-    socket.emit('updateScore', self.scores);
 
     socket.on('disconnect', function () {
       console.log('user disconnected');

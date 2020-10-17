@@ -20,41 +20,9 @@ function preload() {
 }
 
 function create() {
-
-  // Draggable Test
-  var image = this.add.sprite(200, 300, 'ship').setInteractive();
-
-  image.on('pointerover', function () {
-    this.setTint(0x00ff00);
-  });
-  image.on('pointerout', function () {
-    this.clearTint();
-  });
-
-  this.input.setDraggable(image);
-  this.input.on('dragstart', function (pointer, gameObject) {
-    gameObject.setTint(0xff0000);
-  });
-
-  this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
-    gameObject.x = dragX;
-    gameObject.y = dragY;
-  });
-
-  this.input.on('dragend', function (pointer, gameObject) {
-    gameObject.setTint(0x00ff00);
-    gameObject.clearTint();
-  });
-
-
-
-
   var self = this;
   this.socket = io();
   this.players = this.add.group();
-
-  this.blueScoreText = this.add.text(16, 16, '', { fontSize: '32px', fill: '#0000FF' });
-  this.redScoreText = this.add.text(584, 16, '', { fontSize: '32px', fill: '#FF0000' });
 
   this.socket.on('currentPlayers', function (players) {
     Object.keys(players).forEach(function (id) {
@@ -91,11 +59,6 @@ function create() {
 
       });
     });
-  });
-
-  this.socket.on('updateScore', function (scores) {
-    self.blueScoreText.setText('Blue: ' + scores.blue);
-    self.redScoreText.setText('Red: ' + scores.red);
   });
 
   this.cursors = this.input.keyboard.createCursorKeys();
