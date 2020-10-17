@@ -16,7 +16,6 @@ var game = new Phaser.Game(config);
 
 function preload() {
   this.load.image('ship', 'assets/spaceShips_001.png');
-  this.load.image('otherPlayer', 'assets/enemyBlack5.png');
 }
 
 function create() {
@@ -26,11 +25,7 @@ function create() {
 
   this.socket.on('currentPlayers', function (players) {
     Object.keys(players).forEach(function (id) {
-      if (players[id].playerId === self.socket.id) {
         displayPlayers(self, players[id], 'ship');
-      } else {
-        displayPlayers(self, players[id], 'otherPlayer');
-      }
     });
   });
 

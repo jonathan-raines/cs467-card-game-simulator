@@ -34,20 +34,16 @@ function create() {
     console.log('a user connected');
     // create a new player and add it to our players object
     players[socket.id] = {
-      rotation: 0,
       x: Math.floor(Math.random() * 700) + 50,
       y: Math.floor(Math.random() * 500) + 50,
       playerId: socket.id,
-      input: {
-        left: false,
-        right: false,
-        up: false
-      }
     };
     // add player to server
     addPlayer(self, players[socket.id]);
+
     // send the players object to the new player
     socket.emit('currentPlayers', players);
+
     // update all other players of the new player
     socket.broadcast.emit('newPlayer', players[socket.id]);
 
@@ -70,21 +66,6 @@ function create() {
 
 function update() {
   this.players.getChildren().forEach((player) => {
-    const input = players[player.playerId].input;
-    if (input.left) {
-      player.setAngularVelocity(-300);
-    } else if (input.right) {
-      player.setAngularVelocity(300);
-    } else {
-      player.setAngularVelocity(0);
-    }
-
-    if (input.up) {
-      this.physics.velocityFromRotation(player.rotation + 1.5, 200, player.body.acceleration);
-    } else {
-      player.setAcceleration(0);
-    }
-
     players[player.playerId].x = player.x;
     players[player.playerId].y = player.y;
     players[player.playerId].rotation = player.rotation;
@@ -107,9 +88,6 @@ function handlePlayerInput(self, playerId, input) {
 
 function addPlayer(self, playerInfo) {
   const player = self.physics.add.image(playerInfo.x, playerInfo.y, 'ship').setOrigin(0.5, 0.5).setDisplaySize(53, 40);
-  player.setDrag(100);
-  player.setAngularDrag(100);
-  player.setMaxVelocity(200);
   player.playerId = playerInfo.playerId;
   self.players.add(player);
 }
