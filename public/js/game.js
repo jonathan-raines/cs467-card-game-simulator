@@ -18,6 +18,9 @@ var config = {
   }
 };
 
+// The id of an object being currently dragged. -1 if not
+var isDragging = -1;
+
 var game = new Phaser.Game(config);
 
 function preload() {
@@ -85,10 +88,12 @@ function loadCards(self) {
   // Only pick up the top object
   self.input.topOnly = true;
 
+  
+
   // When the mouse starts dragging the object
   self.input.on('dragstart', function (pointer, gameObject) {
     gameObject.setTint(0xff0000);
-
+    isDragging = gameObject.objectId;
     // Tells the server to increase the object's depth and bring to front
     self.socket.emit('objectDepth', { 
       objectId: gameObject.objectId
@@ -124,8 +129,10 @@ function loadCards(self) {
         // Compares local players to auth server's players
         //   ▼ auth players          ▼ local players
         if (objectsInfo[id].objectId === object.objectId) {
-          // Updates position
-          object.setPosition(objectsInfo[id].x, objectsInfo[id].y);
+          // Check if it is not being currently dragged
+          if(isDragging != object.objectId)
+            // Updates position
+            object.setPosition(objectsInfo[id].x, objectsInfo[id].y);
           object.depth = objectsInfo[id].objectDepth;
           if(objectsInfo[id].isFaceUp) { // server says face up
             // check if the card not up
