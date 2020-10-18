@@ -65,13 +65,13 @@ function loadCards(self) {
     if (pointer.rightButtonDown() && targets[0] != null) {
       var orientation = true; // true is face up
       if (targets[0].name == targets[0].frame.name) { //if target cardName == frame name, flip it to back
-        //targets[0].setFrame(frames[frames.indexOf("back")]);
+        // Locally flips the card
+        targets[0].setFrame(frames[frames.indexOf("back")]);
         orientation = false;
-        console.log('card flipped to back');
-
-      } else { //otherwise flip card to front
-        //targets[0].setFrame(frames[frames.indexOf(targets[0].objectName)]);
-        console.log('card flipped to front');
+      } 
+      else { //otherwise flip card to front
+        // Locally flips the card
+        targets[0].setFrame(frames[frames.indexOf(targets[0].objectName)]);
       }
       
       // Send info to server
@@ -98,10 +98,8 @@ function loadCards(self) {
   // While the mouse is dragging
   self.input.on('drag', function (pointer, gameObject, dragX, dragY) {
     // Locally changes the object's position
-    // Not 100% necessary since objectUpdates from the server will
-    // update the client. But it might be good to have for user experience
-    //gameObject.x = dragX;
-    //gameObject.y = dragY;
+    gameObject.x = dragX;
+    gameObject.y = dragY;
 
     // update to server on "objectInput"
     // This sends the input to the server
