@@ -22,96 +22,75 @@ const config = {
   autoFocus: false
 };
 
+// Global all objects reference
+// This keeps track of object position and other info to send to the users
+// This has to be updated with information from the game environment as it 
+// is seperate from the game objects
+const objectInfoToSend = {};
+var overallDepth = 0;
+
 function preload() {
-  this.load.image('ship', 'assets/spaceShips_001.png');
+  //this.load.image('ship', 'assets/spaceShips_001.png');
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
 }
 
 function create() {
+  // For passing this pointer to other functions
   const self = this;
-  this.players = this.physics.add.group();
 
-  this.physics.add.collider(this.players);
+  // Makes this.objects a group of sprites with physics
+  // This is the gameScene's group of objects
+  this.tableObjects = this.physics.add.group();
 
   loadCards(self);
+  let frames = self.textures.get('cards').getFrameNames();
 
+  // While a connection is made
   io.on('connection', function (socket) {
     console.log('a user connected');
-    // create a new player and add it to our players object
-    players[socket.id] = {
-      x: Math.floor(Math.random() * 700) + 50,
-      y: Math.floor(Math.random() * 500) + 50,
-      playerId: socket.id,
-    };
-    // add player to server
-    addPlayer(self, players[socket.id]);
-
-    // send the players object to the new player
-    socket.emit('currentPlayers', players);
-
-    // update all other players of the new player
-    socket.broadcast.emit('newPlayer', players[socket.id]);
-
+  
+    // Listens for when a user is disconnected
     socket.on('disconnect', function () {
       console.log('user disconnected');
-      // remove player from server
-      removePlayer(self, socket.id);
-      // remove this player from our players object
-      delete players[socket.id];
-      // emit a message to all players to remove this player
-      io.emit('disconnect', socket.id);
     });
 
-    // when a player moves, update the player data
-    socket.on('playerInput', function (inputData) {
-      handlePlayerInput(self, socket.id, inputData);
+    // Listens for object movement by the player
+    socket.on('objectInput', function (inputData) {
+      // Finds the object by id
+      // tableObjects.getChildren() is based of when the sprites were addded
+      // to the group (here it is one off)
+      var obj = self.tableObjects.getChildren()[inputData.objectId-1];
+      if(obj)
+          obj.setPosition(inputData.x, inputData.y);
+    });
+
+    // Updates the depth when player picks up a card
+    socket.on('objectDepth', function (inputData) {
+      overallDepth++; // increases the depth everytime the player picks it up
+      objectInfoToSend[inputData.objectId].objectDepth = overallDepth;
+    });
+    
+    // Listens for object movement by the player
+    socket.on('objectFlip', function (inputData) {
+      objectInfoToSend[inputData.objectId].isFaceUp = inputData.isFaceUp;
     });
   });
-
-
 }
 
 function update() {
-  this.players.getChildren().forEach((player) => {
-    players[player.playerId].x = player.x;
-    players[player.playerId].y = player.y;
-    players[player.playerId].rotation = player.rotation;
+  // Update the object info to send to clients from game objects
+  this.tableObjects.getChildren().forEach((object) => {
+    objectInfoToSend[object.objectId].x = object.x;
+    objectInfoToSend[object.objectId].y = object.y;
   });
-  this.physics.world.wrap(this.players, 5);
-  io.emit('playerUpdates', players);
+  // Sends the card positions to clients
+  io.emit('objectUpdates', objectInfoToSend);
 }
 
-function randomPosition(max) {
-  return Math.floor(Math.random() * max) + 50;
-}
-
-function handlePlayerInput(self, playerId, input) {
-  self.players.getChildren().forEach((player) => {
-    if (playerId === player.playerId) {
-      players[player.playerId].input = input;
-    }
-  });
-}
-
-function addPlayer(self, playerInfo) {
-  const player = self.physics.add.image(playerInfo.x, playerInfo.y, 'ship').setOrigin(0.5, 0.5).setDisplaySize(53, 40);
-  player.playerId = playerInfo.playerId;
-  self.players.add(player);
-}
-
-function removePlayer(self, playerId) {
-  self.players.getChildren().forEach((player) => {
-    if (playerId === player.playerId) {
-      player.destroy();
-    }
-  });
-}
 
 function loadCards(self) {
   let frames = self.textures.get('cards').getFrameNames();
 
-  let x = 100;
-  let y = 100;
   let cardNames = ['back', 
     'clubsAce', 'clubs2', 'clubs3', 'clubs4', 'clubs5', 'clubs6', 'clubs7', 'clubs8', 'clubs9', 'clubs10', 'clubsJack', 'clubsQueen', 'clubsKing',
     'diamondsAce', 'diamonds2', 'diamonds3', 'diamonds4', 'diamonds5', 'diamonds6', 'diamonds7','diamonds8', 'diamonds9', 'diamonds10', 'diamondsJack', 'diamondsQueen', 'diamondsKing',
@@ -120,48 +99,51 @@ function loadCards(self) {
     'joker'
   ];
 
+  const xStart = 100;
+  const yStart = 100;
+  const xSpacing = 35;
+  const ySpacing = 200;
+  const perRow = 13;
+
   //add 52 playing cards in order
   for (let i = 1; i <= 52; i++) {
     let nextCard = frames[frames.indexOf(cardNames[i])];
-    let image = self.add.image(x, y, 'cards', nextCard).setInteractive();
-    image.cardName = cardNames[i];
-    self.input.setDraggable(image);
-
-    x += 35;
-    if (i % 13 == 0) {
-      x = 100;
-      y += 80;
-    }
+    // Assigns the info to send to clients
+    // initial position and information
+    objectInfoToSend[i] = {
+      x: ((i-1)%perRow) * xSpacing + xStart,
+      y: Math.floor((i-1)/perRow) * ySpacing + yStart,
+      objectId: i,
+      objectName: cardNames[i],
+      objectDepth: 0,
+      isFaceUp: true  
+    };
+    addObject(self, objectInfoToSend[i], cardNames[i], nextCard);
   }
 
+  
   //display joker card
-  x += 35;
-  y += 80;
-  nextCard = frames[frames.indexOf("joker")];
-  image = self.add.image(x, y, 'cards', nextCard).setInteractive();
-  image.cardName = "joker";
+  let jokerFrame = frames[frames.indexOf("joker")];
+  let jokerId = 53;
+  objectInfoToSend[jokerId] = {
+    x: ((jokerId-1)%perRow) * xSpacing + xStart,
+    y: Math.floor((jokerId-1)/perRow) * ySpacing + yStart,
+    objectId: jokerId,
+    isFaceUp: true  
+  };
+  addObject(self, objectInfoToSend[jokerId], cardNames[jokerId], jokerFrame);
+ 
+}
 
-  self.input.setDraggable(image);
-
-  self.input.mouse.disableContextMenu();
-
-  self.input.on('pointerdown', function (pointer, targets) {
-    if (pointer.rightButtonDown()) {
-      if (targets[0].cardName == targets[0].frame.name) { //if target cardName == frame name, flip it to back
-        targets[0].setFrame(frames[frames.indexOf("back")]);
-      } else { //otherwise flip card to front
-        targets[0].setFrame(frames[frames.indexOf(targets[0].cardName)]);
-      }
-    }
-  });
-
-  self.input.topOnly = true;
-
-  self.input.on('drag', function (pointer, gameObject, dragX, dragY) {
-    gameObject.x = dragX;
-    gameObject.y = dragY;
-
-  });
+function addObject(self, objectInfo, objectName, frame) {
+  // Create object 
+  // physics is used for future features
+  const object = self.physics.add.sprite(objectInfo.x, objectInfo.y, 'cards', frame);
+  // Assign the individual game object an id
+  object.objectId = objectInfo.objectId;
+  object.name = objectName;
+  // Add it to the object group
+  self.tableObjects.add(object);
 }
 
 const game = new Phaser.Game(config);
