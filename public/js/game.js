@@ -1,16 +1,13 @@
 
 var config = {
   type: Phaser.AUTO,
-  createDOMContainer: true,
   parent: 'game-area',
-  // Initial dimensions based on window size
-  width: window.innerWidth,
-  height: window.innerHeight,
-  scale: {
-    // Automatically Resize when window resizes
-    mode: Phaser.Scale.RESIZE,
-    autoCenter: Phaser.Scale.CENTER_BOTH
+  dom: {
+    createContainer: true
   },
+  // Initial dimensions based on window size
+  width: 800,
+  height: 600,
   backgroundColor: '#3CB371',
   scene: {
     preload: preload,
@@ -22,7 +19,7 @@ var config = {
 // The id of an object being currently dragged. -1 if not
 var isDragging = -1;
 
-var game = new Phaser.Game(config, 'game-area');
+var game = new Phaser.Game(config);
 
 function preload() {
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
