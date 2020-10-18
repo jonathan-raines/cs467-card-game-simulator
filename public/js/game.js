@@ -117,7 +117,10 @@ function loadCards(self) {
   self.input.on('dragend', function (pointer, gameObject) {
     gameObject.setTint(0x00ff00);
     gameObject.clearTint();
-    self.time.delayedCall(1000, function() {
+    // Waits since there might be lag so last few inputs that the
+    // player sends to the server before they put the card down
+    // would move the cards
+    self.time.delayedCall(500, function() {
       isDragging = -1;
     });
   });
