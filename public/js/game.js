@@ -2,8 +2,14 @@
 var config = {
   type: Phaser.AUTO,
   parent: 'phaser-example',
-  width: 800,
-  height: 600,
+  // Initial dimensions based on window size
+  width: window.innerWidth,
+  height: window.innerHeight,
+  scale: {
+    // Automatically Resize when window resizes
+    mode: Phaser.Scale.RESIZE,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
   backgroundColor: '#3CB371',
   scene: {
     preload: preload,
@@ -15,56 +21,24 @@ var config = {
 var game = new Phaser.Game(config);
 
 function preload() {
-  this.load.image('ship', 'assets/spaceShips_001.png');
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
 }
 
 function create() {
   var self = this;
   this.socket = io();
-  this.players = this.add.group();
+  this.tableObjects = this.add.group();
 
-  loadCards(self);
 
-  this.socket.on('currentPlayers', function (players) {
-    Object.keys(players).forEach(function (id) {
-      displayPlayers(self, players[id], 'ship');
-    });
-  });
-
-  this.socket.on('newPlayer', function (playerInfo) {
-    displayPlayers(self, playerInfo, 'ship');
-  });
-
-  this.socket.on('disconnect', function (playerId) {
-    self.players.getChildren().forEach(function (player) {
-      if (playerId === player.playerId) {
-        player.destroy();
-      }
-    });
-  });
-
-  this.socket.on('playerUpdates', function (players) {
-    Object.keys(players).forEach(function (id) {
-      self.players.getChildren().forEach(function (player) {
-        // Compares local players to auth server's players
-        //   ▼ auth players          ▼ local players
-        if (players[id].playerId === player.playerId) {
-          // Updates rotation and position
-          player.setPosition(players[id].x, players[id].y);
-        }
-      });
-    });
-  });
+  loadCards(self);  
 }
 
 function update() {}
 
+
 function loadCards(self) {
   let frames = self.textures.get('cards').getFrameNames();
-
-  let x = 100;
-  let y = 100;
+  
   let cardNames = ['back', 
     'clubsAce', 'clubs2', 'clubs3', 'clubs4', 'clubs5', 'clubs6', 'clubs7', 'clubs8', 'clubs9', 'clubs10', 'clubsJack', 'clubsQueen', 'clubsKing',
     'diamondsAce', 'diamonds2', 'diamonds3', 'diamonds4', 'diamonds5', 'diamonds6', 'diamonds7','diamonds8', 'diamonds9', 'diamonds10', 'diamondsJack', 'diamondsQueen', 'diamondsKing',
@@ -76,49 +50,125 @@ function loadCards(self) {
   //add 52 playing cards in order
   for (let i = 1; i <= 52; i++) {
     let nextCard = frames[frames.indexOf(cardNames[i])];
-    let image = self.add.image(x, y, 'cards', nextCard).setInteractive();
-    image.cardName = cardNames[i];
-    self.input.setDraggable(image);
-
-    x += 35;
-    if (i % 13 == 0) {
-      x = 100;
-      y += 80;
-    }
+    addObject(self, i, cardNames[i], nextCard);
   }
 
-  //display joker card
-  x += 35;
-  y += 80;
-  nextCard = frames[frames.indexOf("joker")];
-  image = self.add.image(x, y, 'cards', nextCard).setInteractive();
-  image.cardName = "joker";
+  // Add joker card
+  var jokerFrame = frames[frames.indexOf("joker")];
+  addObject(self, 53, 'joker', jokerFrame);
 
-  self.input.setDraggable(image);
-
+  // for Thomas this doesnt work
   self.input.mouse.disableContextMenu();
 
+  // Right Click for flip
   self.input.on('pointerdown', function (pointer, targets) {
-    if (pointer.rightButtonDown()) {
-      if (targets[0].cardName == targets[0].frame.name) { //if target cardName == frame name, flip it to back
-        targets[0].setFrame(frames[frames.indexOf("back")]);
+    if (pointer.rightButtonDown() && targets[0] != null) {
+      var orientation = true; // true is face up
+      if (targets[0].name == targets[0].frame.name) { //if target cardName == frame name, flip it to back
+        //targets[0].setFrame(frames[frames.indexOf("back")]);
+        orientation = false;
+        console.log('card flipped to back');
+
       } else { //otherwise flip card to front
-        targets[0].setFrame(frames[frames.indexOf(targets[0].cardName)]);
+        //targets[0].setFrame(frames[frames.indexOf(targets[0].objectName)]);
+        console.log('card flipped to front');
       }
+      
+      // Send info to server
+      self.socket.emit('objectFlip', { 
+        objectId: targets[0].objectId,
+        isFaceUp: orientation
+      });
     }
   });
 
+  // Only pick up the top object
   self.input.topOnly = true;
 
-  self.input.on('drag', function (pointer, gameObject, dragX, dragY) {
-    gameObject.x = dragX;
-    gameObject.y = dragY;
+  // When the mouse starts dragging the object
+  self.input.on('dragstart', function (pointer, gameObject) {
+    gameObject.setTint(0xff0000);
 
+    // Tells the server to increase the object's depth and bring to front
+    self.socket.emit('objectDepth', { 
+      objectId: gameObject.objectId
+    });
+  });
+  
+  // While the mouse is dragging
+  self.input.on('drag', function (pointer, gameObject, dragX, dragY) {
+    // Locally changes the object's position
+    // Not 100% necessary since objectUpdates from the server will
+    // update the client. But it might be good to have for user experience
+    //gameObject.x = dragX;
+    //gameObject.y = dragY;
+
+    // update to server on "objectInput"
+    // This sends the input to the server
+    self.socket.emit('objectInput', { 
+      objectId: gameObject.objectId,
+      x: dragX, 
+      y: dragY 
+    });
+  });
+  
+  // When the mouse finishes dragging
+  self.input.on('dragend', function (pointer, gameObject) {
+    gameObject.setTint(0x00ff00);
+    gameObject.clearTint();
+  });
+
+  // Start the object listener for commands from server
+  self.socket.on('objectUpdates', function (objectsInfo) {
+
+    Object.keys(objectsInfo).forEach(function (id) {
+      self.tableObjects.getChildren().forEach(function (object) {
+        // Compares local players to auth server's players
+        //   ▼ auth players          ▼ local players
+        if (objectsInfo[id].objectId === object.objectId) {
+          // Updates position
+          object.setPosition(objectsInfo[id].x, objectsInfo[id].y);
+          object.depth = objectsInfo[id].objectDepth;
+          if(objectsInfo[id].isFaceUp) { // server says face up
+            // check if the card not up
+            if(object.frame.name != frames[frames.indexOf(object.name)]) {
+              object.setFrame(frames[frames.indexOf(object.name)]);
+            }
+          } else { // face down
+            // check if the card is not down
+            if(object.frame.name != "back") {
+              object.setFrame(frames[frames.indexOf("back")]);
+            }
+          }
+          
+        }
+      });
+    });
   });
 }
 
-function displayPlayers(self, playerInfo, sprite) {
-  const player = self.add.sprite(playerInfo.x, playerInfo.y, sprite).setOrigin(0.5, 0.5);
-  player.playerId = playerInfo.playerId;
-  self.players.add(player);
+
+function addObject(self, objectId, objectName, frame) {
+  // Create object
+  // No physics for client side
+  const object = self.add.sprite(0, 0, 'cards', frame).setInteractive();
+
+  // Assign the individual game object an id and name
+  object.objectId = objectId;
+  object.name = objectName;
+
+  self.input.setDraggable(object);
+
+  // Add it to the object group
+  self.tableObjects.add(object);
+  
+  // Change color on hover
+  object.on('pointerover', function () {
+    this.setTint(0x00ff00);
+  });
+  object.on('pointerout', function () {
+    this.clearTint();
+  });
 }
+
+
