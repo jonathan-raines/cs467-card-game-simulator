@@ -146,5 +146,5 @@ function addObject(self, objectInfo, objectName, frame) {
   self.tableObjects.add(object);
 }
 
-const game = new Phaser.Game(config);
+const game = new Phaser.Game(config, 'game-area');
 window.gameLoaded();

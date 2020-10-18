@@ -1,7 +1,8 @@
 
 var config = {
   type: Phaser.AUTO,
-  parent: 'phaser-example',
+  createDOMContainer: true,
+  parent: 'game-area',
   // Initial dimensions based on window size
   width: window.innerWidth,
   height: window.innerHeight,
@@ -21,7 +22,7 @@ var config = {
 // The id of an object being currently dragged. -1 if not
 var isDragging = -1;
 
-var game = new Phaser.Game(config);
+var game = new Phaser.Game(config, 'game-area');
 
 function preload() {
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
