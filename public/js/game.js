@@ -88,8 +88,6 @@ function loadCards(self) {
   // Only pick up the top object
   self.input.topOnly = true;
 
-  
-
   // When the mouse starts dragging the object
   self.input.on('dragstart', function (pointer, gameObject) {
     gameObject.setTint(0xff0000);
@@ -119,6 +117,9 @@ function loadCards(self) {
   self.input.on('dragend', function (pointer, gameObject) {
     gameObject.setTint(0x00ff00);
     gameObject.clearTint();
+    self.time.delayedCall(1000, function() {
+      isDragging = -1;
+    });
   });
 
   // Start the object listener for commands from server
@@ -130,9 +131,10 @@ function loadCards(self) {
         //   ▼ auth players          ▼ local players
         if (objectsInfo[id].objectId === object.objectId) {
           // Check if it is not being currently dragged
-          if(isDragging != object.objectId)
+          if(isDragging != object.objectId) {
             // Updates position
             object.setPosition(objectsInfo[id].x, objectsInfo[id].y);
+          }
           object.depth = objectsInfo[id].objectDepth;
           if(objectsInfo[id].isFaceUp) { // server says face up
             // check if the card not up
