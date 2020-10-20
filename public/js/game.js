@@ -6,8 +6,8 @@ var config = {
     createContainer: true
   },
   // Initial dimensions based on window size
-  width: 800,
-  height: 600,
+  width: window.innerWidth,
+  height: window.innerHeight,
   backgroundColor: '#3CB371',
   scene: {
     preload: preload,
