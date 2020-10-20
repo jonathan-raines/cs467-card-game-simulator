@@ -30,8 +30,21 @@ function create() {
   this.socket = io();
   this.tableObjects = this.add.group();
 
+  this.menuLabel = this.add.text(20, 10, 'Menu', { 
+    font: 'bold 34px Arial', 
+    fill: '#fff', 
+    align: 'left',
+  }).setInteractive();
 
-  loadCards(self);  
+  loadCards(self);
+  
+  this.menuLabel.on('pointerdown', function() {
+    if (this.text === 'Menu') {
+      this.setText('Testing');
+    } else {
+      this.setText('Menu');
+    }
+  });
 }
 
 function update() {}
