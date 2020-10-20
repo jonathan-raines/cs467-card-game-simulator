@@ -1,15 +1,13 @@
 
 var config = {
   type: Phaser.AUTO,
-  parent: 'phaser-example',
+  parent: 'game-area',
+  dom: {
+    createContainer: true
+  },
   // Initial dimensions based on window size
   width: window.innerWidth,
   height: window.innerHeight,
-  scale: {
-    // Automatically Resize when window resizes
-    mode: Phaser.Scale.RESIZE,
-    autoCenter: Phaser.Scale.CENTER_BOTH
-  },
   backgroundColor: '#3CB371',
   scene: {
     preload: preload,
@@ -32,8 +30,21 @@ function create() {
   this.socket = io();
   this.tableObjects = this.add.group();
 
+  this.menuLabel = this.add.text(20, 10, 'Menu', { 
+    font: 'bold 34px Arial', 
+    fill: '#fff', 
+    align: 'left',
+  }).setInteractive();
 
-  loadCards(self);  
+  loadCards(self);
+  
+  this.menuLabel.on('pointerdown', function() {
+    if (this.text === 'Menu') {
+      this.setText('Testing');
+    } else {
+      this.setText('Menu');
+    }
+  });
 }
 
 function update() {}

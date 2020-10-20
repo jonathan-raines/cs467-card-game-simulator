@@ -2,9 +2,12 @@ const players = {};
 
 const config = {
   type: Phaser.HEADLESS,
-  parent: 'phaser-example',
   width: 800,
   height: 600,
+  scale: {
+    mode: Phaser.Scale.RESIZE,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
   physics: {
     default: 'arcade',
     arcade: {
@@ -48,6 +51,10 @@ function create() {
   // While a connection is made
   io.on('connection', function (socket) {
     console.log('a user connected');
+
+    socket.on('chat message', (msg) => {
+      io.emit('chat message', msg);
+    });
   
     // Listens for when a user is disconnected
     socket.on('disconnect', function () {
