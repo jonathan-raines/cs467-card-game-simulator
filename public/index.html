@@ -5,6 +5,11 @@
         <title>Card Game Simulator</title>
         <meta name="description" content="Multiplayer Card Game Simulator" />
         <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" rel="stylesheet"/>
+        <style>
+            #messages { list-style-type: none; margin: 0; padding: 0; overflow: auto; height: 95%; background-color: white; }
+            #messages li { padding: 5px 10px; }
+            #messages li:nth-child(odd) { background: rgb(223, 218, 218); }
+        </style>
 
     </head>
 
@@ -33,7 +38,7 @@
         <div class="row" style="width: 100%;">
             <div class="column" id="game-area" style="width: 80%;"></div>
             <div class="column" id='chat-area' style="height: 100%; width: 20%; position: absolute; right: 0; background-color: white;">
-                <ul id="messages" style="overflow: scroll; height: 95%; background-color: white;"></ul>
+                <ul id="messages"></ul>
                 <form action="">
                     <input id="m" autocomplete="off" style="position: absolute; bottom: 0; width: 95%;"/><button style="position: absolute; bottom: 0; right: 0;">Send</button>
                 </form>
