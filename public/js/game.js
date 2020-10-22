@@ -38,19 +38,6 @@ function create() {
 
   showNicknamePrompt(self);
 
-  // Setup Chat
-  $('form').submit(function(e) {
-    e.preventDefault(); // prevents page reloading
-    self.socket.emit('chat message', playerNickname + ': ' + $('#m').val());
-    $('#m').val('');
-    return false;
-    });
-
-  self.socket.on('chat message', function(msg){
-    $('#messages').append($('<li>').text(msg));
-  });
-
-
   this.tableObjects = this.add.group();
 
   this.menuLabel = this.add.text(20, 10, 'Menu', { 
@@ -70,12 +57,10 @@ function create() {
     }
   });
 
-  // Gets the list of current players from the server
-  this.socket.on('currentPlayers', function (playersInfo) {
-    players = playersInfo;
-  });
+  
 
   loadCards(self);
+  startSocketUpdates(self);
 }
 
 function update() {}
@@ -165,7 +150,7 @@ function loadCards(self) {
     self.time.delayedCall(500, function() {
       isDragging = -1;
     });
-  });
+  });  
 
   // Start the object listener for commands from server
   self.socket.on('objectUpdates', function (objectsInfo) {
@@ -192,10 +177,28 @@ function loadCards(self) {
               object.setFrame(frames[frames.indexOf("back")]);
             }
           }
-          
         }
       });
     });
+  });
+}
+
+function startSocketUpdates(self) {
+  // Gets the list of current players from the server
+  self.socket.on('currentPlayers', function (playersInfo) {
+    players = playersInfo;
+  });
+
+  // Setup Chat
+  $('#chat-form').submit(function(e) {
+    e.preventDefault(); // prevents page reloading
+    self.socket.emit('chat message', playerNickname + ': ' + $('#chat-msg').val());
+    $('#chat-msg').val('');
+    return false;
+  });
+
+  self.socket.on('chat message', function(msg){
+    $('#messages').append($('<li>').text(msg));
   });
 }
 
@@ -212,36 +215,35 @@ function showNicknamePrompt(self) {
   var element = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('nameform');
   element.setPerspective(800);
   element.addListener('click');
-  element.on('click', function (event) {
-      if(event.target.name === 'nicknameButton') {
-          var inputNickname = this.getChildByName('nickname');
-          //  Have they entered anything?
-          if(inputNickname.value !== '') {
-              //  Turn off the click events
-              this.removeListener('click');
-              // Fade Out
-              this.scene.tweens.add({
-                targets: element,
-                alpha: 0,
-                duration: 300,
-                ease: 'Power2',
-                onComplete: function() {
-                  element.setVisible(false);
-                  element.destroy();
-                }
-              }, this);
-              playerNickname = inputNickname.value;
-              //  Populate the text with whatever they typed in as the username
-              text.setText('Nickname: ' + inputNickname.value);
-              text.x = self.cameras.main.centerX-150;
-              text.y = self.cameras.main.height-40;
-              // Send to server
-              self.socket.emit('playerNickname', playerNickname);
-          } else {
-              //  Flash the prompt
-              this.scene.tweens.add({ targets: text, alpha: 0.1, duration: 200, ease: 'Power3', yoyo: true });
-          }
-      }
+
+  $('#nickname-form').submit(function(e) {
+    e.preventDefault(); // prevents page reloading
+    var inputNickname = $('#nickname').val();
+    $('#nickname').val('');
+    if(inputNickname !== '') {
+      // Fade Out
+      self.tweens.add({
+        targets: element,
+        alpha: 0,
+        duration: 300,
+        ease: 'Power2',
+        onComplete: function() {
+          element.setVisible(false);
+          element.destroy();
+        }
+      }, this);
+      playerNickname = inputNickname;
+      //  Populate the text with whatever they typed in as the username
+      text.setText('Nickname: ' + inputNickname);
+      text.x = self.cameras.main.centerX-150;
+      text.y = self.cameras.main.height-40;
+      // Send to server
+      self.socket.emit('playerNickname', playerNickname);
+    } else {
+      //  Flash the prompt
+      self.tweens.add({ targets: text, alpha: 0.1, duration: 200, ease: 'Power3', yoyo: true });
+    }
+    return false;
   });
 }
 
