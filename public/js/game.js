@@ -8,7 +8,6 @@ var config = {
   // Initial dimensions based on window size
   width: window.innerWidth*.8,
   height: window.innerHeight,
-  backgroundColor: '#3CB371',
   scene: {
     preload: preload,
     create: create,
@@ -29,6 +28,7 @@ var game = new Phaser.Game(config);
 
 function preload() {
   this.load.html('nameform', 'assets/nameform.html');
+  this.load.html('menu', 'assets/menu.html');
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
 }
 
@@ -36,35 +36,43 @@ function create() {
   var self = this;
   this.socket = io();
 
+  var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
+  console.log(backgroundColor);
+
   showNicknamePrompt(self);
 
   this.tableObjects = this.add.group();
-
-  this.menuLabel = this.add.text(20, 10, 'Menu', { 
-    color: 'White',
-    font: 'bold 34px Arial', 
-    align: 'left',
-    backgroundColor: "Black"
-  }).setInteractive();
-
-  this.menuLabel.depth = 1000;
-
-  this.menuLabel.on('pointerdown', function() {
-    if (this.text === 'Menu') {
-      this.setText('Testing');
-    } else {
-      this.setText('Menu');
-    }
-  });
-
   
-
+  loadMenu(self);
   loadCards(self);
   startSocketUpdates(self);
 }
 
 function update() {}
 
+function loadMenu(self) {
+  var menu = self.add.text(20, 10, 'Menu', { 
+    color: 'White',
+    font: 'bold 34px Arial', 
+    align: 'left',
+    backgroundColor: "Black"
+  }).setInteractive();
+
+  menu.depth = 1000;
+
+  menu.on('pointerdown', function() {
+    var element = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('menu');
+
+    $('#menu-form').submit(function(e) {
+      e.preventDefault();
+      self.backgroundColor = self.cameras.main.setBackgroundColor($('#background').val());
+    });
+
+    $('#exit-menu').click(function() {
+      element.destroy();
+    });
+  });
+}
 
 function loadCards(self) {
   let frames = self.textures.get('cards').getFrameNames();
