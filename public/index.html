@@ -20,23 +20,11 @@
         <script src="js/game.js"></script> 
         <script src="/socket.io/socket.io.js"></script>
         <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-        <script>
-            $(function () {
-            var socket = io();
-            $('form').submit(function(e){
-            e.preventDefault(); // prevents page reloading
-            socket.emit('chat message', $('#m').val());
-            $('#m').val('');
-            return false;
-            });
-            socket.on('chat message', function(msg){
-            $('#messages').append($('<li>').text(msg));
-            });
-        });
-        </script>
         
         <div class="row" style="width: 100%;">
-            <div class="column" id="game-area" style="width: 80%;"></div>
+            <div class="column" id="game-area" style="width: 80%; position: relative">
+
+            </div>
             <div class="column" id='chat-area' style="height: 100%; width: 20%; position: absolute; right: 0; background-color: white;">
                 <ul id="messages"></ul>
                 <form action="">

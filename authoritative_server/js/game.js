@@ -1,5 +1,3 @@
-const players = {};
-
 const config = {
   type: Phaser.HEADLESS,
   width: 800,
@@ -30,6 +28,14 @@ const config = {
 // This has to be updated with information from the game environment as it 
 // is seperate from the game objects
 const objectInfoToSend = {};
+
+// Info of all the current players in the game session
+const players = {};
+
+// Number of current players in the game session
+let numPlayers = 0;
+
+// Depth of the highest card
 var overallDepth = 0;
 
 function preload() {
@@ -48,17 +54,39 @@ function create() {
   loadCards(self);
   let frames = self.textures.get('cards').getFrameNames();
 
-  // While a connection is made
+  // When a connection is made
   io.on('connection', function (socket) {
-    console.log('a user connected');
+    numPlayers++;
+    players[socket.id] = {
+      playerId: socket.id,
+      name: "player" + numPlayers,
+      playerNum: numPlayers       // player's number that's not long
+    };
+    // Assigns a nickname 
+    socket.on('playerNickname', function(name) {
+      players[socket.id].name = name;
+      console.log('Player ' + players[socket.id].playerNum + ' changed their name to ' + name);
+      // Send the new info out
+      socket.emit('currentPlayers', players);
+    });
+
+    console.log('Player ' + players[socket.id].playerNum + 
+      ' (' + players[socket.id].name + ') connected');
+
+    socket.emit('currentPlayers', players);
 
     socket.on('chat message', (msg) => {
       io.emit('chat message', msg);
     });
-  
+
     // Listens for when a user is disconnected
     socket.on('disconnect', function () {
-      console.log('user disconnected');
+      console.log('Player ' + players[socket.id].playerNum + 
+        ' (' + players[socket.id].name + ') disconnected');
+      delete players[socket.id];
+      numPlayers--;
+      // emit a message to all players to remove this player
+      socket.emit('currentPlayers', players);
     });
 
     // Listens for object movement by the player

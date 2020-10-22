@@ -16,28 +16,52 @@ var config = {
   }
 };
 
+// List of all the current players in the game 
+var players = {};
+
 // The id of an object being currently dragged. -1 if not
 var isDragging = -1;
+
+// This player's info
+var playerNickname;
 
 var game = new Phaser.Game(config);
 
 function preload() {
+  this.load.html('nameform', 'assets/nameform.html');
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
 }
 
 function create() {
   var self = this;
   this.socket = io();
+
+  showNicknamePrompt(self);
+
+  // Setup Chat
+  $('form').submit(function(e) {
+    e.preventDefault(); // prevents page reloading
+    self.socket.emit('chat message', playerNickname + ': ' + $('#m').val());
+    $('#m').val('');
+    return false;
+    });
+
+  self.socket.on('chat message', function(msg){
+    $('#messages').append($('<li>').text(msg));
+  });
+
+
   this.tableObjects = this.add.group();
 
   this.menuLabel = this.add.text(20, 10, 'Menu', { 
+    color: 'White',
     font: 'bold 34px Arial', 
-    fill: '#fff', 
     align: 'left',
+    backgroundColor: "Black"
   }).setInteractive();
 
-  loadCards(self);
-  
+  this.menuLabel.depth = 1000;
+
   this.menuLabel.on('pointerdown', function() {
     if (this.text === 'Menu') {
       this.setText('Testing');
@@ -45,6 +69,13 @@ function create() {
       this.setText('Menu');
     }
   });
+
+  // Gets the list of current players from the server
+  this.socket.on('currentPlayers', function (playersInfo) {
+    players = playersInfo;
+  });
+
+  loadCards(self);
 }
 
 function update() {}
@@ -165,6 +196,52 @@ function loadCards(self) {
         }
       });
     });
+  });
+}
+
+// At the start of the game it asks the player to enter a nickname
+function showNicknamePrompt(self) {
+  var text = self.add.text(self.cameras.main.centerX-150, self.cameras.main.centerY-100, 
+    'Please enter a nickname:', { 
+      color: 'Black', 
+      boundsAlignH: 'center',
+      fontFamily: 'Arial', 
+      fontSize: '32px '
+  });
+  text.depth = 1000;
+  var element = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('nameform');
+  element.setPerspective(800);
+  element.addListener('click');
+  element.on('click', function (event) {
+      if(event.target.name === 'nicknameButton') {
+          var inputNickname = this.getChildByName('nickname');
+          //  Have they entered anything?
+          if(inputNickname.value !== '') {
+              //  Turn off the click events
+              this.removeListener('click');
+              // Fade Out
+              this.scene.tweens.add({
+                targets: element,
+                alpha: 0,
+                duration: 300,
+                ease: 'Power2',
+                onComplete: function() {
+                  element.setVisible(false);
+                  element.destroy();
+                }
+              }, this);
+              playerNickname = inputNickname.value;
+              //  Populate the text with whatever they typed in as the username
+              text.setText('Nickname: ' + inputNickname.value);
+              text.x = self.cameras.main.centerX-150;
+              text.y = self.cameras.main.height-40;
+              // Send to server
+              self.socket.emit('playerNickname', playerNickname);
+          } else {
+              //  Flash the prompt
+              this.scene.tweens.add({ targets: text, alpha: 0.1, duration: 200, ease: 'Power3', yoyo: true });
+          }
+      }
   });
 }
 
