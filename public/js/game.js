@@ -63,9 +63,16 @@ function loadMenu(self) {
   menu.on('pointerdown', function() {
     var element = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('menu');
 
+    $('#user-name').val(playerNickname);
+
     $('#menu-form').submit(function(e) {
       e.preventDefault();
       self.backgroundColor = self.cameras.main.setBackgroundColor($('#background').val());
+
+      playerNickname = $('#user-name').val();
+
+      self.socket.emit('playerNickname', playerNickname);
+
     });
 
     $('#exit-menu').click(function() {
@@ -242,9 +249,7 @@ function showNicknamePrompt(self) {
       }, this);
       playerNickname = inputNickname;
       //  Populate the text with whatever they typed in as the username
-      text.setText('Nickname: ' + inputNickname);
-      text.x = self.cameras.main.centerX-150;
-      text.y = self.cameras.main.height-40;
+      text.destroy();
       // Send to server
       self.socket.emit('playerNickname', playerNickname);
     } else {
