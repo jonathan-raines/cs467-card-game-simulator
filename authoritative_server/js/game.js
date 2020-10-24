@@ -26,6 +26,10 @@ const config = {
   autoFocus: false
 };
 
+// The game ticks at the rate of 1 tick per 100 milliseconds
+const GAME_TICK_RATE = 100
+let gameTickerOn = false;
+
 const roomName = roomInfo.roomName;
 const maxPlayers = roomInfo.maxPlayers;
 let backgroundColor = getRandomColor();
@@ -68,10 +72,13 @@ function create() {
 
   loadCards(self);
   let frames = self.textures.get('cards').getFrameNames();
+  
+  startGameDataTicker(self);
 
   // When a connection is made
   io.on('connection', function (socket) {
     numPlayers++;
+    gameTickerOn = true;
     players[socket.id] = {
       playerId: socket.id,
       name: "player" + numPlayers,
@@ -135,6 +142,7 @@ function create() {
 }
 
 function update() {
+  /* Trying the gamedata ticker
   // Update the object info to send to clients from game objects
   this.tableObjects.getChildren().forEach((object) => {
     objectInfoToSend[object.objectId].x = object.x;
@@ -142,7 +150,24 @@ function update() {
   });
   // Sends the card positions to clients
   io.emit('objectUpdates', objectInfoToSend);
+  */
 }
+
+function startGameDataTicker(self) {
+
+  let tickInterval = setInterval(() => {
+    
+      // Update the object info to send to clients from game objects
+      self.tableObjects.getChildren().forEach((object) => {
+        objectInfoToSend[object.objectId].x = object.x;
+        objectInfoToSend[object.objectId].y = object.y;
+      });
+      // Sends the card positions to clients
+      io.emit('objectUpdates', objectInfoToSend);
+    
+  }, GAME_TICK_RATE);
+}
+
 
 
 function loadCards(self) {
