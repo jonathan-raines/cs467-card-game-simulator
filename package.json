@@ -1,6 +1,6 @@
 {
   "name": "card-game-simulator",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "An online multiplayer card game simulator.",
   "main": "server.js",
   "scripts": {
