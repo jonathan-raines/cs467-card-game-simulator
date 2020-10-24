@@ -193,33 +193,50 @@ function loadCards(self) {
 
   // Start the object listener for commands from server
   self.socket.on('objectUpdates', function (objectsInfo) {
-
+    
+    var allTableObjects = self.tableObjects.getChildren();
+    Object.keys(objectsInfo).forEach(function (id) {
+      var obj = allTableObjects[id-1];
+      if(obj)
+        updateObjects(objectsInfo, id, obj, frames);
+    });
+    
+    /*
+    // This is wasteful, it iterates all the tableobjects
     Object.keys(objectsInfo).forEach(function (id) {
       self.tableObjects.getChildren().forEach(function (object) {
         // Compares local players to auth server's players
         //   ▼ auth players          ▼ local players
         if (objectsInfo[id].objectId === object.objectId) {
-          // Check if it is not being currently dragged
-          if(isDragging != object.objectId) {
-            // Updates position
-            object.setPosition(objectsInfo[id].x, objectsInfo[id].y);
-          }
-          object.depth = objectsInfo[id].objectDepth;
-          if(objectsInfo[id].isFaceUp) { // server says face up
-            // check if the card not up
-            if(object.frame.name != frames[frames.indexOf(object.name)]) {
-              object.setFrame(frames[frames.indexOf(object.name)]);
-            }
-          } else { // face down
-            // check if the card is not down
-            if(object.frame.name != "back") {
-              object.setFrame(frames[frames.indexOf("back")]);
-            }
-          }
+          updateObjects(objectsInfo, id, object, frames);
         }
       });
     });
+    */
   });
+}
+
+function updateObjects(objectsInfo, id, object, frames) {
+    // Check if it is not being currently dragged and it's not in the same position
+  if(isDragging != object.objectId && 
+    (object.x != objectsInfo[id].x || object.y != objectsInfo[id].y)) {
+    // Updates position
+    object.setPosition(objectsInfo[id].x, objectsInfo[id].y);
+    object.depth = objectsInfo[id].objectDepth;
+  }
+  if(object.depth != objectsInfo[id].objectDepth)
+    object.depth = objectsInfo[id].objectDepth;
+  if(objectsInfo[id].isFaceUp) { // server says face up
+    // check if the card not up
+    if(object.frame.name != frames[frames.indexOf(object.name)]) {
+      object.setFrame(frames[frames.indexOf(object.name)]);
+    }
+  } else { // face down
+    // check if the card is not down
+    if(object.frame.name != "back") {
+      object.setFrame(frames[frames.indexOf("back")]);
+    }
+  }
 }
 
 function startSocketUpdates(self) {
