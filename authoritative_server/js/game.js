@@ -6,6 +6,9 @@ const config = {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH
   },
+  audio: {
+    disableWebAudio: true
+  },
   physics: {
     default: 'arcade',
     arcade: {
@@ -23,6 +26,9 @@ const config = {
   autoFocus: false
 };
 
+const roomName = roomInfo.roomName;
+const maxPlayers = roomInfo.maxPlayers;
+
 // Global all objects reference
 // This keeps track of object position and other info to send to the users
 // This has to be updated with information from the game environment as it 
@@ -39,7 +45,6 @@ let numPlayers = 0;
 var overallDepth = 0;
 
 function preload() {
-  //this.load.image('ship', 'assets/spaceShips_001.png');
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
 }
 
@@ -65,13 +70,14 @@ function create() {
     // Assigns a nickname 
     socket.on('playerNickname', function(name) {
       players[socket.id].name = name;
-      console.log('Player ' + players[socket.id].playerNum + ' changed their name to ' + name);
+      console.log('[Room ' +  roomName + '] Player ' + players[socket.id].playerNum + 
+                  ' changed their name to ' + name);      
       // Send the new info out
       socket.emit('currentPlayers', players);
     });
 
-    console.log('Player ' + players[socket.id].playerNum + 
-      ' (' + players[socket.id].name + ') connected');
+    console.log('[Room ' +  roomName + '] Player ' + players[socket.id].playerNum + 
+                ' (' + players[socket.id].name + ') connected');
 
     socket.emit('currentPlayers', players);
 
@@ -81,8 +87,8 @@ function create() {
 
     // Listens for when a user is disconnected
     socket.on('disconnect', function () {
-      console.log('Player ' + players[socket.id].playerNum + 
-        ' (' + players[socket.id].name + ') disconnected');
+      console.log('[Room ' +  roomName + '] Player ' + players[socket.id].playerNum + 
+                  ' (' + players[socket.id].name + ') disconnected');
       delete players[socket.id];
       numPlayers--;
       // emit a message to all players to remove this player
@@ -182,4 +188,3 @@ function addObject(self, objectInfo, objectName, frame) {
 }
 
 const game = new Phaser.Game(config);
-window.gameLoaded();

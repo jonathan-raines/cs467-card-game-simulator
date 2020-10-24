@@ -22,7 +22,9 @@ var players = {};
 var isDragging = -1;
 
 // This player's info
-var playerNickname;
+var playerNickname = getParameterByName('nickname');
+// Room's infrom from url query
+const roomName = '/' + getParameterByName('roomId');
 
 var game = new Phaser.Game(config);
 
@@ -34,12 +36,16 @@ function preload() {
 
 function create() {
   var self = this;
-  this.socket = io();
+  this.socket = io(roomName);
 
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
   console.log(backgroundColor);
 
-  showNicknamePrompt(self);
+  if(playerNickname)
+    self.socket.emit('playerNickname', playerNickname);
+
+  // Not in use (implemented in lobby) Keep for reference
+  //showNicknamePrompt(self);
 
   this.tableObjects = this.add.group();
   
@@ -49,6 +55,16 @@ function create() {
 }
 
 function update() {}
+
+// Gets url parameters/queries for a name and returns the value
+function getParameterByName(name, url = window.location.href) {
+    name = name.replace(/[\[\]]/g, '\\$&');
+    var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
 
 function loadMenu(self) {
   var menu = self.add.text(20, 10, 'Menu', { 
@@ -73,6 +89,10 @@ function loadMenu(self) {
 
       self.socket.emit('playerNickname', playerNickname);
 
+    });
+
+    self.input.keyboard.on('keyup-ESC', function (event) {
+      element.destroy();
     });
 
     $('#exit-menu').click(function() {
@@ -217,6 +237,7 @@ function startSocketUpdates(self) {
   });
 }
 
+/*
 // At the start of the game it asks the player to enter a nickname
 function showNicknamePrompt(self) {
   var text = self.add.text(self.cameras.main.centerX-150, self.cameras.main.centerY-100, 
@@ -259,7 +280,7 @@ function showNicknamePrompt(self) {
     return false;
   });
 }
-
+*/
 
 function addObject(self, objectId, objectName, frame) {
   // Create object
