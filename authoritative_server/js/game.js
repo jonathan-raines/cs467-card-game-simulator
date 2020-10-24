@@ -140,18 +140,20 @@ function create() {
 }
 
 function update() {
+  /*
   // Update the object info to send to clients from game objects
-  self.tableObjects.getChildren().forEach((object) => {
+  this.tableObjects.getChildren().forEach((object) => {
     objectInfoToSend[object.objectId].x = object.x;
     objectInfoToSend[object.objectId].y = object.y;
   });
   // Sends the card positions to clients
   io.emit('objectUpdates', objectInfoToSend);
+  */
 }
 
 // This is the update() function for the server
 function startGameDataTicker(self) {
-  /*
+  
   let tickInterval = setInterval(() => {
 
       // Update the object info to send to clients from game objects
@@ -163,7 +165,7 @@ function startGameDataTicker(self) {
       io.emit('objectUpdates', objectInfoToSend);
 
   }, GAME_TICK_RATE);
-  */
+  
 }
 
 
