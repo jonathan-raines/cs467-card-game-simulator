@@ -83,12 +83,16 @@ function loadMenu(self) {
 
     $('#menu-form').submit(function(e) {
       e.preventDefault();
-      self.backgroundColor = self.cameras.main.setBackgroundColor($('#background').val());
-
-      playerNickname = $('#user-name').val();
-
-      self.socket.emit('playerNickname', playerNickname);
-
+      var newColor = $('#background').val();
+      if(newColor != self.backgroundColor) {
+        self.backgroundColor = self.cameras.main.setBackgroundColor(newColor);
+        self.socket.emit('backgroundColor', newColor);
+      }
+      newNickname = $('#user-name').val();
+      if(playerNickname != newNickname) {
+        playerNickname = newNickname;
+        self.socket.emit('playerNickname', playerNickname);
+      }
     });
 
     self.input.keyboard.on('keyup-ESC', function (event) {
@@ -219,6 +223,12 @@ function loadCards(self) {
 }
 
 function startSocketUpdates(self) {
+  // Get background color
+  self.socket.on('backgroundColor', function(color) {
+    console.log(color);
+    self.backgroundColor = self.cameras.main.setBackgroundColor(color);
+  });
+
   // Gets the list of current players from the server
   self.socket.on('currentPlayers', function (playersInfo) {
     players = playersInfo;

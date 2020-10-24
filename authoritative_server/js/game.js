@@ -28,6 +28,16 @@ const config = {
 
 const roomName = roomInfo.roomName;
 const maxPlayers = roomInfo.maxPlayers;
+let backgroundColor = getRandomColor();
+
+function getRandomColor() {
+  var letters = '0123456789ABCDEF';
+  var color = '#';
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}
 
 // Global all objects reference
 // This keeps track of object position and other info to send to the users
@@ -80,6 +90,12 @@ function create() {
                 ' (' + players[socket.id].name + ') connected');
 
     socket.emit('currentPlayers', players);
+    socket.emit('backgroundColor', backgroundColor);
+
+    socket.on('backgroundColor', function(color) {
+      backgroundColor = color;
+      socket.emit('backgroundColor', color);
+    });
 
     socket.on('chat message', (msg) => {
       io.emit('chat message', msg);
