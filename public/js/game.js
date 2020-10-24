@@ -159,6 +159,7 @@ function loadCards(self) {
     gameObject.setTint(0xff0000);
     isDragging = gameObject.objectId;
     // Tells the server to increase the object's depth and bring to front
+    gameObject.depth = 999;
     self.socket.emit('objectDepth', { 
       objectId: gameObject.objectId
     });

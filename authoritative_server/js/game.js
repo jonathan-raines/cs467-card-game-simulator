@@ -190,6 +190,7 @@ function loadCards(self) {
   //add 52 playing cards in order
   for (let i = 1; i <= 52; i++) {
     let nextCard = frames[frames.indexOf(cardNames[i])];
+    overallDepth++;
     // Assigns the info to send to clients
     // initial position and information
     objectInfoToSend[i] = {
@@ -197,7 +198,7 @@ function loadCards(self) {
       y: Math.floor((i-1)/perRow) * ySpacing + yStart,
       objectId: i,
       objectName: cardNames[i],
-      objectDepth: 0,
+      objectDepth: overallDepth,
       isFaceUp: true  
     };
     addObject(self, objectInfoToSend[i], cardNames[i], nextCard);
