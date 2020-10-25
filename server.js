@@ -10,6 +10,12 @@ const querystring = require('querystring');
 const datauri = new Datauri();
 const { JSDOM } = jsdom;
 
+// Length of time the server will wait to close after making the room
+const ROOM_TIMEOUT_LENGTH = 30 * 1000;
+// How often the server will check if there are any players
+const CHECK_ROOM_INTERVAL = 10 * 1000;
+
+
 // Info to send to the games about the room
 // roomName - the room code
 // maxPlayers - the maximum number of players allowed
@@ -66,38 +72,100 @@ app.get('/host-a-game', function(req, res) {
   res.redirect('/?' + query + nickname);
 });
 
+// Starts a new gameServer
 function setupAuthoritativePhaser(roomInfo) {
-  JSDOM.fromFile(path.join(__dirname, 'authoritative_server/index.html'), {
-    // To run the scripts in the html file
-    runScripts: "dangerously",
-    // Also load supported external resources
-    resources: "usable",
-    // So requestAnimatinFrame events fire
-    pretendToBeVisual: true
-  }).then((dom) => {
-    dom.window.URL.createObjectURL = (blob) => {
-      if (blob){
-        return datauri.format(blob.type, blob[Object.getOwnPropertySymbols(blob)[0]]._buffer).content;
-      }
-    };
-    dom.window.URL.revokeObjectURL = (objectURL) => {};
-    
-    dom.window.io = io.of('/' + roomInfo.roomName);
-    // Pass room info to the server instance
-    dom.window.roomInfo = roomInfo;
-  }).catch((error) => {
-    console.log(error.message);
-  });
-  console.log('Server ' + roomInfo.roomName + ' started.');
+  if(roomInfo && roomInfo.roomName) {
+    let room_io = io.of('/' + roomInfo.roomName);
+    const domdom = JSDOM.fromFile(path.join(__dirname, 'authoritative_server/index.html'), {
+      // To run the scripts in the html file
+      runScripts: "dangerously",
+      // Also load supported external resources
+      resources: "usable",
+      // So requestAnimatinFrame events fire
+      pretendToBeVisual: true
+    }).then((dom) => {
+
+      dom.window.URL.createObjectURL = (blob) => {
+        if (blob){
+          return datauri.format(blob.type, blob[Object.getOwnPropertySymbols(blob)[0]]._buffer).content;
+        }
+      };
+      dom.window.URL.revokeObjectURL = (objectURL) => {};
+      // Assign the socket io namespace
+      dom.window.io = room_io;
+      // Pass room info to the server instance
+      dom.window.roomInfo = roomInfo;
+      console.log('Server ' + roomInfo.roomName + ' started.');
+
+      // Simple shutdown timer
+      var timer = setTimeout(function() {
+        window.close();
+      }, 24*60*60*1000); //24 hrs
+
+
+      /*
+      var players, numPlayers = dom.window.numPlayers;
+      room_io.on('currentPlayers', function(playersInfo) {
+        players = playersInfo;
+        numPlayers = Object.size(players);
+        console.log('Num players = ' + numPlayers);
+      }); 
+      
+      // Timer to close server if unactive
+      var timer = setInterval(function() {
+        // Check how many players
+        //numPlayers = Object.size(players); 
+        numPlayers = dom.window.numPlayers;
+        console.log('Num players = ' + numPlayers);
+        if(numPlayers <= 0) {
+          // Wait
+          setTimeout(function() { 
+            // Check again and see if still no players
+            //numPlayers = Object.size(players);
+            numPlayers = dom.window.numPlayers;
+            console.log('Num players = ' + numPlayers);
+            if(numPlayers <= 0) {
+              clearInterval(timer);
+              dom.window.close(); 
+              room_io.removeAllListeners('currentPlayers');
+              console.log('Server ' + roomInfo.roomName + ' stopped.');
+            }
+          }, ROOM_TIMEOUT_LENGTH);
+        }
+      }, CHECK_ROOM_INTERVAL);
+      */
+
+
+    }).catch((error) => {
+      console.log(error.message);
+    });
+
+  } else {
+    console.log('Cannot start server because of no room info');
+  }
 }
+
+Object.size = function(obj) {
+  var size = 0, key;
+  for (key in obj) {
+      if (obj.hasOwnProperty(key)) size++;
+  }
+  return size;
+};
+
 
 // -----------  For testing  ------------------
 activeGameRooms['testing'] = {
-    roomName: 'testing',
-    maxPlayers: 6
-  };
+  roomName: 'testing',
+  maxPlayers: 6
+};
+activeGameRooms['testing2'] = {
+  roomName: 'testing2',
+  maxPlayers: 6
+};
+
 setupAuthoritativePhaser(activeGameRooms['testing']);
-//setupAuthoritativePhaser(activeGameRooms['testing2']);
+setupAuthoritativePhaser(activeGameRooms['testing2']);
 
 let port = process.env.PORT || 8082;
 server.listen(port, function () {
