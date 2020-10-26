@@ -36,8 +36,8 @@ const client = new Client({
 
 client.connect();
 
-var query = 'CREATE TABLE test1 (a boolean, b text); INSERT INTO PLAYERS (username, is_host) VALUES (\'player1\', TRUE);'
-
+var query = 'CREATE TABLE test1 (a boolean, b text);'
+//INSERT INTO PLAYERS (username, is_host) VALUES (\'player1\', TRUE);
 client.query(
   query, (err, res) => {
   if (err) throw err;
