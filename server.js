@@ -1,7 +1,8 @@
 const path = require('path');
 const jsdom = require('jsdom');
 const express = require('express');
-const { Client } = require('pg');
+//const { Client } = require('pg');
+const { Pool } = require('pg');
 const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io').listen(server);
@@ -22,6 +23,17 @@ const CHECK_ROOM_INTERVAL = 10 * 1000;
 // roomName - the room code
 // maxPlayers - the maximum number of players allowed
 const activeGameRooms = {};
+
+/*
+// Setting up the postgres database
+const client = new Client({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+*/
+
 
 initializeDatabase();
 
@@ -71,18 +83,6 @@ app.get('/host-a-game', function(req, res) {
   res.redirect('/?' + query + nickname);
 });
 
-// -----------  For testing  ------------------
-activeGameRooms['testing'] = {
-  roomName: 'testing',
-  maxPlayers: 6
-};
-activeGameRooms['testing2'] = {
-  roomName: 'testing2',
-  maxPlayers: 6
-};
-
-setupAuthoritativePhaser(activeGameRooms['testing']);
-setupAuthoritativePhaser(activeGameRooms['testing2']);
 
 server.listen(port, function () {
   console.log(`Listening on ${server.address().port}`);
@@ -94,14 +94,12 @@ function setupAuthoritativePhaser(roomInfo) {
     // Add to the room's socket io namespace
     let room_io = io.of('/' + roomInfo.roomName);
 
-    
+    /*
     // Add the room to the database
     // Setting up the postgres database
     const client = new Client({
       connectionString: process.env.DATABASE_URL,
-      ssl: {
-        rejectUnauthorized: false
-      }
+      ssl: { rejectUnauthorized: false }
     });
     client.connect();
     var query = 
@@ -114,9 +112,28 @@ function setupAuthoritativePhaser(roomInfo) {
       }
       client.end();
     });
-    
+    */
+    var query = 
+      "INSERT INTO rooms (room_name, num_players, max_players) VALUES ('" + roomInfo.roomName + "', 0, " + roomInfo.maxPlayers + ");";
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false
+      }
+    });
+    pool.query(query, (err, res) => {
+      console.log(err, res);
+      console.log('Added a room to the database.');
+      pool.end();
+    });
 
-    const domdom = JSDOM.fromFile(path.join(__dirname, 'authoritative_server/index.html'), {
+
+
+
+
+
+
+    JSDOM.fromFile(path.join(__dirname, 'authoritative_server/index.html'), {
       // To run the scripts in the html file
       runScripts: "dangerously",
       // Also load supported external resources
@@ -200,33 +217,48 @@ const uniqueId = function () {
 
 
 function initializeDatabase() {
-  // Setting up the postgres database
-  const client = new Client({
+  var query = ""+
+    "DROP TABLE IF EXISTS players; "+
+    "DROP TABLE IF EXISTS rooms; "+
+    "CREATE TABLE rooms (room_id serial PRIMARY KEY, room_name VARCHAR (20) NOT NULL, num_players INTEGER NOT NULL, max_players INTEGER NOT NULL ); " +
+    "CREATE TABLE players (player_id serial PRIMARY KEY, player_name VARCHAR (50) NOT NULL, player_color VARCHAR (20), room INTEGER REFERENCES rooms);";
+
+  const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
       rejectUnauthorized: false
     }
   });
+  pool.query(query, (err, res) => {
+    console.log(err, res);
+    pool.end();
+  });
 
+  /*
   client.connect();
 
   var query = ""+
     "DROP TABLE IF EXISTS players; "+
     "DROP TABLE IF EXISTS rooms; "+
     "CREATE TABLE rooms (room_id serial PRIMARY KEY, room_name VARCHAR (20) NOT NULL, num_players INTEGER NOT NULL, max_players INTEGER NOT NULL ); " +
-    "CREATE TABLE players (player_id serial PRIMARY KEY, player_name VARCHAR (50) NOT NULL, player_color VARCHAR (20), room INTEGER REFERENCES rooms); " +
-    "INSERT INTO rooms ("+
-      "room_name, " +
-      "num_players, "+
-      "max_players"+
-    ") VALUES ("+
-      "'testing--', "+
-      "0, "+
-      "6"+
-    ");";
+    "CREATE TABLE players (player_id serial PRIMARY KEY, player_name VARCHAR (50) NOT NULL, player_color VARCHAR (20), room INTEGER REFERENCES rooms);";
   client.query(
     query, (err, res) => {
     if (err) throw err;
     client.end();
+
+    // -----------  For testing  ------------------
+    activeGameRooms['testing'] = {
+      roomName: 'testing',
+      maxPlayers: 6
+    };
+    activeGameRooms['testing2'] = {
+      roomName: 'testing2',
+      maxPlayers: 6
+    };
+
+    setupAuthoritativePhaser(activeGameRooms['testing']);
+    setupAuthoritativePhaser(activeGameRooms['testing2']);
   });
+  */
 }
