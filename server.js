@@ -134,7 +134,7 @@ function setupAuthoritativePhaser(roomInfo) {
         rejectUnauthorized: false
       }
     });
-    await pool.query(query, (err, res) => {
+    pool.query(query, (err, res) => {
       console.log(err, res);
       console.log('Added a room to the database.');
       pool.end();
