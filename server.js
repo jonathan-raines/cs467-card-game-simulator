@@ -104,13 +104,8 @@ function setupAuthoritativePhaser(roomInfo) {
       }
     });
     client.connect();
-    var query = ''+
-      "INSERT INTO rooms (room_name, num_players, max_players) " +
-      "VALUES ('"+
-        roomInfo.roomName + "', " +
-        "0, "+
-        roomInfo.maxPlayers
-      ");";
+    var query = 
+      "INSERT INTO rooms (room_name, num_players, max_players) VALUES ('" + roomInfo.roomName + "', 0, " + roomInfo.maxPlayers + ");";
     client.query(query, (err, res) => {
       if (err) throw err;
       for (let row of res.rows) {
