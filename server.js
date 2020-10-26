@@ -34,8 +34,21 @@ const client = new Client({
 });
 */
 
-
 initializeDatabase();
+
+// -----------  For testing  ------------------
+activeGameRooms['testing'] = {
+  roomName: 'testing',
+  maxPlayers: 6
+};
+activeGameRooms['testing2'] = {
+  roomName: 'testing2',
+  maxPlayers: 6
+};
+setupAuthoritativePhaser(activeGameRooms['testing']);
+setupAuthoritativePhaser(activeGameRooms['testing2']);
+//----------------------------------------------
+
 
 app.use(express.static(__dirname + '/public'));
 
@@ -121,7 +134,7 @@ function setupAuthoritativePhaser(roomInfo) {
         rejectUnauthorized: false
       }
     });
-    pool.query(query, (err, res) => {
+    await pool.query(query, (err, res) => {
       console.log(err, res);
       console.log('Added a room to the database.');
       pool.end();
@@ -217,18 +230,18 @@ const uniqueId = function () {
 
 
 function initializeDatabase() {
-  var query = ""+
-    "DROP TABLE IF EXISTS players; "+
-    "DROP TABLE IF EXISTS rooms; "+
-    "CREATE TABLE rooms (room_id serial PRIMARY KEY, room_name VARCHAR (20) NOT NULL, num_players INTEGER NOT NULL, max_players INTEGER NOT NULL ); " +
-    "CREATE TABLE players (player_id serial PRIMARY KEY, player_name VARCHAR (50) NOT NULL, player_color VARCHAR (20), room INTEGER REFERENCES rooms);";
-
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
       rejectUnauthorized: false
     }
   });
+  var query = ""+
+    "DROP TABLE IF EXISTS players; "+
+    "DROP TABLE IF EXISTS rooms; "+
+    "CREATE TABLE rooms (room_id serial PRIMARY KEY, room_name VARCHAR (20) NOT NULL, num_players INTEGER NOT NULL, max_players INTEGER NOT NULL ); " +
+    "CREATE TABLE players (player_id serial PRIMARY KEY, player_name VARCHAR (50) NOT NULL, player_color VARCHAR (20), room INTEGER REFERENCES rooms);";
+
   pool.query(query, (err, res) => {
     console.log(err, res);
     pool.end();
@@ -247,18 +260,7 @@ function initializeDatabase() {
     if (err) throw err;
     client.end();
 
-    // -----------  For testing  ------------------
-    activeGameRooms['testing'] = {
-      roomName: 'testing',
-      maxPlayers: 6
-    };
-    activeGameRooms['testing2'] = {
-      roomName: 'testing2',
-      maxPlayers: 6
-    };
-
-    setupAuthoritativePhaser(activeGameRooms['testing']);
-    setupAuthoritativePhaser(activeGameRooms['testing2']);
+    
   });
   */
 }
