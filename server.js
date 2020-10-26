@@ -18,14 +18,11 @@ const ROOM_TIMEOUT_LENGTH = 30 * 1000;
 // How often the server will check if there are any players
 const CHECK_ROOM_INTERVAL = 10 * 1000;
 
-
 // Info to send to the games about the room
 // roomName - the room code
 // maxPlayers - the maximum number of players allowed
 const activeGameRooms = {};
 
-// Password: Sx95PSGVAPjkP9C8nbNtseYEG
-// Port 5432
 // Setting up the postgres database
 const client = new Client({
   connectionString: process.env.DATABASE_URL,
@@ -34,20 +31,7 @@ const client = new Client({
   }
 });
 
-client.connect();
-
-var query = 'CREATE TABLE test1 (a boolean, b text);'
-//INSERT INTO PLAYERS (username, is_host) VALUES (\'player1\', TRUE);
-client.query(
-  query, (err, res) => {
-  if (err) throw err;
-  for (let row of res.rows) {
-    console.log(JSON.stringify(row));
-  }
-  client.end();
-});
-
-
+initializeDatabase();
 
 app.use(express.static(__dirname + '/public'));
 
@@ -95,10 +79,48 @@ app.get('/host-a-game', function(req, res) {
   res.redirect('/?' + query + nickname);
 });
 
+// -----------  For testing  ------------------
+activeGameRooms['testing'] = {
+  roomName: 'testing',
+  maxPlayers: 6
+};
+activeGameRooms['testing2'] = {
+  roomName: 'testing2',
+  maxPlayers: 6
+};
+
+setupAuthoritativePhaser(activeGameRooms['testing']);
+setupAuthoritativePhaser(activeGameRooms['testing2']);
+
+server.listen(port, function () {
+  console.log(`Listening on ${server.address().port}`);
+});
+
 // Starts a new gameServer
 function setupAuthoritativePhaser(roomInfo) {
   if(roomInfo && roomInfo.roomName) {
+    // Add to the room's socket io namespace
     let room_io = io.of('/' + roomInfo.roomName);
+
+    // Add the room to the database
+    client.connect();
+    var query = ''+
+      'INSERT INTO rooms (room_name, num_players, max_players)'+
+        'VALUES ('+
+          '\''+ roomInfo.roomName + '\',' +
+          '0,'+
+          roomInfo.maxPlayers +
+      ');';
+    client.query(query, (err, res) => {
+      if (err) throw err;
+      for (let row of res.rows) {
+        console.log('Rooms in database:');
+        console.log(JSON.stringify(row));
+      }
+      client.end();
+    });
+
+
     const domdom = JSDOM.fromFile(path.join(__dirname, 'authoritative_server/index.html'), {
       // To run the scripts in the html file
       runScripts: "dangerously",
@@ -162,7 +184,6 @@ function setupAuthoritativePhaser(roomInfo) {
     }).catch((error) => {
       console.log(error.message);
     });
-
   } else {
     console.log('Cannot start server because of no room info');
   }
@@ -182,19 +203,31 @@ const uniqueId = function () {
   return Math.random().toString(36).substr(4);
 };
 
-// -----------  For testing  ------------------
-activeGameRooms['testing'] = {
-  roomName: 'testing',
-  maxPlayers: 6
-};
-activeGameRooms['testing2'] = {
-  roomName: 'testing2',
-  maxPlayers: 6
-};
 
-setupAuthoritativePhaser(activeGameRooms['testing']);
-setupAuthoritativePhaser(activeGameRooms['testing2']);
-
-server.listen(port, function () {
-  console.log(`Listening on ${server.address().port}`);
-});
+function initializeDatabase() {
+  client.connect();
+  var query = ''+
+    'DROP TABLE [IF EXISTS] players;'+
+    'DROP TABLE [IF EXISTS] rooms;'+
+    'CREATE TABLE rooms ('+
+      'room_id serial PRIMARY KEY,'+
+      'room_name VARCHAR (20) NOT NULL,'+
+      'num_players INTEGER NOT NULL,'+
+      'max_players INTEGER NOT NULL'+
+    ');' + 
+    'CREATE TABLE players (' +
+      'player_id serial PRIMARY KEY,'+
+      'player_name VARCHAR (50) NOT NULL,' +
+      'player_color VARCHAR (20),'+
+      'room INTEGER,'
+      'FOREIGN KEY room REFERENCES rooms room_id'+
+    ');';
+  client.query(
+    query, (err, res) => {
+    if (err) throw err;
+    for (let row of res.rows) {
+      console.log(JSON.stringify(row));
+    }
+    client.end();
+  });
+}
