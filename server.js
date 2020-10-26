@@ -216,27 +216,23 @@ function initializeDatabase() {
   client.connect();
 
   var query = ''+
-    'DROP TABLE IF EXISTS players;'+
-    'DROP TABLE IF EXISTS rooms;'+
+    'DROP TABLE IF EXISTS players; '+
+    'DROP TABLE IF EXISTS rooms; '+
     'CREATE TABLE rooms ('+
-      'room_id serial PRIMARY KEY,'+
-      'room_name VARCHAR (20) NOT NULL,'+
-      'num_players INTEGER NOT NULL,'+
-      'max_players INTEGER NOT NULL'+
-    ');' + 
+      'room_id serial PRIMARY KEY, '+
+      'room_name VARCHAR (20) NOT NULL, '+
+      'num_players INTEGER NOT NULL, '+
+      'max_players INTEGER NOT NULL '+
+    '); ' + 
     'CREATE TABLE players (' +
-      'player_id serial PRIMARY KEY,'+
-      'player_name VARCHAR (50) NOT NULL,' +
-      'player_color VARCHAR (20),'+
-      'room INTEGER,'
-      'FOREIGN KEY room REFERENCES rooms room_id'+
-    ');' +
-    'INSERT INTO rooms (room_name, num_players, max_players)'+
-        'VALUES ('+
-          'testing--,' +
-          '0,'+
-          '6' +
-      ');';
+      'player_id serial PRIMARY KEY, '+
+      'player_name VARCHAR (50) NOT NULL, ' +
+      'player_color VARCHAR (20), '+
+      'room INTEGER, '
+      'FOREIGN KEY room REFERENCES rooms room_id '+
+    '); ' //+
+    //'INSERT INTO rooms (room_name, num_players, max_players) '+
+    //'VALUES (\'testing--\', 0, 6);';
   client.query(
     query, (err, res) => {
     if (err) throw err;
