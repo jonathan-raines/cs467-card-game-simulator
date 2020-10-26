@@ -36,8 +36,10 @@ const client = new Client({
 
 client.connect();
 
+var query = 'CREATE TABLE test1 (a boolean, b text); INSERT INTO PLAYERS (username, is_host) VALUES (\'player1\', TRUE);'
+
 client.query(
-  'INSERT INTO PLAYERS (username, is_host) VALUES (\'player1\', TRUE);', (err, res) => {
+  query, (err, res) => {
   if (err) throw err;
   for (let row of res.rows) {
     console.log(JSON.stringify(row));
