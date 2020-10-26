@@ -216,8 +216,8 @@ function initializeDatabase() {
   client.connect();
 
   var query = ''+
-    'DROP TABLE [IF EXISTS] players;'+
-    'DROP TABLE [IF EXISTS] rooms;'+
+    'DROP TABLE IF EXISTS players;'+
+    'DROP TABLE IF EXISTS rooms;'+
     'CREATE TABLE rooms ('+
       'room_id serial PRIMARY KEY,'+
       'room_name VARCHAR (20) NOT NULL,'+
