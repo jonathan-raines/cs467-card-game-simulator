@@ -1,6 +1,7 @@
 const path = require('path');
 const jsdom = require('jsdom');
 const express = require('express');
+const { Client } = require('pg');
 const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io').listen(server);
@@ -21,10 +22,27 @@ const CHECK_ROOM_INTERVAL = 10 * 1000;
 // maxPlayers - the maximum number of players allowed
 const activeGameRooms = {};
 
-// create a uniqueId to assign to clients on auth
-const uniqueId = function () {
-  return Math.random().toString(36).substr(4);
-};
+// Password: Sx95PSGVAPjkP9C8nbNtseYEG
+// Port 5432
+// Setting up the postgres database
+const client = new Client({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
+client.connect();
+
+client.query('SELECT table_schema,table_name FROM information_schema.tables;', (err, res) => {
+  if (err) throw err;
+  for (let row of res.rows) {
+    console.log(JSON.stringify(row));
+  }
+  client.end();
+});
+
+
 
 app.use(express.static(__dirname + '/public'));
 
@@ -153,6 +171,11 @@ Object.size = function(obj) {
   return size;
 };
 
+
+// create a uniqueId to assign to clients on auth
+const uniqueId = function () {
+  return Math.random().toString(36).substr(4);
+};
 
 // -----------  For testing  ------------------
 activeGameRooms['testing'] = {
