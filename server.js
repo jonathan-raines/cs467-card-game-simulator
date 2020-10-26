@@ -23,14 +23,6 @@ const CHECK_ROOM_INTERVAL = 10 * 1000;
 // maxPlayers - the maximum number of players allowed
 const activeGameRooms = {};
 
-// Setting up the postgres database
-const client = new Client({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
-
 initializeDatabase();
 
 app.use(express.static(__dirname + '/public'));
@@ -103,6 +95,13 @@ function setupAuthoritativePhaser(roomInfo) {
     let room_io = io.of('/' + roomInfo.roomName);
 
     // Add the room to the database
+    // Setting up the postgres database
+    const client = new Client({
+      connectionString: process.env.DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false
+      }
+    });
     client.connect();
     var query = ''+
       'INSERT INTO rooms (room_name, num_players, max_players)'+
@@ -205,7 +204,16 @@ const uniqueId = function () {
 
 
 function initializeDatabase() {
+  // Setting up the postgres database
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
+
   client.connect();
+
   var query = ''+
     'DROP TABLE [IF EXISTS] players;'+
     'DROP TABLE [IF EXISTS] rooms;'+
@@ -225,9 +233,6 @@ function initializeDatabase() {
   client.query(
     query, (err, res) => {
     if (err) throw err;
-    for (let row of res.rows) {
-      console.log(JSON.stringify(row));
-    }
     client.end();
   });
 }
