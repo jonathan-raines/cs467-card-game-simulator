@@ -11,6 +11,8 @@ const querystring = require('querystring');
 const datauri = new Datauri();
 const { JSDOM } = jsdom;
 
+let port = process.env.PORT || 8082;
+
 // Length of time the server will wait to close after making the room
 const ROOM_TIMEOUT_LENGTH = 30 * 1000;
 // How often the server will check if there are any players
@@ -34,7 +36,8 @@ const client = new Client({
 
 client.connect();
 
-client.query('SELECT table_schema,table_name FROM information_schema.tables;', (err, res) => {
+client.query(
+  'INSERT INTO PLAYERS (username, is_host) VALUES (\'player1\', TRUE);', (err, res) => {
   if (err) throw err;
   for (let row of res.rows) {
     console.log(JSON.stringify(row));
@@ -190,7 +193,6 @@ activeGameRooms['testing2'] = {
 setupAuthoritativePhaser(activeGameRooms['testing']);
 setupAuthoritativePhaser(activeGameRooms['testing2']);
 
-let port = process.env.PORT || 8082;
 server.listen(port, function () {
   console.log(`Listening on ${server.address().port}`);
 });
