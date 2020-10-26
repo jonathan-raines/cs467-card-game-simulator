@@ -94,6 +94,7 @@ function setupAuthoritativePhaser(roomInfo) {
     // Add to the room's socket io namespace
     let room_io = io.of('/' + roomInfo.roomName);
 
+    /*
     // Add the room to the database
     // Setting up the postgres database
     const client = new Client({
@@ -118,7 +119,7 @@ function setupAuthoritativePhaser(roomInfo) {
       }
       client.end();
     });
-
+    */
 
     const domdom = JSDOM.fromFile(path.join(__dirname, 'authoritative_server/index.html'), {
       // To run the scripts in the html file
@@ -229,7 +230,13 @@ function initializeDatabase() {
       'player_color VARCHAR (20),'+
       'room INTEGER,'
       'FOREIGN KEY room REFERENCES rooms room_id'+
-    ');';
+    ');' +
+    'INSERT INTO rooms (room_name, num_players, max_players)'+
+        'VALUES ('+
+          'testing--,' +
+          '0,'+
+          '6' +
+      ');';
   client.query(
     query, (err, res) => {
     if (err) throw err;
