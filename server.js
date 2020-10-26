@@ -34,6 +34,13 @@ const client = new Client({
 });
 */
 
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
 initializeDatabase();
 
 // -----------  For testing  ------------------
@@ -126,21 +133,29 @@ function setupAuthoritativePhaser(roomInfo) {
       client.end();
     });
     */
+
     var query = 
       "INSERT INTO rooms (room_name, num_players, max_players) VALUES ('" + roomInfo.roomName + "', 0, " + roomInfo.maxPlayers + ");";
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: {
-        rejectUnauthorized: false
-      }
-    });
+    /*
     pool.query(query, (err, res) => {
       console.log(err, res);
       console.log('Added a room to the database.');
       pool.end();
     });
+    */
 
-
+    pool.connect((err, client, release) => {
+      if (err) {
+        return console.error('Error acquiring client', err.stack);
+      }
+      client.query(query, (err, result) => {
+        release()
+        if (err) {
+          return console.error('Error executing query', err.stack);
+        }
+        console.log(result.rows);
+      });
+    });
 
 
 
@@ -230,23 +245,39 @@ const uniqueId = function () {
 
 
 function initializeDatabase() {
+  /*
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
       rejectUnauthorized: false
     }
   });
+  */
   var query = ""+
     "DROP TABLE IF EXISTS players; "+
     "DROP TABLE IF EXISTS rooms; "+
     "CREATE TABLE rooms (room_id serial PRIMARY KEY, room_name VARCHAR (20) NOT NULL, num_players INTEGER NOT NULL, max_players INTEGER NOT NULL ); " +
     "CREATE TABLE players (player_id serial PRIMARY KEY, player_name VARCHAR (50) NOT NULL, player_color VARCHAR (20), room INTEGER REFERENCES rooms);";
 
+  /*
   pool.query(query, (err, res) => {
     console.log(err, res);
     pool.end();
   });
+  */
 
+  pool.connect((err, client, release) => {
+    if (err) {
+      return console.error('Error acquiring client', err.stack);
+    }
+    client.query(query, (err, result) => {
+      release()
+      if (err) {
+        return console.error('Error executing query', err.stack);
+      }
+      console.log(result.rows);
+    });
+  });
   /*
   client.connect();
 
