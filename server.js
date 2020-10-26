@@ -94,7 +94,7 @@ function setupAuthoritativePhaser(roomInfo) {
     // Add to the room's socket io namespace
     let room_io = io.of('/' + roomInfo.roomName);
 
-    /*
+    
     // Add the room to the database
     // Setting up the postgres database
     const client = new Client({
@@ -105,12 +105,12 @@ function setupAuthoritativePhaser(roomInfo) {
     });
     client.connect();
     var query = ''+
-      'INSERT INTO rooms (room_name, num_players, max_players)'+
-        'VALUES ('+
-          '\''+ roomInfo.roomName + '\',' +
-          '0,'+
-          roomInfo.maxPlayers +
-      ');';
+      "INSERT INTO rooms (room_name, num_players, max_players) " +
+      "VALUES ('"+
+        roomInfo.roomName + "', " +
+        "0, "+
+        roomInfo.maxPlayers
+      ");";
     client.query(query, (err, res) => {
       if (err) throw err;
       for (let row of res.rows) {
@@ -119,7 +119,7 @@ function setupAuthoritativePhaser(roomInfo) {
       }
       client.end();
     });
-    */
+    
 
     const domdom = JSDOM.fromFile(path.join(__dirname, 'authoritative_server/index.html'), {
       // To run the scripts in the html file
@@ -220,7 +220,15 @@ function initializeDatabase() {
     "DROP TABLE IF EXISTS rooms; "+
     "CREATE TABLE rooms (room_id serial PRIMARY KEY, room_name VARCHAR (20) NOT NULL, num_players INTEGER NOT NULL, max_players INTEGER NOT NULL ); " +
     "CREATE TABLE players (player_id serial PRIMARY KEY, player_name VARCHAR (50) NOT NULL, player_color VARCHAR (20), room INTEGER REFERENCES rooms); " +
-    "INSERT INTO rooms (room_name, num_players, max_players) VALUES ('testing--', 0, 6);";
+    "INSERT INTO rooms ("+
+      "room_name, " +
+      "num_players, "+
+      "max_players"+
+    ") VALUES ("+
+      "'testing--', "+
+      "0, "+
+      "6"+
+    ");";
   client.query(
     query, (err, res) => {
     if (err) throw err;
