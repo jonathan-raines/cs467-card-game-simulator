@@ -12,10 +12,12 @@ const datauri = new Datauri();
 const { JSDOM } = jsdom;
 
 let port = process.env.PORT || 8082;
-// For local development use the -local argument after calling server.js
-const IS_LOCAL = process.argv.slice(2)[0] == '-local';
+// URL for the database given in .env file from heroku
+const CONNECTION_STRING = process.env.DATABASE_URL || '';
+// The server running on a local machine if no .env database url
+const IS_LOCAL = CONNECTION_STRING == '';
 // Length of time the server will wait to close after making the room
-const SERVER_TIMEOUT = 24*60*60*1000; // 24 hrs
+const SERVER_TIMEOUT = 86400000; // 24 hrs
 
 // Info to send to the games about the room
 const activeGameRooms = {};
@@ -24,7 +26,7 @@ let pool;
 if(!IS_LOCAL) {
   // Setting up the postgres database
   pool = new Pool({
-    connectionString: process.env.DATABASE_URL || '',
+    connectionString: CONNECTION_STRING,
     ssl: { rejectUnauthorized: false },
     idleTimeoutMillis: 30000
   });
@@ -38,6 +40,7 @@ app.get('/', function (req, res) {
   let requestedRoom = req.query.roomId || '';
 
   if(!IS_LOCAL) {
+    // Update activeGameRooms from database
     let query = "SELECT * FROM rooms WHERE room_name = '" + requestedRoom + "'";
     ;(async function() {
       const client = await pool.connect();
@@ -104,7 +107,7 @@ server.listen(port, function () {
   console.log(`Listening on ${server.address().port}`);
 });
 
-
+// You must catch this async function for example: createRoom(**,**)).catch( e => { console.error(e) });
 async function createRoom(roomId, maxPlayers) {
   activeGameRooms[roomId] = {
     roomName: roomId,
@@ -120,6 +123,7 @@ async function createRoom(roomId, maxPlayers) {
   }
 }
 
+// You must catch this async function for example: deleteRoom(**).catch( e => { console.error(e) });
 async function deleteRoom(roomId) {
   activeGameRooms[roomId] = null;
   if(!IS_LOCAL) {
@@ -129,7 +133,6 @@ async function deleteRoom(roomId) {
     client.release();
   }
 }
-
 
 // Starts a new gameServer
 function setupAuthoritativePhaser(roomInfo) {
@@ -155,9 +158,10 @@ function setupAuthoritativePhaser(roomInfo) {
       
       // Pass objects to auth game.js
       dom.window.io = room_io;        // Pass the socket io namespace name
-      dom.window.IS_LOCAL = IS_LOCAL;
+      dom.window.IS_LOCAL = IS_LOCAL; // Let game.js know if it's running locally
       dom.window.pool = pool;         // Pass the pool for the database
       dom.window.roomInfo = roomInfo; // Pass room info to the server instance
+      dom.window.numPlayers = 0;
       console.log('Server ' + roomInfo.roomName + ' started.');
 
       // Simple shutdown timer so the server doesn't stay on forever
@@ -166,42 +170,9 @@ function setupAuthoritativePhaser(roomInfo) {
         deleteRoom(roomInfo.roomName).catch( e => { console.error(e) });
         dom.window.close();
       }, SERVER_TIMEOUT); 
-      /*
-      var players, numPlayers = dom.window.numPlayers;
-      room_io.on('currentPlayers', function(playersInfo) {
-        players = playersInfo;
-        numPlayers = Object.size(players);
-        console.log('Num players = ' + numPlayers);
-      }); 
-      
-      // Timer to close server if unactive
-      var timer = setInterval(function() {
-        // Check how many players
-        //numPlayers = Object.size(players); 
-        numPlayers = dom.window.numPlayers;
-        console.log('Num players = ' + numPlayers);
-        if(numPlayers <= 0) {
-          // Wait
-          setTimeout(function() { 
-            // Check again and see if still no players
-            //numPlayers = Object.size(players);
-            numPlayers = dom.window.numPlayers;
-            console.log('Num players = ' + numPlayers);
-            if(numPlayers <= 0) {
-              clearInterval(timer);
-              dom.window.close(); 
-              room_io.removeAllListeners('currentPlayers');
-              console.log('Server ' + roomInfo.roomName + ' stopped.');
-            }
-          }, ROOM_TIMEOUT_LENGTH);
-        }
-      }, CHECK_ROOM_INTERVAL);
-      */
-    }).catch((error) => {
-      console.log(error.message);
-    });
+    }).catch((error) => { console.log(error.message); });
   } else {
-    console.log('Cannot start server because of no room info');
+    console.log('Cannot start server because there is no room info.');
   }
 }
 
@@ -224,9 +195,14 @@ function initializeDatabase() {
   var query = 
     "DROP TABLE IF EXISTS players; "+
     "DROP TABLE IF EXISTS rooms; "+
-    "CREATE TABLE rooms (room_id serial PRIMARY KEY, room_name VARCHAR (20) NOT NULL, num_players INTEGER NOT NULL, max_players INTEGER NOT NULL ); " +
-    "CREATE TABLE players (player_id serial PRIMARY KEY, player_name VARCHAR (50) NOT NULL, player_color VARCHAR (20), room INTEGER REFERENCES rooms);";
-
+    "CREATE TABLE rooms (" +
+      "room_id serial PRIMARY KEY, "+
+      "room_name VARCHAR (20) NOT NULL, "+
+      "num_players INTEGER NOT NULL, "+
+      "max_players INTEGER NOT NULL "+
+    "); ";
+    // Not using players table but maybe in the future
+    //"CREATE TABLE players (player_id serial PRIMARY KEY, player_name VARCHAR (50) NOT NULL, player_color VARCHAR (20), room INTEGER REFERENCES rooms);"
   ;(async function() {
     if(!IS_LOCAL) {
       const client = await pool.connect()

@@ -27,25 +27,15 @@ const config = {
 };
 
 // Length of time the server will wait to close after all the players have left
-const ROOM_TIMEOUT_LENGTH = 60 * 1000; // 30 min
+const ROOM_TIMEOUT_LENGTH = 1800000; // 30 min
 // How often the server will check if there are any players
-const CHECK_ROOM_INTERVAL = 60 * 1000; // 5 min
-
-// The game ticks at the rate of 1 tick per 200 milliseconds
+const CHECK_ROOM_INTERVAL = 300000; // 5 min
+// The game ticks at the rate of 1 tick per 100 milliseconds
 const GAME_TICK_RATE = 100
 
 const roomName = roomInfo.roomName;
 const maxPlayers = roomInfo.maxPlayers;
 let backgroundColor = getRandomColor();
-
-function getRandomColor() {
-  var letters = '0123456789ABCDEF';
-  var color = '#';
-  for (var i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
-}
 
 // Global all objects reference
 // This keeps track of object position and other info to send to the users
@@ -57,11 +47,12 @@ const objectInfoToSend = {};
 const players = {};
 
 // Number of current players in the game session
-let numPlayers = 0;
-
+//let numPlayers = 0;
 
 // Depth of the highest card
 var overallDepth = 0;
+
+
 
 function preload() {
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
@@ -174,8 +165,6 @@ function startGameDataTicker(self) {
   
 }
 
-
-
 function loadCards(self) {
   let frames = self.textures.get('cards').getFrameNames();
 
@@ -234,11 +223,17 @@ function addObject(self, objectInfo, objectName, frame) {
   self.tableObjects.add(object);
 }
 
-
-function addPlayer() {
-  
+function getRandomColor() {
+  var letters = '0123456789ABCDEF';
+  var color = '#';
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
 }
 
+// ----------------- MAIN ------------------------------------
+// Start running the game
 const game = new Phaser.Game(config);
 
 // Timer to close server if inactive
