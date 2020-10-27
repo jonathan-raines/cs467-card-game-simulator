@@ -18,7 +18,6 @@ const CONNECTION_STRING = process.env.DATABASE_URL || '';
 const IS_LOCAL = CONNECTION_STRING == '';
 // Length of time the server will wait to close after making the room
 const SERVER_TIMEOUT = 86400000; // 24 hrs
-
 // Info to send to the games about the room
 const activeGameRooms = {};
 
@@ -30,7 +29,9 @@ if(!IS_LOCAL) {
     ssl: { rejectUnauthorized: false },
     idleTimeoutMillis: 30000
   });
-} 
+} else {
+  console.log('Running on a local system.');
+}
 
 initializeDatabase();
 
@@ -59,7 +60,6 @@ app.get('/', function (req, res) {
     lobbyRouter(requestedRoom, req, res);
   }
 });
-
 
 function lobbyRouter(requestedRoom, req, res) {
   // For regular requests to lobby
@@ -102,9 +102,8 @@ app.get('/host-a-game', function(req, res) {
   res.redirect('/?' + query + nickname);
 });
 
-
 server.listen(port, function () {
-  console.log(`Listening on ${server.address().port}`);
+  console.log(`Listening on port ${server.address().port}`);
 });
 
 // You must catch this async function for example: createRoom(**,**)).catch( e => { console.error(e) });
@@ -116,7 +115,8 @@ async function createRoom(roomId, maxPlayers) {
   roomInfo = activeGameRooms[roomId];
   setupAuthoritativePhaser(roomInfo);
   if(!IS_LOCAL) {
-    var query = "INSERT INTO rooms (room_name, num_players, max_players) VALUES ('" + roomInfo.roomName + "', 0, " + roomInfo.maxPlayers + ");";
+    var query = "INSERT INTO rooms (room_name, num_players, max_players) " + 
+                "VALUES ('" + roomInfo.roomName + "', 0, " + roomInfo.maxPlayers + ");";
     const client = await pool.connect();
     await client.query(query);
     client.release();
@@ -189,7 +189,6 @@ Object.size = function(obj) {
 const uniqueId = function () {
   return Math.random().toString(36).substr(4);
 };
-
 
 function initializeDatabase() {
   var query = 
