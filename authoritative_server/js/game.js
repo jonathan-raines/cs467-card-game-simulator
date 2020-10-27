@@ -133,6 +133,10 @@ function create() {
     socket.on('objectFlip', function (inputData) {
       objectInfoToSend[inputData.objectId].isFaceUp = inputData.isFaceUp;
     });
+
+    socket.on('cardRotate', function(inputData) {
+      objectInfoToSend[inputData.objectId].rotation = inputData.rotation;
+    });
   });
 }
 
@@ -194,6 +198,7 @@ function loadCards(self) {
       objectId: i,
       objectName: cardNames[i],
       objectDepth: overallDepth,
+      rotation: 0,
       isFaceUp: true  
     };
     addObject(self, objectInfoToSend[i], cardNames[i], nextCard);
@@ -207,6 +212,7 @@ function loadCards(self) {
     x: ((jokerId-1)%perRow) * xSpacing + xStart,
     y: Math.floor((jokerId-1)/perRow) * ySpacing + yStart,
     objectId: jokerId,
+    rotation: 0,
     isFaceUp: true  
   };
   addObject(self, objectInfoToSend[jokerId], cardNames[jokerId], jokerFrame);
@@ -219,6 +225,8 @@ function addObject(self, objectInfo, objectName, frame) {
   // Assign the individual game object an id
   object.objectId = objectInfo.objectId;
   object.name = objectName;
+  object.rotation = objectInfo.rotation;
+
   // Add it to the object group
   self.tableObjects.add(object);
 }

@@ -39,7 +39,6 @@ function create() {
   this.socket = io(roomName);
 
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
-  console.log(backgroundColor);
 
   if(playerNickname)
     self.socket.emit('playerNickname', playerNickname);
@@ -256,11 +255,14 @@ function updateObjects(objectsInfo, id, object, frames) {
     if(object.frame.name != frames[frames.indexOf(object.name)]) {
       object.setFrame(frames[frames.indexOf(object.name)]);
     }
-  } else { // face down
+  }  else { // face down
     // check if the card is not down
     if(object.frame.name != "back") {
       object.setFrame(frames[frames.indexOf("back")]);
     }
+  }
+  if (object.rotation !== objectsInfo[id].rotation) {
+    object.rotation = objectsInfo[id].rotation;
   }
 }
 
@@ -358,6 +360,11 @@ function addObject(self, objectId, objectName, frame) {
 
   object.on('pointerdown', function() {
     this.rotation = self.cameras.main.rotation;
+    self.socket.emit('cardRotate', {
+      objectId: object.objectId,
+      rotation: self.cameras.main.rotation
+    });
+
   });
 }
 
