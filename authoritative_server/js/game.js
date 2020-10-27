@@ -258,7 +258,7 @@ var timer = setInterval(function() {
             await client.query(query);
             client.release();
           }
-        })().then(() => {
+        })().catch( e => { console.error(e) }).then(() => {
           game.destroy(true, true);
           window.close(); 
         });

@@ -51,7 +51,7 @@ app.get('/', function (req, res) {
         lobbyRouter(requestedRoom, req, res);
         client.release();
       });
-    })()
+    })().catch( e => { console.error(e) })
   } else {
     lobbyRouter(requestedRoom, req, res);
   }
@@ -90,7 +90,7 @@ app.get('/host-a-game', function(req, res) {
   if(nickname != '')
     nickname = '&nickname=' + nickname;
 
-  createRoom(newRoomId, 8);
+  createRoom(newRoomId, 8).catch( e => { console.error(e) });
 
   // Make query to send gameroom info with URL
   const query = querystring.stringify({
@@ -163,7 +163,7 @@ function setupAuthoritativePhaser(roomInfo) {
       // Simple shutdown timer so the server doesn't stay on forever
       var timer = setTimeout(function() {
         console.log('Server ' + roomInfo.roomName + ' stopped.');
-        deleteRoom(roomInfo.roomName);
+        deleteRoom(roomInfo.roomName).catch( e => { console.error(e) });
         dom.window.close();
       }, SERVER_TIMEOUT); 
       /*
@@ -233,10 +233,10 @@ function initializeDatabase() {
       await client.query(query)
       client.release()
     }
-  })().then(() => {
+  })().catch( e => { console.error(e) }).then(() => {
     // -----------  For testing  ------------------
-    createRoom('testing', 8);
-    createRoom('testing2', 8);
+    createRoom('testing', 8).catch( e => { console.error(e) });
+    createRoom('testing2', 8).catch( e => { console.error(e) });
     //----------------------------------------------
   });
 }
