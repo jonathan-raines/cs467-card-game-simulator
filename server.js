@@ -110,7 +110,7 @@ server.listen(port, function () {
 });
 
 // Starts a new gameServer
-function setupAuthoritativePhaser(roomInfo) {
+async function setupAuthoritativePhaser(roomInfo) {
   if(roomInfo && roomInfo.roomName) {
     // Add to the room's socket io namespace
     let room_io = io.of('/' + roomInfo.roomName);
@@ -146,12 +146,7 @@ function setupAuthoritativePhaser(roomInfo) {
     */
 
 
-    try {
-      const { rows } = await query(query);
-      console.log(JSON.stringify(rows));
-    } catch (err) {
-      console.log('Database ' + err);
-    }
+    
 
     /*
     pool.connect((err, client, release) => {
@@ -230,7 +225,12 @@ function setupAuthoritativePhaser(roomInfo) {
       }, CHECK_ROOM_INTERVAL);
       */
 
-
+      try {
+        const { rows } = await query(query);
+        console.log(JSON.stringify(rows));
+      } catch (err) {
+        console.log('Database ' + err);
+      }
     }).catch((error) => {
       console.log(error.message);
     });
