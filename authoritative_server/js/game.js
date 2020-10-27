@@ -249,6 +249,7 @@ var timer = setInterval(function() {
         console.log('Server ' + roomName + ' stopped.');
         ;(async function() {
           if(!IS_LOCAL) {
+            var query = "DELETE FROM rooms WHERE room_name = '" + roomId + "'";
             const client = await pool.connect();
             await client.query(query);
             client.release();
