@@ -46,9 +46,33 @@ function create() {
   loadMenu(self);
   loadCards(self);
   startSocketUpdates(self);
+
+  menuCam = this.cameras.add(0, 0, window.innerWidth*.8, window.innerHeight);
+  menuCam.ignore(this.tableObjects);
+
+  cursors = this.input.keyboard.createCursorKeys();
 }
 
-function update() {}
+function update() {
+  var cam = this.cameras.main; 
+
+  if (cursors.left.isDown)
+    {
+        cam.rotation -= 0.005 //0.0025;
+    }
+  else if (cursors.right.isDown)
+  {
+      cam.rotation += 0.005 //0.0025;
+  }
+  if (cursors.up.isDown)
+  {
+    cam.zoom += 0.005 //0.0025;
+  }
+  else if (cursors.down.isDown)
+  {
+    cam.zoom -= 0.005 //0.0025;
+  }
+}
 
 function loadMenu(self) {
   var menu = self.add.text(20, 10, 'Menu', { 
@@ -281,6 +305,10 @@ function addObject(self, objectId, objectName, frame) {
   });
   object.on('pointerout', function () {
     this.clearTint();
+  });
+
+  object.on('pointerdown', function() {
+    this.rotation = self.cameras.main.rotation;
   });
 }
 
