@@ -111,11 +111,12 @@ server.listen(port, function () {
 
 
 async function createRoom(roomInfo) {
+  setupAuthoritativePhaser(roomInfo);
+
   var query = "INSERT INTO rooms (room_name, num_players, max_players) VALUES ('" + roomInfo.roomName + "', 0, " + roomInfo.maxPlayers + ");"
   const client = await pool.connect();
   await client.query(query);
   client.release();
-  setupAuthoritativePhaser(roomInfo);
 }
 
 
@@ -124,54 +125,7 @@ function setupAuthoritativePhaser(roomInfo) {
   if(roomInfo && roomInfo.roomName) {
     // Add to the room's socket io namespace
     let room_io = io.of('/' + roomInfo.roomName);
-
-    /*
-    // Add the room to the database
-    // Setting up the postgres database
-    const client = new Client({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
-    });
-    client.connect();
-    */
-
-
-    /*
-    pool.connect((err, client, release) => {
-      if (err) {
-        return console.error('Error acquiring client', err.stack);
-      }
-      client.query('SELECT NOW()', (err, result) => {
-        release();
-        if (err) {
-          return console.error('Error executing query', err.stack);
-        }
-        console.log(result.rows);
-      });
-    });
-    */
-    /*
-    client.query(query, (err, res) => {
-      if (err) throw err;
-      for (let row of res.rows) {
-        console.log('Rooms in database:');
-        console.log(JSON.stringify(row));
-      }
-      //client.end();
-      client.release();
-    });
-    */
-    
-    /*
-    pool.query(query, (err, res) => {
-      console.log(err, res);
-      console.log('Added a room to the database.');
-      pool.end();
-    });
-    */
-
-
-
+    // Run a JSDOM script for the server game engine
     JSDOM.fromFile(path.join(__dirname, 'authoritative_server/index.html'), {
       // To run the scripts in the html file
       runScripts: "dangerously",
@@ -230,15 +184,6 @@ function setupAuthoritativePhaser(roomInfo) {
         }
       }, CHECK_ROOM_INTERVAL);
       */
-
-      /*
-      try {
-        const { rows } = await query(query);
-        console.log(JSON.stringify(rows));
-      } catch (err) {
-        console.log('Database ' + err);
-      }
-      */
     }).catch((error) => {
       console.log(error.message);
     });
@@ -263,53 +208,18 @@ const uniqueId = function () {
 
 
 function initializeDatabase() {
-  /*
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false
-    }
-  });
-  */
   var query = ""+
     "DROP TABLE IF EXISTS players; "+
     "DROP TABLE IF EXISTS rooms; "+
     "CREATE TABLE rooms (room_id serial PRIMARY KEY, room_name VARCHAR (20) NOT NULL, num_players INTEGER NOT NULL, max_players INTEGER NOT NULL ); " +
     "CREATE TABLE players (player_id serial PRIMARY KEY, player_name VARCHAR (50) NOT NULL, player_color VARCHAR (20), room INTEGER REFERENCES rooms);";
-  pool.query(query, (err, res) => {});
+  //pool.query(query, (err, res) => {});
   
-
-  /*
-  // ASYNC try
-  pool.connect((err, client, release) => {
-    if (err) {
-      return console.error('Error acquiring client', err.stack);
-    }
-    client.query(query, (err, result) => {
-      release()
-      if (err) {
-        return console.error('Error executing query', err.stack);
-      }
-      console.log(result.rows);
-    });
-  });
-  */
-  /*
-  client.connect();
-
-  var query = ""+
-    "DROP TABLE IF EXISTS players; "+
-    "DROP TABLE IF EXISTS rooms; "+
-    "CREATE TABLE rooms (room_id serial PRIMARY KEY, room_name VARCHAR (20) NOT NULL, num_players INTEGER NOT NULL, max_players INTEGER NOT NULL ); " +
-    "CREATE TABLE players (player_id serial PRIMARY KEY, player_name VARCHAR (50) NOT NULL, player_color VARCHAR (20), room INTEGER REFERENCES rooms);";
-  client.query(
-    query, (err, res) => {
-    if (err) throw err;
-    client.end();
-
-    
-  });
-  */
+  ;(async function() {
+    const client = await pool.connect()
+    await client.query(query)
+    client.release()
+  })()
 }
 
 
