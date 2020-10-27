@@ -26,10 +26,10 @@ const config = {
   autoFocus: false
 };
 
-// Length of time the server will wait to close after making the room
-const ROOM_TIMEOUT_LENGTH = 30 * 1000;
+// Length of time the server will wait to close after all the players have left
+const ROOM_TIMEOUT_LENGTH = 60 * 1000; // 30 min
 // How often the server will check if there are any players
-const CHECK_ROOM_INTERVAL = 5 * 1000;
+const CHECK_ROOM_INTERVAL = 60 * 1000; // 5 min
 
 // The game ticks at the rate of 1 tick per 200 milliseconds
 const GAME_TICK_RATE = 100
@@ -237,24 +237,27 @@ function addObject(self, objectInfo, objectName, frame) {
 
 const game = new Phaser.Game(config);
 
-/*
-// Timer to close server if unactive
+// Timer to close server if inactive
 var timer = setInterval(function() {
   // Check how many players
-  console.log('Num players = ' + numPlayers);
   if(numPlayers <= 0) {
     // Wait
     setTimeout(function() { 
       // Check again and see if still no players
-      console.log('Num players = ' + numPlayers);
       if(numPlayers <= 0) {
         clearInterval(timer);
         console.log('Server ' + roomName + ' stopped.');
-        game.destroy(true, true);
-        window.close(); 
+        ;(async function() {
+          if(!IS_LOCAL) {
+            const client = await pool.connect();
+            await client.query(query);
+            client.release();
+          }
+        })().then(() => {
+          game.destroy(true, true);
+          window.close(); 
+        });
       }
     }, ROOM_TIMEOUT_LENGTH);
   }
 }, CHECK_ROOM_INTERVAL);
-
-*/

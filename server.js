@@ -153,17 +153,19 @@ function setupAuthoritativePhaser(roomInfo) {
       };
       dom.window.URL.revokeObjectURL = (objectURL) => {};
       
+      // Pass objects to auth game.js
       dom.window.io = room_io;        // Pass the socket io namespace name
       dom.window.IS_LOCAL = IS_LOCAL;
+      dom.window.pool = pool;         // Pass the pool for the database
       dom.window.roomInfo = roomInfo; // Pass room info to the server instance
       console.log('Server ' + roomInfo.roomName + ' started.');
 
-      // Simple shutdown timer
+      // Simple shutdown timer so the server doesn't stay on forever
       var timer = setTimeout(function() {
         console.log('Server ' + roomInfo.roomName + ' stopped.');
         deleteRoom(roomInfo.roomName);
         dom.window.close();
-      }, 60*1000); //24 hrs
+      }, SERVER_TIMEOUT); 
       /*
       var players, numPlayers = dom.window.numPlayers;
       room_io.on('currentPlayers', function(playersInfo) {
