@@ -126,6 +126,7 @@ function loadMenu(self) {
       element.destroy();
     });
   });
+  self.cameras.main.ignore(menu);
 }
 
 function loadCards(self) {
