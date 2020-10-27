@@ -38,7 +38,8 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false
-  }
+  },
+  idleTimeoutMillis: 30000
 });
 
 initializeDatabase();
@@ -96,9 +97,9 @@ app.get('/host-a-game', function(req, res) {
   };
 
   setupAuthoritativePhaser(activeGameRooms[newRoomId]);
-  // Make query to send gameroom info
+  // Make query to send gameroom info with URL
   const query = querystring.stringify({
-      "roomId": newRoomId,
+      "roomId": newRoomId
   });
   res.redirect('/?' + query + nickname);
 });
@@ -144,6 +145,15 @@ function setupAuthoritativePhaser(roomInfo) {
     });
     */
 
+
+    try {
+      const { rows } = await query(query);
+      console.log(JSON.stringify(rows));
+    } catch (err) {
+      console.log('Database ' + err);
+    }
+
+    /*
     pool.connect((err, client, release) => {
       if (err) {
         return console.error('Error acquiring client', err.stack);
@@ -157,7 +167,7 @@ function setupAuthoritativePhaser(roomInfo) {
       });
     });
 
-
+    */
 
 
 
@@ -294,4 +304,24 @@ function initializeDatabase() {
     
   });
   */
+}
+
+
+
+async function query (q) {
+  const client = await pool.connect();
+  let res;
+  try {
+    await client.query('BEGIN');
+    try {
+      res = await client.query(q);
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    }
+  } finally {
+    client.release();
+  }
+  return res;
 }
