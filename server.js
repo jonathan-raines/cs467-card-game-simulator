@@ -162,7 +162,7 @@ function setupAuthoritativePhaser(roomInfo) {
       var timer = setTimeout(function() {
         console.log('Server ' + roomInfo.roomName + ' stopped.');
         deleteRoom(roomInfo.roomName);
-        window.close();
+        dom.window.close();
       }, 60*1000); //24 hrs
       /*
       var players, numPlayers = dom.window.numPlayers;
