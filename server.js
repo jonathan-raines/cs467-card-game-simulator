@@ -115,7 +115,7 @@ function setupAuthoritativePhaser(roomInfo) {
     // Add to the room's socket io namespace
     let room_io = io.of('/' + roomInfo.roomName);
 
-    
+    /*
     // Add the room to the database
     // Setting up the postgres database
     const client = new Client({
@@ -123,21 +123,23 @@ function setupAuthoritativePhaser(roomInfo) {
       ssl: { rejectUnauthorized: false }
     });
     client.connect();
+    */
+
     var query = 
       "INSERT INTO rooms (room_name, num_players, max_players) VALUES ('" + roomInfo.roomName + "', 0, " + roomInfo.maxPlayers + ");";
     
     pool.connect((err, client, release) => {
       if (err) {
-        return console.error('Error acquiring client', err.stack)
+        return console.error('Error acquiring client', err.stack);
       }
       client.query('SELECT NOW()', (err, result) => {
-        release()
+        release();
         if (err) {
-          return console.error('Error executing query', err.stack)
+          return console.error('Error executing query', err.stack);
         }
-        console.log(result.rows)
-      })
-    })
+        console.log(result.rows);
+      });
+    });
     /*
     client.query(query, (err, res) => {
       if (err) throw err;
@@ -150,34 +152,12 @@ function setupAuthoritativePhaser(roomInfo) {
     });
     */
     
-
-    var query = 
-      "INSERT INTO rooms (room_name, num_players, max_players) VALUES ('" + roomInfo.roomName + "', 0, " + roomInfo.maxPlayers + ");";
     /*
     pool.query(query, (err, res) => {
       console.log(err, res);
       console.log('Added a room to the database.');
       pool.end();
     });
-    */
-
-
-    
-
-    /*
-    pool.connect((err, client, release) => {
-      if (err) {
-        return console.error('Error acquiring client', err.stack);
-      }
-      client.query(query, (err, result) => {
-        release()
-        if (err) {
-          return console.error('Error executing query', err.stack);
-        }
-        console.log(result.rows);
-      });
-    });
-
     */
 
 
@@ -241,12 +221,14 @@ function setupAuthoritativePhaser(roomInfo) {
       }, CHECK_ROOM_INTERVAL);
       */
 
+      /*
       try {
         const { rows } = await query(query);
         console.log(JSON.stringify(rows));
       } catch (err) {
         console.log('Database ' + err);
       }
+      */
     }).catch((error) => {
       console.log(error.message);
     });
