@@ -30,6 +30,7 @@ var game = new Phaser.Game(config);
 
 function preload() {
   this.load.html('nameform', 'assets/nameform.html');
+  this.load.html('playerIndicator', 'assets/playerIndicator.html');
   this.load.html('menu', 'assets/menu.html');
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
 }
@@ -39,6 +40,9 @@ function create() {
   this.socket = io(roomName);
 
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
+
+  var playerIndicator = this.add.dom(game.config.width/2, game.config.height - 50).createFromCache('playerIndicator');
+  document.getElementById('btn').innerText = playerNickname;
 
   if(playerNickname)
     self.socket.emit('playerNickname', playerNickname);
