@@ -53,8 +53,8 @@ activeGameRooms['testing2'] = {
   roomName: 'testing2',
   maxPlayers: 6
 };
-setupAuthoritativePhaser(activeGameRooms['testing']);
-setupAuthoritativePhaser(activeGameRooms['testing2']);
+createRoom(activeGameRooms['testing']);
+createRoom(activeGameRooms['testing2']);
 //----------------------------------------------
 
 
@@ -96,7 +96,7 @@ app.get('/host-a-game', function(req, res) {
     maxPlayers: 6
   };
 
-  setupAuthoritativePhaser(activeGameRooms[newRoomId]);
+  createRoom(activeGameRooms[newRoomId]);
   // Make query to send gameroom info with URL
   const query = querystring.stringify({
       "roomId": newRoomId
@@ -108,6 +108,16 @@ app.get('/host-a-game', function(req, res) {
 server.listen(port, function () {
   console.log(`Listening on ${server.address().port}`);
 });
+
+
+async function createRoom(roomInfo) {
+  var query = "INSERT INTO rooms (room_name, num_players, max_players) VALUES ('" + roomInfo.roomName + "', 0, " + roomInfo.maxPlayers + ");"
+  const client = await pool.connect();
+  await client.query(query);
+  client.release();
+  setupAuthoritativePhaser(roomInfo);
+}
+
 
 // Starts a new gameServer
 function setupAuthoritativePhaser(roomInfo) {
@@ -124,14 +134,6 @@ function setupAuthoritativePhaser(roomInfo) {
     });
     client.connect();
     */
-
-    var query = "INSERT INTO rooms (room_name, num_players, max_players) VALUES ('" + roomInfo.roomName + "', 0, " + roomInfo.maxPlayers + ");"
-    ;(async function() {
-      const client = await pool.connect()
-      await client.query(query)
-      client.release()
-    })()
-
 
 
     /*
