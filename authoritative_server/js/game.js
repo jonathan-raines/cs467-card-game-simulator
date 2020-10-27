@@ -221,7 +221,6 @@ function loadCards(self) {
     isFaceUp: true  
   };
   addObject(self, objectInfoToSend[jokerId], cardNames[jokerId], jokerFrame);
- 
 }
 
 function addObject(self, objectInfo, objectName, frame) {
@@ -233,6 +232,11 @@ function addObject(self, objectInfo, objectName, frame) {
   object.name = objectName;
   // Add it to the object group
   self.tableObjects.add(object);
+}
+
+
+function addPlayer() {
+  
 }
 
 const game = new Phaser.Game(config);
@@ -249,7 +253,7 @@ var timer = setInterval(function() {
         console.log('Server ' + roomName + ' stopped.');
         ;(async function() {
           if(!IS_LOCAL) {
-            var query = "DELETE FROM rooms WHERE room_name = '" + roomId + "'";
+            var query = "DELETE FROM rooms WHERE room_name = '" + roomName + "'";
             const client = await pool.connect();
             await client.query(query);
             client.release();
