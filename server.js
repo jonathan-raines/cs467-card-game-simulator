@@ -24,39 +24,14 @@ const CHECK_ROOM_INTERVAL = 10 * 1000;
 // maxPlayers - the maximum number of players allowed
 const activeGameRooms = {};
 
-/*
 // Setting up the postgres database
-const client = new Client({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
-*/
-
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  },
+  ssl: { rejectUnauthorized: false },
   idleTimeoutMillis: 30000
 });
 
 initializeDatabase();
-
-// -----------  For testing  ------------------
-activeGameRooms['testing'] = {
-  roomName: 'testing',
-  maxPlayers: 6
-};
-activeGameRooms['testing2'] = {
-  roomName: 'testing2',
-  maxPlayers: 6
-};
-createRoom(activeGameRooms['testing']);
-createRoom(activeGameRooms['testing2']);
-//----------------------------------------------
-
 
 app.use(express.static(__dirname + '/public'));
 
@@ -215,30 +190,24 @@ function initializeDatabase() {
     "CREATE TABLE players (player_id serial PRIMARY KEY, player_name VARCHAR (50) NOT NULL, player_color VARCHAR (20), room INTEGER REFERENCES rooms);";
   //pool.query(query, (err, res) => {});
   
+  activeGameRooms['testing'] = {
+    roomName: 'testing',
+    maxPlayers: 6
+  };
+  activeGameRooms['testing2'] = {
+    roomName: 'testing2',
+    maxPlayers: 6
+  };
+
   ;(async function() {
     const client = await pool.connect()
     await client.query(query)
     client.release()
-  })()
+  })().then(() => {
+    // -----------  For testing  ------------------
+    
+    createRoom(activeGameRooms['testing']);
+    createRoom(activeGameRooms['testing2']);
+    //----------------------------------------------
+  });
 }
-
-
-/*
-async function query (q) {
-  const client = await pool.connect();
-  let res;
-  try {
-    await client.query('BEGIN');
-    try {
-      res = await client.query(q);
-      await client.query('COMMIT');
-    } catch (err) {
-      await client.query('ROLLBACK');
-      throw err;
-    }
-  } finally {
-    client.release();
-  }
-  return res;
-}
-*/
