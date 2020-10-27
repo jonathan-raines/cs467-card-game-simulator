@@ -110,12 +110,12 @@ server.listen(port, function () {
 });
 
 // Starts a new gameServer
-async function setupAuthoritativePhaser(roomInfo) {
+function setupAuthoritativePhaser(roomInfo) {
   if(roomInfo && roomInfo.roomName) {
     // Add to the room's socket io namespace
     let room_io = io.of('/' + roomInfo.roomName);
 
-    /*
+    
     // Add the room to the database
     // Setting up the postgres database
     const client = new Client({
@@ -125,15 +125,31 @@ async function setupAuthoritativePhaser(roomInfo) {
     client.connect();
     var query = 
       "INSERT INTO rooms (room_name, num_players, max_players) VALUES ('" + roomInfo.roomName + "', 0, " + roomInfo.maxPlayers + ");";
+    
+    pool.connect((err, client, release) => {
+      if (err) {
+        return console.error('Error acquiring client', err.stack)
+      }
+      client.query('SELECT NOW()', (err, result) => {
+        release()
+        if (err) {
+          return console.error('Error executing query', err.stack)
+        }
+        console.log(result.rows)
+      })
+    })
+    /*
     client.query(query, (err, res) => {
       if (err) throw err;
       for (let row of res.rows) {
         console.log('Rooms in database:');
         console.log(JSON.stringify(row));
       }
-      client.end();
+      //client.end();
+      client.release();
     });
     */
+    
 
     var query = 
       "INSERT INTO rooms (room_name, num_players, max_players) VALUES ('" + roomInfo.roomName + "', 0, " + roomInfo.maxPlayers + ");";
@@ -269,13 +285,14 @@ function initializeDatabase() {
     "CREATE TABLE rooms (room_id serial PRIMARY KEY, room_name VARCHAR (20) NOT NULL, num_players INTEGER NOT NULL, max_players INTEGER NOT NULL ); " +
     "CREATE TABLE players (player_id serial PRIMARY KEY, player_name VARCHAR (50) NOT NULL, player_color VARCHAR (20), room INTEGER REFERENCES rooms);";
 
-  /*
+  
   pool.query(query, (err, res) => {
     console.log(err, res);
     pool.end();
   });
-  */
-
+  
+  /*
+  // ASYNC try
   pool.connect((err, client, release) => {
     if (err) {
       return console.error('Error acquiring client', err.stack);
@@ -288,6 +305,7 @@ function initializeDatabase() {
       console.log(result.rows);
     });
   });
+  */
   /*
   client.connect();
 
@@ -307,7 +325,7 @@ function initializeDatabase() {
 }
 
 
-
+/*
 async function query (q) {
   const client = await pool.connect();
   let res;
@@ -325,3 +343,4 @@ async function query (q) {
   }
   return res;
 }
+*/
