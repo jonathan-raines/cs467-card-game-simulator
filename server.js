@@ -1,7 +1,6 @@
 const path = require('path');
 const jsdom = require('jsdom');
 const express = require('express');
-//const { Client } = require('pg');
 const { Pool } = require('pg');
 const app = express();
 const server = require('http').Server(app);
@@ -13,23 +12,23 @@ const datauri = new Datauri();
 const { JSDOM } = jsdom;
 
 let port = process.env.PORT || 8082;
-
+// For local development use the -local argument after calling server.js
+const IS_LOCAL = process.argv.slice(2)[0] == '-local';
 // Length of time the server will wait to close after making the room
-const ROOM_TIMEOUT_LENGTH = 30 * 1000;
-// How often the server will check if there are any players
-const CHECK_ROOM_INTERVAL = 10 * 1000;
+const SERVER_TIMEOUT = 24*60*60*1000; // 24 hrs
 
 // Info to send to the games about the room
-// roomName - the room code
-// maxPlayers - the maximum number of players allowed
 const activeGameRooms = {};
 
-// Setting up the postgres database
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-  idleTimeoutMillis: 30000
-});
+let pool;
+if(!IS_LOCAL) {
+  // Setting up the postgres database
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL || '',
+    ssl: { rejectUnauthorized: false },
+    idleTimeoutMillis: 30000
+  });
+} 
 
 initializeDatabase();
 
@@ -37,9 +36,32 @@ app.use(express.static(__dirname + '/public'));
 
 app.get('/', function (req, res) {  
   let requestedRoom = req.query.roomId || '';
+
+  if(!IS_LOCAL) {
+    let query = "SELECT * FROM rooms WHERE room_name = '" + requestedRoom + "'";
+    ;(async function() {
+      const client = await pool.connect();
+      await client.query(query, (err, result) => {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        if(result.rows.length == 0)
+           activeGameRooms[requestedRoom] = null;
+        lobbyRouter(requestedRoom, req, res);
+        client.release();
+      });
+    })()
+  } else {
+    lobbyRouter(requestedRoom, req, res);
+  }
+});
+
+
+function lobbyRouter(requestedRoom, req, res) {
   // For regular requests to lobby
   if(requestedRoom == '') {
-    res.sendFile(__dirname + '/views/lobby.html');
+  res.sendFile(__dirname + '/views/lobby.html');
   // For specific rooms
   } else if (activeGameRooms[requestedRoom]) {
     var nickname = req.query.nickname || '';
@@ -54,7 +76,8 @@ app.get('/', function (req, res) {
   } else {
     res.send('No room found.'); // TEMP (should be a html link)
   }
-});
+}
+
 
 app.get('/host-a-game', function(req, res) {
   // Make a new roomId
@@ -66,12 +89,9 @@ app.get('/host-a-game', function(req, res) {
   let nickname = req.query.nickname || '';
   if(nickname != '')
     nickname = '&nickname=' + nickname;
-  activeGameRooms[newRoomId] = {
-    roomName: newRoomId,
-    maxPlayers: 6
-  };
 
-  createRoom(activeGameRooms[newRoomId]);
+  createRoom(newRoomId, 8);
+
   // Make query to send gameroom info with URL
   const query = querystring.stringify({
       "roomId": newRoomId
@@ -85,13 +105,29 @@ server.listen(port, function () {
 });
 
 
-async function createRoom(roomInfo) {
+async function createRoom(roomId, maxPlayers) {
+  activeGameRooms[roomId] = {
+    roomName: roomId,
+    maxPlayers: maxPlayers
+  };
+  roomInfo = activeGameRooms[roomId];
   setupAuthoritativePhaser(roomInfo);
+  if(!IS_LOCAL) {
+    var query = "INSERT INTO rooms (room_name, num_players, max_players) VALUES ('" + roomInfo.roomName + "', 0, " + roomInfo.maxPlayers + ");";
+    const client = await pool.connect();
+    await client.query(query);
+    client.release();
+  }
+}
 
-  var query = "INSERT INTO rooms (room_name, num_players, max_players) VALUES ('" + roomInfo.roomName + "', 0, " + roomInfo.maxPlayers + ");"
-  const client = await pool.connect();
-  await client.query(query);
-  client.release();
+async function deleteRoom(roomId) {
+  activeGameRooms[roomId] = null;
+  if(!IS_LOCAL) {
+    var query = "DELETE FROM rooms WHERE room_name = '" + roomId + "'";
+    const client = await pool.connect();
+    await client.query(query);
+    client.release();
+  }
 }
 
 
@@ -116,14 +152,16 @@ function setupAuthoritativePhaser(roomInfo) {
         }
       };
       dom.window.URL.revokeObjectURL = (objectURL) => {};
-      // Assign the socket io namespace
-      dom.window.io = room_io;
-      // Pass room info to the server instance
-      dom.window.roomInfo = roomInfo;
+      
+      dom.window.io = room_io;        // Pass the socket io namespace name
+      dom.window.IS_LOCAL = IS_LOCAL;
+      dom.window.roomInfo = roomInfo; // Pass room info to the server instance
       console.log('Server ' + roomInfo.roomName + ' started.');
 
       // Simple shutdown timer
       var timer = setTimeout(function() {
+        console.log('Server ' + roomInfo.roomName + ' stopped.');
+        deleteRoom(roomInfo.roomName);
         window.close();
       }, 24*60*60*1000); //24 hrs
 
@@ -183,31 +221,22 @@ const uniqueId = function () {
 
 
 function initializeDatabase() {
-  var query = ""+
+  var query = 
     "DROP TABLE IF EXISTS players; "+
     "DROP TABLE IF EXISTS rooms; "+
     "CREATE TABLE rooms (room_id serial PRIMARY KEY, room_name VARCHAR (20) NOT NULL, num_players INTEGER NOT NULL, max_players INTEGER NOT NULL ); " +
     "CREATE TABLE players (player_id serial PRIMARY KEY, player_name VARCHAR (50) NOT NULL, player_color VARCHAR (20), room INTEGER REFERENCES rooms);";
-  //pool.query(query, (err, res) => {});
-  
-  activeGameRooms['testing'] = {
-    roomName: 'testing',
-    maxPlayers: 6
-  };
-  activeGameRooms['testing2'] = {
-    roomName: 'testing2',
-    maxPlayers: 6
-  };
 
   ;(async function() {
-    const client = await pool.connect()
-    await client.query(query)
-    client.release()
+    if(!IS_LOCAL) {
+      const client = await pool.connect()
+      await client.query(query)
+      client.release()
+    }
   })().then(() => {
     // -----------  For testing  ------------------
-    
-    createRoom(activeGameRooms['testing']);
-    createRoom(activeGameRooms['testing2']);
+    createRoom('testing', 8);
+    createRoom('testing2', 8);
     //----------------------------------------------
   });
 }
