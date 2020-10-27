@@ -270,7 +270,6 @@ function initializeDatabase() {
   
   pool.query(query, (err, res) => {
     console.log(err, res);
-    pool.end();
   });
   
   /*
