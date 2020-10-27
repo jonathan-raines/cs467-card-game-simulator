@@ -1,6 +1,6 @@
 {
   "name": "card-game-simulator",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "An online multiplayer card game simulator.",
   "main": "server.js",
   "scripts": {
@@ -16,6 +16,8 @@
     "express": "^4.17.1",
     "jsdom": "^13.0.0",
     "nodemon": "^2.0.5",
+    "pg": "^8.4.2",
+    "pg-hstore": "^2.3.3",
     "socket.io": "^2.1.1"
   }
 }
