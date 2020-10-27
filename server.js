@@ -125,9 +125,16 @@ function setupAuthoritativePhaser(roomInfo) {
     client.connect();
     */
 
-    var query = 
-      "INSERT INTO rooms (room_name, num_players, max_players) VALUES ('" + roomInfo.roomName + "', 0, " + roomInfo.maxPlayers + ");";
-    
+    var query = "INSERT INTO rooms (room_name, num_players, max_players) VALUES ('" + roomInfo.roomName + "', 0, " + roomInfo.maxPlayers + ");"
+    ;(async function() {
+      const client = await pool.connect()
+      await client.query(query)
+      client.release()
+    })()
+
+
+
+    /*
     pool.connect((err, client, release) => {
       if (err) {
         return console.error('Error acquiring client', err.stack);
@@ -140,6 +147,7 @@ function setupAuthoritativePhaser(roomInfo) {
         console.log(result.rows);
       });
     });
+    */
     /*
     client.query(query, (err, res) => {
       if (err) throw err;
@@ -266,12 +274,9 @@ function initializeDatabase() {
     "DROP TABLE IF EXISTS rooms; "+
     "CREATE TABLE rooms (room_id serial PRIMARY KEY, room_name VARCHAR (20) NOT NULL, num_players INTEGER NOT NULL, max_players INTEGER NOT NULL ); " +
     "CREATE TABLE players (player_id serial PRIMARY KEY, player_name VARCHAR (50) NOT NULL, player_color VARCHAR (20), room INTEGER REFERENCES rooms);";
+  pool.query(query, (err, res) => {});
+  
 
-  
-  pool.query(query, (err, res) => {
-    console.log(err, res);
-  });
-  
   /*
   // ASYNC try
   pool.connect((err, client, release) => {
