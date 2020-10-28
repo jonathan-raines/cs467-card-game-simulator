@@ -6,6 +6,9 @@ const config = {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH
   },
+  audio: {
+    disableWebAudio: true
+  },
   physics: {
     default: 'arcade',
     arcade: {
@@ -23,6 +26,17 @@ const config = {
   autoFocus: false
 };
 
+// Length of time the server will wait to close after all the players have left
+const ROOM_TIMEOUT_LENGTH = 1800000; // 30 min
+// How often the server will check if there are any players
+const CHECK_ROOM_INTERVAL = 300000; // 5 min
+// The game ticks at the rate of 1 tick per 100 milliseconds
+const GAME_TICK_RATE = 100
+
+const roomName = roomInfo.roomName;
+const maxPlayers = roomInfo.maxPlayers;
+let backgroundColor = getRandomColor();
+
 // Global all objects reference
 // This keeps track of object position and other info to send to the users
 // This has to be updated with information from the game environment as it 
@@ -33,13 +47,14 @@ const objectInfoToSend = {};
 const players = {};
 
 // Number of current players in the game session
-let numPlayers = 0;
+//let numPlayers = 0;
 
 // Depth of the highest card
 var overallDepth = 0;
 
+
+
 function preload() {
-  //this.load.image('ship', 'assets/spaceShips_001.png');
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
 }
 
@@ -53,6 +68,8 @@ function create() {
 
   loadCards(self);
   let frames = self.textures.get('cards').getFrameNames();
+  
+  startGameDataTicker(self);
 
   // When a connection is made
   io.on('connection', function (socket) {
@@ -65,15 +82,22 @@ function create() {
     // Assigns a nickname 
     socket.on('playerNickname', function(name) {
       players[socket.id].name = name;
-      console.log('Player ' + players[socket.id].playerNum + ' changed their name to ' + name);
+      console.log('[Room ' +  roomName + '] Player ' + players[socket.id].playerNum + 
+                  ' changed their name to ' + name);      
       // Send the new info out
       socket.emit('currentPlayers', players);
     });
 
-    console.log('Player ' + players[socket.id].playerNum + 
-      ' (' + players[socket.id].name + ') connected');
+    console.log('[Room ' +  roomName + '] Player ' + players[socket.id].playerNum + 
+                ' (' + players[socket.id].name + ') connected');
 
     socket.emit('currentPlayers', players);
+    socket.emit('backgroundColor', backgroundColor);
+
+    socket.on('backgroundColor', function(color) {
+      backgroundColor = color;
+      socket.emit('backgroundColor', color);
+    });
 
     socket.on('chat message', (msg) => {
       io.emit('chat message', msg);
@@ -81,8 +105,8 @@ function create() {
 
     // Listens for when a user is disconnected
     socket.on('disconnect', function () {
-      console.log('Player ' + players[socket.id].playerNum + 
-        ' (' + players[socket.id].name + ') disconnected');
+      console.log('[Room ' +  roomName + '] Player ' + players[socket.id].playerNum + 
+                  ' (' + players[socket.id].name + ') disconnected');
       delete players[socket.id];
       numPlayers--;
       // emit a message to all players to remove this player
@@ -113,6 +137,7 @@ function create() {
 }
 
 function update() {
+  /*
   // Update the object info to send to clients from game objects
   this.tableObjects.getChildren().forEach((object) => {
     objectInfoToSend[object.objectId].x = object.x;
@@ -120,8 +145,25 @@ function update() {
   });
   // Sends the card positions to clients
   io.emit('objectUpdates', objectInfoToSend);
+  */
 }
 
+// This is the update() function for the server
+function startGameDataTicker(self) {
+  
+  let tickInterval = setInterval(() => {
+
+      // Update the object info to send to clients from game objects
+      self.tableObjects.getChildren().forEach((object) => {
+        objectInfoToSend[object.objectId].x = object.x;
+        objectInfoToSend[object.objectId].y = object.y;
+      });
+      // Sends the card positions to clients
+      io.emit('objectUpdates', objectInfoToSend);
+
+  }, GAME_TICK_RATE);
+  
+}
 
 function loadCards(self) {
   let frames = self.textures.get('cards').getFrameNames();
@@ -143,6 +185,7 @@ function loadCards(self) {
   //add 52 playing cards in order
   for (let i = 1; i <= 52; i++) {
     let nextCard = frames[frames.indexOf(cardNames[i])];
+    overallDepth++;
     // Assigns the info to send to clients
     // initial position and information
     objectInfoToSend[i] = {
@@ -150,7 +193,7 @@ function loadCards(self) {
       y: Math.floor((i-1)/perRow) * ySpacing + yStart,
       objectId: i,
       objectName: cardNames[i],
-      objectDepth: 0,
+      objectDepth: overallDepth,
       isFaceUp: true  
     };
     addObject(self, objectInfoToSend[i], cardNames[i], nextCard);
@@ -167,7 +210,6 @@ function loadCards(self) {
     isFaceUp: true  
   };
   addObject(self, objectInfoToSend[jokerId], cardNames[jokerId], jokerFrame);
- 
 }
 
 function addObject(self, objectInfo, objectName, frame) {
@@ -181,5 +223,41 @@ function addObject(self, objectInfo, objectName, frame) {
   self.tableObjects.add(object);
 }
 
+function getRandomColor() {
+  var letters = '0123456789ABCDEF';
+  var color = '#';
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}
+
+// ----------------- MAIN ------------------------------------
+// Start running the game
 const game = new Phaser.Game(config);
-window.gameLoaded();
+
+// Timer to close server if inactive
+var timer = setInterval(function() {
+  // Check how many players
+  if(numPlayers <= 0) {
+    // Wait
+    setTimeout(function() { 
+      // Check again and see if still no players
+      if(numPlayers <= 0) {
+        clearInterval(timer);
+        console.log('Server ' + roomName + ' stopped.');
+        ;(async function() {
+          if(!IS_LOCAL) {
+            var query = "DELETE FROM rooms WHERE room_name = '" + roomName + "'";
+            const client = await pool.connect();
+            await client.query(query);
+            client.release();
+          }
+        })().catch( e => { console.error(e) }).then(() => {
+          game.destroy(true, true);
+          window.close(); 
+        });
+      }
+    }, ROOM_TIMEOUT_LENGTH);
+  }
+}, CHECK_ROOM_INTERVAL);

@@ -22,7 +22,9 @@ var players = {};
 var isDragging = -1;
 
 // This player's info
-var playerNickname;
+var playerNickname = getParameterByName('nickname');
+// Room's infrom from url query
+const roomName = '/' + getParameterByName('roomId');
 
 var game = new Phaser.Game(config);
 
@@ -34,12 +36,16 @@ function preload() {
 
 function create() {
   var self = this;
-  this.socket = io();
+  this.socket = io(roomName);
 
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
   console.log(backgroundColor);
 
-  showNicknamePrompt(self);
+  if(playerNickname)
+    self.socket.emit('playerNickname', playerNickname);
+
+  // Not in use (implemented in lobby) Keep for reference
+  //showNicknamePrompt(self);
 
   this.tableObjects = this.add.group();
   
@@ -49,6 +55,16 @@ function create() {
 }
 
 function update() {}
+
+// Gets url parameters/queries for a name and returns the value
+function getParameterByName(name, url = window.location.href) {
+    name = name.replace(/[\[\]]/g, '\\$&');
+    var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
 
 function loadMenu(self) {
   var menu = self.add.text(20, 10, 'Menu', { 
@@ -67,12 +83,20 @@ function loadMenu(self) {
 
     $('#menu-form').submit(function(e) {
       e.preventDefault();
-      self.backgroundColor = self.cameras.main.setBackgroundColor($('#background').val());
+      var newColor = $('#background').val();
+      if(newColor != self.backgroundColor) {
+        self.backgroundColor = self.cameras.main.setBackgroundColor(newColor);
+        self.socket.emit('backgroundColor', newColor);
+      }
+      newNickname = $('#user-name').val();
+      if(playerNickname != newNickname) {
+        playerNickname = newNickname;
+        self.socket.emit('playerNickname', playerNickname);
+      }
+    });
 
-      playerNickname = $('#user-name').val();
-
-      self.socket.emit('playerNickname', playerNickname);
-
+    self.input.keyboard.on('keyup-ESC', function (event) {
+      element.destroy();
     });
 
     $('#exit-menu').click(function() {
@@ -135,6 +159,7 @@ function loadCards(self) {
     gameObject.setTint(0xff0000);
     isDragging = gameObject.objectId;
     // Tells the server to increase the object's depth and bring to front
+    gameObject.depth = 999;
     self.socket.emit('objectDepth', { 
       objectId: gameObject.objectId
     });
@@ -169,36 +194,59 @@ function loadCards(self) {
 
   // Start the object listener for commands from server
   self.socket.on('objectUpdates', function (objectsInfo) {
-
+    
+    var allTableObjects = self.tableObjects.getChildren();
+    Object.keys(objectsInfo).forEach(function (id) {
+      var obj = allTableObjects[id-1];
+      if(obj)
+        updateObjects(objectsInfo, id, obj, frames);
+    });
+    
+    /*
+    // This is wasteful, it iterates all the tableobjects
     Object.keys(objectsInfo).forEach(function (id) {
       self.tableObjects.getChildren().forEach(function (object) {
         // Compares local players to auth server's players
         //   ▼ auth players          ▼ local players
         if (objectsInfo[id].objectId === object.objectId) {
-          // Check if it is not being currently dragged
-          if(isDragging != object.objectId) {
-            // Updates position
-            object.setPosition(objectsInfo[id].x, objectsInfo[id].y);
-          }
-          object.depth = objectsInfo[id].objectDepth;
-          if(objectsInfo[id].isFaceUp) { // server says face up
-            // check if the card not up
-            if(object.frame.name != frames[frames.indexOf(object.name)]) {
-              object.setFrame(frames[frames.indexOf(object.name)]);
-            }
-          } else { // face down
-            // check if the card is not down
-            if(object.frame.name != "back") {
-              object.setFrame(frames[frames.indexOf("back")]);
-            }
-          }
+          updateObjects(objectsInfo, id, object, frames);
         }
       });
     });
+    */
   });
 }
 
+function updateObjects(objectsInfo, id, object, frames) {
+    // Check if it is not being currently dragged and it's not in the same position
+  if(isDragging != object.objectId && 
+    (object.x != objectsInfo[id].x || object.y != objectsInfo[id].y)) {
+    // Updates position
+    object.setPosition(objectsInfo[id].x, objectsInfo[id].y);
+    object.depth = objectsInfo[id].objectDepth;
+  }
+  if(object.depth != objectsInfo[id].objectDepth)
+    object.depth = objectsInfo[id].objectDepth;
+  if(objectsInfo[id].isFaceUp) { // server says face up
+    // check if the card not up
+    if(object.frame.name != frames[frames.indexOf(object.name)]) {
+      object.setFrame(frames[frames.indexOf(object.name)]);
+    }
+  } else { // face down
+    // check if the card is not down
+    if(object.frame.name != "back") {
+      object.setFrame(frames[frames.indexOf("back")]);
+    }
+  }
+}
+
 function startSocketUpdates(self) {
+  // Get background color
+  self.socket.on('backgroundColor', function(color) {
+    console.log(color);
+    self.backgroundColor = self.cameras.main.setBackgroundColor(color);
+  });
+
   // Gets the list of current players from the server
   self.socket.on('currentPlayers', function (playersInfo) {
     players = playersInfo;
@@ -217,6 +265,7 @@ function startSocketUpdates(self) {
   });
 }
 
+/*
 // At the start of the game it asks the player to enter a nickname
 function showNicknamePrompt(self) {
   var text = self.add.text(self.cameras.main.centerX-150, self.cameras.main.centerY-100, 
@@ -259,7 +308,7 @@ function showNicknamePrompt(self) {
     return false;
   });
 }
-
+*/
 
 function addObject(self, objectId, objectName, frame) {
   // Create object
