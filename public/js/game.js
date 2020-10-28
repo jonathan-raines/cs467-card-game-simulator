@@ -52,8 +52,7 @@ function create() {
 
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
 
-  playerIndicator = this.add.dom(game.config.width/2, game.config.height - 50).createFromCache('playerIndicator').setInteractive();
-  document.getElementById('btn').innerText = playerNickname;
+  
 
   if(playerNickname)
     self.socket.emit('playerNickname', playerNickname);
@@ -61,25 +60,26 @@ function create() {
   this.tableObjects = this.add.group();
   
   loadMenu(self);
+  loadPlayer(self);
   loadCards(self);
   startSocketUpdates(self);
 
-  menuCam = this.cameras.add(0, 0, window.innerWidth*.8, window.innerHeight);
-  menuCam.ignore(this.tableObjects);
+  menuCam = self.cameras.add(0, 0, window.innerWidth*.8, window.innerHeight);
+  menuCam.ignore(self.tableObjects);
 
   cursors = this.input.keyboard.createCursorKeys();
 }
 
 function update() {
 
-  if (cursors.left.isDown)
+  /* if (cursors.left.isDown)
     {
         cam.rotation -= 0.005 //0.0025;
     }
   else if (cursors.right.isDown)
   {
       cam.rotation += 0.005 //0.0025;
-  }
+  } */
   if (cursors.up.isDown)
   {
     cam.zoom += 0.005 //0.0025;
@@ -99,6 +99,11 @@ function getParameterByName(name, url = window.location.href) {
     if (!results) return null;
     if (!results[2]) return '';
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
+
+function loadPlayer(self) {
+  playerIndicator = self.add.dom(game.config.width/2, game.config.height - 50).createFromCache('playerIndicator').setInteractive();
+  document.getElementById('btn').innerText = playerNickname;
 }
 
 function loadMenu(self) {
@@ -139,6 +144,9 @@ function loadMenu(self) {
     });
   });
   self.cameras.main.ignore(menu);
+
+  
+  
 }
 
 function loadCards(self) {
