@@ -14,24 +14,17 @@ var config = {
     update: update
   }
 };
-
 // List of all the current players in the game 
 var players = {};
-
 var numberOfPlayers = 0;
-
 // The id of an object being currently dragged. -1 if not
 var isDragging = -1;
-
 // This player's info
 var playerNickname = getParameterByName('nickname');
 // Room's infrom from url query
 const roomName = '/' + getParameterByName('roomId');
 
 var playerIndicator;
-
-var position = 0;
-var playerSpacing = 0;
 
 var cam;
 
@@ -52,8 +45,6 @@ function create() {
 
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
 
-  
-
   if(playerNickname)
     self.socket.emit('playerNickname', playerNickname);
 
@@ -71,7 +62,6 @@ function create() {
 }
 
 function update() {
-
   /* if (cursors.left.isDown)
     {
         cam.rotation -= 0.005 //0.0025;
@@ -88,7 +78,6 @@ function update() {
   {
     cam.zoom -= 0.005 //0.0025;
   }
-
 }
 
 // Gets url parameters/queries for a name and returns the value
@@ -104,6 +93,8 @@ function getParameterByName(name, url = window.location.href) {
 function loadPlayer(self) {
   playerIndicator = self.add.dom(game.config.width/2, game.config.height - 50).createFromCache('playerIndicator').setInteractive();
   document.getElementById('btn').innerText = playerNickname;
+  //console.log(playerIndicator);
+  
 }
 
 function loadMenu(self) {

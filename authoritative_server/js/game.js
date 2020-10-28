@@ -42,17 +42,12 @@ let backgroundColor = getRandomColor();
 // This has to be updated with information from the game environment as it 
 // is seperate from the game objects
 const objectInfoToSend = {};
-
 // Info of all the current players in the game session
 const players = {};
-
 // Number of current players in the game session
 let numPlayers = 0;
-
 // Depth of the highest card
 var overallDepth = 0;
-
-
 
 function preload() {
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
@@ -61,7 +56,6 @@ function preload() {
 function create() {
   // For passing this pointer to other functions
   const self = this;
-
   // Makes this.objects a group of sprites with physics
   // This is the gameScene's group of objects
   this.tableObjects = this.physics.add.group();
@@ -80,6 +74,7 @@ function create() {
         playerNum: numPlayers,       // player's number that's not long
         playerSpacing: Phaser.Math.DegToRad(360/numPlayers)
     }
+    // Need to recalculate player spacing when a new user joins
     for (x in players) {
       if (players[x].playerNum !== 1) {
         players[x].playerSpacing = Phaser.Math.DegToRad(360/numPlayers);
@@ -113,6 +108,12 @@ function create() {
                   ' (' + players[socket.id].name + ') disconnected');
       delete players[socket.id];
       numPlayers--;
+      // Need to recalculate player spacing when a new user joins
+      for (x in players) {
+        if (players[x].playerNum !== 1) {
+          players[x].playerSpacing = Phaser.Math.DegToRad(360/numPlayers);
+        }
+      }
       // emit a message to all players to remove this player
       //socket.emit('currentPlayers', players);
     });
