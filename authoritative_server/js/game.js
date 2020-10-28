@@ -154,9 +154,10 @@ function startGameDataTicker(self) {
   let tickInterval = setInterval(() => {
 
       // Update the object info to send to clients from game objects
-      self.tableObjects.getChildren().forEach((object) => {
-        objectInfoToSend[object.objectId].x = object.x;
-        objectInfoToSend[object.objectId].y = object.y;
+      self.tableObjects.getChildren().forEach((stack) => {
+        objectInfoToSend[stack.stackId].x = stack.x;
+        objectInfoToSend[stack.stackId].y = stack.y;
+
       });
       // Sends the card positions to clients
       io.emit('objectUpdates', objectInfoToSend);
@@ -219,8 +220,12 @@ function addObject(self, objectInfo, objectName, frame) {
   // Assign the individual game object an id
   object.objectId = objectInfo.objectId;
   object.name = objectName;
+
+  const stack = self.add.container(objectInfo.x, objectInfo.y, object);
+  stack.stackId = objectInfo.objectId;  
+
   // Add it to the object group
-  self.tableObjects.add(object);
+  self.tableObjects.add(stack);
 }
 
 function getRandomColor() {
