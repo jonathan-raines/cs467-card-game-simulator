@@ -47,7 +47,7 @@ const objectInfoToSend = {};
 const players = {};
 
 // Number of current players in the game session
-//let numPlayers = 0;
+let numPlayers = 0;
 
 // Depth of the highest card
 var overallDepth = 0;
@@ -73,25 +73,29 @@ function create() {
 
   // When a connection is made
   io.on('connection', function (socket) {
-    numPlayers++;
-    players[socket.id] = {
-      playerId: socket.id,
-      name: "player" + numPlayers,
-      playerNum: numPlayers       // player's number that's not long
-    };
+      numPlayers++;
+      players[socket.id] = {
+        playerId: socket.id,
+        name: "player" + numPlayers,
+        playerNum: numPlayers,       // player's number that's not long
+        playerSpacing: Phaser.Math.DegToRad(360/numPlayers)
+    }
+    for (x in players) {
+      if (players[x].playerNum !== 1) {
+        players[x].playerSpacing = Phaser.Math.DegToRad(360/numPlayers);
+      }
+    }
     // Assigns a nickname 
     socket.on('playerNickname', function(name) {
       players[socket.id].name = name;
       console.log('[Room ' +  roomName + '] Player ' + players[socket.id].playerNum + 
-                  ' changed their name to ' + name);      
-      // Send the new info out
-      socket.emit('currentPlayers', players);
+                  ' changed their name to ' + name);
     });
 
     console.log('[Room ' +  roomName + '] Player ' + players[socket.id].playerNum + 
                 ' (' + players[socket.id].name + ') connected');
 
-    socket.emit('currentPlayers', players);
+    //socket.emit('currentPlayers', players);
     socket.emit('backgroundColor', backgroundColor);
 
     socket.on('backgroundColor', function(color) {
@@ -110,7 +114,7 @@ function create() {
       delete players[socket.id];
       numPlayers--;
       // emit a message to all players to remove this player
-      socket.emit('currentPlayers', players);
+      //socket.emit('currentPlayers', players);
     });
 
     // Listens for object movement by the player
@@ -137,6 +141,7 @@ function create() {
     socket.on('cardRotate', function(inputData) {
       objectInfoToSend[inputData.objectId].rotation = inputData.rotation;
     });
+
   });
 }
 
@@ -162,6 +167,8 @@ function startGameDataTicker(self) {
         objectInfoToSend[object.objectId].x = object.x;
         objectInfoToSend[object.objectId].y = object.y;
       });
+
+      io.emit('currentPlayers', players);
       // Sends the card positions to clients
       io.emit('objectUpdates', objectInfoToSend);
 

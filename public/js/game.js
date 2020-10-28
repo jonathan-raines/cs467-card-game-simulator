@@ -18,6 +18,8 @@ var config = {
 // List of all the current players in the game 
 var players = {};
 
+var numberOfPlayers = 0;
+
 // The id of an object being currently dragged. -1 if not
 var isDragging = -1;
 
@@ -25,6 +27,13 @@ var isDragging = -1;
 var playerNickname = getParameterByName('nickname');
 // Room's infrom from url query
 const roomName = '/' + getParameterByName('roomId');
+
+var playerIndicator;
+
+var position = 0;
+var playerSpacing = 0;
+
+var cam;
 
 var game = new Phaser.Game(config);
 
@@ -39,16 +48,15 @@ function create() {
   var self = this;
   this.socket = io(roomName);
 
+  cam = this.cameras.main;
+
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
 
-  var playerIndicator = this.add.dom(game.config.width/2, game.config.height - 50).createFromCache('playerIndicator');
+  playerIndicator = this.add.dom(game.config.width/2, game.config.height - 50).createFromCache('playerIndicator').setInteractive();
   document.getElementById('btn').innerText = playerNickname;
 
   if(playerNickname)
     self.socket.emit('playerNickname', playerNickname);
-
-  // Not in use (implemented in lobby) Keep for reference
-  //showNicknamePrompt(self);
 
   this.tableObjects = this.add.group();
   
@@ -63,7 +71,6 @@ function create() {
 }
 
 function update() {
-  var cam = this.cameras.main; 
 
   if (cursors.left.isDown)
     {
@@ -81,6 +88,7 @@ function update() {
   {
     cam.zoom -= 0.005 //0.0025;
   }
+
 }
 
 // Gets url parameters/queries for a name and returns the value
@@ -229,19 +237,6 @@ function loadCards(self) {
       if(obj)
         updateObjects(objectsInfo, id, obj, frames);
     });
-    
-    /*
-    // This is wasteful, it iterates all the tableobjects
-    Object.keys(objectsInfo).forEach(function (id) {
-      self.tableObjects.getChildren().forEach(function (object) {
-        // Compares local players to auth server's players
-        //   ▼ auth players          ▼ local players
-        if (objectsInfo[id].objectId === object.objectId) {
-          updateObjects(objectsInfo, id, object, frames);
-        }
-      });
-    });
-    */
   });
 }
 
@@ -274,13 +269,25 @@ function updateObjects(objectsInfo, id, object, frames) {
 function startSocketUpdates(self) {
   // Get background color
   self.socket.on('backgroundColor', function(color) {
-    console.log(color);
     self.backgroundColor = self.cameras.main.setBackgroundColor(color);
   });
 
   // Gets the list of current players from the server
   self.socket.on('currentPlayers', function (playersInfo) {
     players = playersInfo;
+
+    for (x in players) {
+      if (players[x].playerId === self.socket.id) {
+        if (players[x].playerNum % 4 === 0) {
+          cam.rotation = 2 * players[x].playerSpacing;
+        } else if (players[x].playerNum % 2 === 0) {
+          cam.rotation = -(players[x].playerSpacing);
+        } else {
+          cam.rotation = players[x].playerSpacing;
+        }
+      }
+    }
+    
   });
 
   // Setup Chat
@@ -295,51 +302,6 @@ function startSocketUpdates(self) {
     $('#messages').append($('<li>').text(msg));
   });
 }
-
-/*
-// At the start of the game it asks the player to enter a nickname
-function showNicknamePrompt(self) {
-  var text = self.add.text(self.cameras.main.centerX-150, self.cameras.main.centerY-100, 
-    'Please enter a nickname:', { 
-      color: 'Black', 
-      boundsAlignH: 'center',
-      fontFamily: 'Arial', 
-      fontSize: '32px '
-  });
-  text.depth = 1000;
-  var element = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('nameform');
-  element.setPerspective(800);
-  element.addListener('click');
-
-  $('#nickname-form').submit(function(e) {
-    e.preventDefault(); // prevents page reloading
-    var inputNickname = $('#nickname').val();
-    $('#nickname').val('');
-    if(inputNickname !== '') {
-      // Fade Out
-      self.tweens.add({
-        targets: element,
-        alpha: 0,
-        duration: 300,
-        ease: 'Power2',
-        onComplete: function() {
-          element.setVisible(false);
-          element.destroy();
-        }
-      }, this);
-      playerNickname = inputNickname;
-      //  Populate the text with whatever they typed in as the username
-      text.destroy();
-      // Send to server
-      self.socket.emit('playerNickname', playerNickname);
-    } else {
-      //  Flash the prompt
-      self.tweens.add({ targets: text, alpha: 0.1, duration: 200, ease: 'Power3', yoyo: true });
-    }
-    return false;
-  });
-}
-*/
 
 function addObject(self, objectId, objectName, frame) {
   // Create object
@@ -364,13 +326,22 @@ function addObject(self, objectId, objectName, frame) {
   });
 
   object.on('pointerdown', function() {
-    this.rotation = self.cameras.main.rotation;
     self.socket.emit('cardRotate', {
       objectId: object.objectId,
-      rotation: self.cameras.main.rotation
+      rotation: cam.rotation < 0 ? -(cam.rotation) : cam.rotation
     });
-
   });
 }
 
-
+  /* for (x in players) {
+    console.log('player ' + players[x].playerNum);
+    if (players[x].playerNum === 1) {
+      cam.rotation = 0;
+    } else if (players[x].playerNum % 2 === 0) {
+      cam.rotation = players[x].playerSpacing;
+      console.log(cam.rotation);
+    } else {
+      cam.rotation = -(players[x].playerSpacing);
+      console.log('player rotation: ' + cam.rotation);
+    }
+  } */
