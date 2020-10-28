@@ -16,7 +16,6 @@ var config = {
 };
 // List of all the current players in the game 
 var players = {};
-var numberOfPlayers = 0;
 // The id of an object being currently dragged. -1 if not
 var isDragging = -1;
 // This player's info
@@ -50,33 +49,24 @@ function create() {
 
   this.tableObjects = this.add.group();
   
-  loadMenu(self);
-  loadPlayer(self);
-  loadCards(self);
   startSocketUpdates(self);
+  loadMenu(self);
+  loadCards(self);
 
-  menuCam = self.cameras.add(0, 0, window.innerWidth*.8, window.innerHeight);
+  menuCam = self.cameras.add(0, 0, game.config.width, game.config.height);
   menuCam.ignore(self.tableObjects);
 
   cursors = this.input.keyboard.createCursorKeys();
 }
 
 function update() {
-  /* if (cursors.left.isDown)
-    {
-        cam.rotation -= 0.005 //0.0025;
-    }
-  else if (cursors.right.isDown)
-  {
-      cam.rotation += 0.005 //0.0025;
-  } */
   if (cursors.up.isDown)
   {
-    cam.zoom += 0.005 //0.0025;
+    cam.zoom += 0.005;
   }
   else if (cursors.down.isDown)
   {
-    cam.zoom -= 0.005 //0.0025;
+    cam.zoom -= 0.005;
   }
 }
 
@@ -90,12 +80,10 @@ function getParameterByName(name, url = window.location.href) {
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
-function loadPlayer(self) {
-  playerIndicator = self.add.dom(game.config.width/2, game.config.height - 50).createFromCache('playerIndicator').setInteractive();
+/* function loadPlayer(self) {
+  playerIndicator = self.add.dom((Math.cos(cam.rotation) * game.config.width/2), (Math.sin(cam.rotation) * game.config.height/2 + 50)).createFromCache('playerIndicator').setInteractive();
   document.getElementById('btn').innerText = playerNickname;
-  //console.log(playerIndicator);
-  
-}
+} */
 
 function loadMenu(self) {
   var menu = self.add.text(20, 10, 'Menu', { 
@@ -135,8 +123,6 @@ function loadMenu(self) {
     });
   });
   self.cameras.main.ignore(menu);
-
-  
   
 }
 
@@ -213,6 +199,8 @@ function loadCards(self) {
       x: dragX, 
       y: dragY 
     });
+    /* console.log('x: ' + gameObject.x);
+    console.log('y: ' + gameObject.y); */
   });
   
   // When the mouse finishes dragging
@@ -275,6 +263,7 @@ function startSocketUpdates(self) {
   self.socket.on('currentPlayers', function (playersInfo) {
     players = playersInfo;
 
+
     for (x in players) {
       if (players[x].playerId === self.socket.id) {
         if (players[x].playerNum % 4 === 0) {
@@ -328,6 +317,6 @@ function addObject(self, objectId, objectName, frame) {
     self.socket.emit('cardRotate', {
       objectId: object.objectId,
       rotation: cam.rotation > 0 ? -(cam.rotation) : cam.rotation
-    });
+    });  
   });
 }
