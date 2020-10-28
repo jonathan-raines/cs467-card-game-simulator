@@ -328,20 +328,7 @@ function addObject(self, objectId, objectName, frame) {
   object.on('pointerdown', function() {
     self.socket.emit('cardRotate', {
       objectId: object.objectId,
-      rotation: cam.rotation < 0 ? -(cam.rotation) : cam.rotation
+      rotation: cam.rotation > 0 ? -(cam.rotation) : cam.rotation
     });
   });
 }
-
-  /* for (x in players) {
-    console.log('player ' + players[x].playerNum);
-    if (players[x].playerNum === 1) {
-      cam.rotation = 0;
-    } else if (players[x].playerNum % 2 === 0) {
-      cam.rotation = players[x].playerSpacing;
-      console.log(cam.rotation);
-    } else {
-      cam.rotation = -(players[x].playerSpacing);
-      console.log('player rotation: ' + cam.rotation);
-    }
-  } */
