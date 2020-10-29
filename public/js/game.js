@@ -15,11 +15,20 @@ var config = {
   }
 };
 
+const STACK_SNAP_DISTANCE = 25;
+
 // List of all the current players in the game 
 var players = {};
 
+const spriteIdToName = [];
+
 // The id of an object being currently dragged. -1 if not
 var isDragging = -1;
+
+// This is made to keep track of updated items
+// if not updated then the count should be off
+// resets back to 0 when it gets to 100
+var updatedCount = 0;
 
 // This player's info
 var playerNickname = getParameterByName('nickname');
@@ -39,7 +48,6 @@ function create() {
   this.socket = io(roomName);
 
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
-  console.log(backgroundColor);
 
   if(playerNickname)
     self.socket.emit('playerNickname', playerNickname);
@@ -116,19 +124,25 @@ function loadCards(self) {
     'joker'
   ];
 
+
+
   //add 52 playing cards in order
-  for (let i = 1; i <= 52; i++) {
-    let nextCard = frames[frames.indexOf(cardNames[i])];
-    addObject(self, i, cardNames[i], nextCard);
+  for (let i = 1; i <= 53; i++) {
+    //let nextCard = frames[frames.indexOf(cardNames[i])];
+    spriteIdToName[i] = cardNames[i]; // Info to find name from spriteId
+    addObject(self, [i], frames);
   }
 
+  /*
   // Add joker card
   var jokerFrame = frames[frames.indexOf("joker")];
   addObject(self, 53, 'joker', jokerFrame);
+  */
 
   // for Thomas this doesnt work
   self.input.mouse.disableContextMenu();
 
+  /*
   // Right Click for flip
   self.input.on('pointerdown', function (pointer, targets) {
     if (pointer.rightButtonDown() && targets[0] != null) {
@@ -150,13 +164,14 @@ function loadCards(self) {
       });
     }
   });
+  */
 
   // Only pick up the top object
   self.input.topOnly = true;
 
   // When the mouse starts dragging the object
   self.input.on('dragstart', function (pointer, gameObject) {
-    gameObject.setTint(0xff0000);
+    //gameObject.setTint(0xff0000);
     isDragging = gameObject.objectId;
     // Tells the server to increase the object's depth and bring to front
     gameObject.depth = 999;
@@ -182,68 +197,106 @@ function loadCards(self) {
   
   // When the mouse finishes dragging
   self.input.on('dragend', function (pointer, gameObject) {
-    gameObject.setTint(0x00ff00);
-    gameObject.clearTint();
+    //gameObject.setTint(0x00ff00);
+    //gameObject.clearTint();
+
     // Waits since there might be lag so last few inputs that the
     // player sends to the server before they put the card down
     // would move the cards
     self.time.delayedCall(500, function() {
       isDragging = -1;
     });
+
+    onObjectDrop(self, gameObject);
   });  
 
   // Start the object listener for commands from server
   self.socket.on('objectUpdates', function (objectsInfo) {
     
     var allTableObjects = self.tableObjects.getChildren();
+    // this keeps track of what items are updated
+    updatedCount = (updatedCount + 1) % 100;
     Object.keys(objectsInfo).forEach(function (id) {
-      var obj = allTableObjects[id-1];
-      if(obj)
-        updateObjects(objectsInfo, id, obj, frames);
-    });
-    
-    /*
-    // This is wasteful, it iterates all the tableobjects
-    Object.keys(objectsInfo).forEach(function (id) {
-      self.tableObjects.getChildren().forEach(function (object) {
-        // Compares local players to auth server's players
-        //   ▼ auth players          ▼ local players
-        if (objectsInfo[id].objectId === object.objectId) {
-          updateObjects(objectsInfo, id, object, frames);
-        }
+      self.tableObjects.getChildren().forEach(function (tableObject) {
+        if(tableObject.objectId == id)
+          updateObject(self, objectsInfo, id, tableObject, frames);
       });
+      
     });
-    */
+    // check for objects that weren't updated, then delete them
+    self.tableObjects.getChildren().forEach(function (object) {
+      // if objects dont have the updated count then they got deleted on the server
+      if(updatedCount != object.updated) {
+        //self.tableObjects.remove(object, true, true);
+        object.removeAll(true);
+        object.destroy();
+      }
+    });
   });
 }
 
-function updateObjects(objectsInfo, id, object, frames) {
+function updateObject(self, objectsInfo, id, object, frames) {
+  if(!object && objectsInfo[id] != null) { // No local object
+    // Create a new object
+    addObject(self, objectsInfo[id].items, frames);
+  } else if(objectsInfo[id] != null) {
+    //console.log(objectsInfo[id].items.toString());
+
+    object.updated = updatedCount;
     // Check if it is not being currently dragged and it's not in the same position
-  if(isDragging != object.objectId && 
-    (object.x != objectsInfo[id].x || object.y != objectsInfo[id].y)) {
-    // Updates position
-    object.setPosition(objectsInfo[id].x, objectsInfo[id].y);
-    object.depth = objectsInfo[id].objectDepth;
-  }
-  if(object.depth != objectsInfo[id].objectDepth)
-    object.depth = objectsInfo[id].objectDepth;
-  if(objectsInfo[id].isFaceUp) { // server says face up
-    // check if the card not up
-    if(object.frame.name != frames[frames.indexOf(object.name)]) {
-      object.setFrame(frames[frames.indexOf(object.name)]);
+    if(isDragging != object.objectId && 
+      (object.x != objectsInfo[id].x || object.y != objectsInfo[id].y) ) {
+      // Update position
+      object.setPosition(objectsInfo[id].x, objectsInfo[id].y);
     }
-  } else { // face down
-    // check if the card is not down
-    if(object.frame.name != "back") {
-      object.setFrame(frames[frames.indexOf("back")]);
+    // Update depth
+    if(object.depth != objectsInfo[id].objectDepth)
+      object.depth = objectsInfo[id].objectDepth;
+
+    // Udpate sprite list
+    var serverSpriteId = objectsInfo[id].items; // array of spriteId
+    var localSprites = object.getAll();   // array of sprites gameobjects
+    var i;
+    for (i = 0; i < serverSpriteId.length; i++) {
+      var id = serverSpriteId[i];
+      if(i >= localSprites.length) {   // There are more server sprites than local
+        // Create a new sprite
+        var newSprite = self.add.sprite(0, 0, 'cards', frames[id]);
+        newSprite.name = spriteIdToName[id];
+        newSprite.spriteId = id;
+        newSprite.displayWidth = 70;
+        newSprite.displayHeight = 95;
+        newSprite.isFaceUp = true;
+        object.addAt(newSprite, i);
+      } 
+      else if(localSprites[i].spriteId != id) {
+        localSprites[i].spriteId = id;
+        localSprites[i].name = spriteIdToName[id];
+        localSprites[i].setFrame(frames[spriteIdToName[id]]);
+        localSprites[i].isFaceUp = true;
+      }
     }
+    localSprites.splice(i, localSprites.length); // Delete all the extra sprites
+    
+    /*
+    if(objectsInfo[id].isFaceUp) { // server says face up
+      // check if the card not up
+      if(object.frame.name != frames[frames.indexOf(object.name)]) {
+        object.setFrame(frames[frames.indexOf(object.name)]);
+      }
+    } else { // face down
+      // check if the card is not down
+      if(object.frame.name != "back") {
+        object.setFrame(frames[frames.indexOf("back")]);
+      }
+    }
+    */
   }
 }
 
 function startSocketUpdates(self) {
   // Get background color
   self.socket.on('backgroundColor', function(color) {
-    console.log(color);
     self.backgroundColor = self.cameras.main.setBackgroundColor(color);
   });
 
@@ -310,27 +363,84 @@ function showNicknamePrompt(self) {
 }
 */
 
-function addObject(self, objectId, objectName, frame) {
-  // Create object
-  // No physics for client side
-  const object = self.add.sprite(0, 0, 'cards', frame).setInteractive();
+// May have multiple sprites for an object (in the case of a stack)
+function addObject(self, spriteIds, frames) {
+  var i;
+  var spritesToAdd = [];
+  var spriteId;
+  // first spriteId will always equal the objectId
+  for(i = 0; i < spriteIds.length; i++) {
+    spriteId = spriteIds[i];
+    var spriteName = spriteIdToName[spriteId];
+    var frame = frames[frames.indexOf(spriteName)];
+    // Create sprite
+    // No physics for client side
+    spritesToAdd[i] = self.add.sprite(0, 0, 'cards', frame);
 
-  // Assign the individual game object an id and name
-  object.objectId = objectId;
-  object.name = objectName;
+    // Assign the individual sprite an id and name and size
+    spritesToAdd[i].spriteId = spriteId;
+    spritesToAdd[i].name = spriteName;
+    spritesToAdd[i].displayWidth = 70;
+    spritesToAdd[i].displayHeight = 95;
+    spritesToAdd[i].isFaceUp = true;
+  }
 
+  // Create object that acts like a stack (can have multiple sprites in it) 
+  const object = self.add.container(0,0, spritesToAdd);
+  object.objectId = spriteId;
+  object.setSize(70, 95);
+  object.setInteractive(); // Make interactive with mouse
+  object.updated = updatedCount;
   self.input.setDraggable(object);
+  // Change color on hover
+  //object.on('pointerover', function () { this.setTint(0x00ff00); });
+  //object.on('pointerout', function () {  this.clearTint(); });
 
   // Add it to the object group
   self.tableObjects.add(object);
-  
-  // Change color on hover
-  object.on('pointerover', function () {
-    this.setTint(0x00ff00);
+}
+
+// Called when an object is dropped
+function onObjectDrop(self, gameObject) {
+  // Find closest object
+  var closest = findSnapObject(self, gameObject);
+  if(closest != null) {
+    // Snap to position
+    gameObject.x = closest.x;
+    gameObject.y = closest.y;
+    self.socket.emit('objectInput', { 
+      objectId: gameObject.objectId,
+      x: closest.x, 
+      y: closest.y 
+    });
+    // Merge the two stacks
+    self.socket.emit('mergeStacks', { 
+      topStack: gameObject.objectId,
+      bottomStack: closest.objectId
+    });
+  } 
+}
+
+// Finds the first object within the snap distance, returns null if there are none
+function findSnapObject(self, gameObject) {
+  var closestObj = null;
+  var distance = STACK_SNAP_DISTANCE;
+  self.tableObjects.getChildren().forEach(function (tableObject) {
+    if (gameObject !== tableObject) {
+      var tempDistance = Phaser.Math.Distance.BetweenPoints(gameObject, tableObject);
+      if(tempDistance < distance) {
+      closestObj = tableObject;
+      distance = tempDistance
+      }
+    }
   });
-  object.on('pointerout', function () {
-    this.clearTint();
-  });
+  return closestObj;
 }
 
 
+
+/*
+function combineObjects(obj1, obj2) {
+
+}
+*/
