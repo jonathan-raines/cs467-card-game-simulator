@@ -60,9 +60,17 @@ function create() {
   menuCam.ignore(self.tableObjects);
 
   cursors = this.input.keyboard.createCursorKeys();
+
+  this.input.on('pointermove', pointer => {
+    if (pointer.middleButtonDown()) {
+      cam.pan(pointer.x, pointer.y);
+    }
+  });
+
 }
 
 function update() {
+
   if (cursors.up.isDown)
   {
     cam.zoom += 0.005;
