@@ -33,6 +33,7 @@ function preload() {
   this.load.html('nameform', 'assets/nameform.html');
   this.load.html('playerIndicator', 'assets/playerIndicator.html');
   this.load.html('menu', 'assets/menu.html');
+  this.load.html('help', 'assets/help.html');
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
 }
 
@@ -52,6 +53,7 @@ function create() {
   startSocketUpdates(self);
   loadMenu(self);
   loadCards(self);
+  loadPlayer(self);
 
   menuCam = self.cameras.add(0, 0, game.config.width, game.config.height);
   menuCam.ignore(self.tableObjects);
@@ -80,17 +82,21 @@ function getParameterByName(name, url = window.location.href) {
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
-/* function loadPlayer(self) {
-  playerIndicator = self.add.dom((Math.cos(cam.rotation) * game.config.width/2), (Math.sin(cam.rotation) * game.config.height/2 + 50)).createFromCache('playerIndicator').setInteractive();
+function loadPlayer(self) {
+  playerIndicator = self.add.dom(635, 1250).createFromCache('playerIndicator');
   document.getElementById('btn').innerText = playerNickname;
-} */
+  
+  playerIndicator.on('pointerdown', function() {
+    console.log(playerIndicator.x);
+    console.log(playerIndicator.y);
+  });
+}
 
 function loadMenu(self) {
   var menu = self.add.text(20, 10, 'Menu', { 
     color: 'White',
     font: 'bold 34px Arial', 
     align: 'left',
-    backgroundColor: "Black"
   }).setInteractive();
 
   menu.depth = 1000;
@@ -122,7 +128,28 @@ function loadMenu(self) {
       element.destroy();
     });
   });
-  self.cameras.main.ignore(menu);
+
+  var help = self.add.text(game.config.width - 80, 10, 'Help', { 
+    color: 'White',
+    font: 'bold 34px Arial', 
+    align: 'left',
+  }).setInteractive();
+
+  help.depth = 1000;
+
+  help.on('pointerdown', function() {
+    var element = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('help');
+
+    self.input.keyboard.on('keyup-ESC', function (event) {
+      element.destroy();
+    });
+
+    $('#exit-help').click(function() {
+      element.destroy();
+    });
+  });
+
+  self.cameras.main.ignore(menu, help);
   
 }
 
@@ -199,8 +226,6 @@ function loadCards(self) {
       x: dragX, 
       y: dragY 
     });
-    /* console.log('x: ' + gameObject.x);
-    console.log('y: ' + gameObject.y); */
   });
   
   // When the mouse finishes dragging
@@ -275,7 +300,6 @@ function startSocketUpdates(self) {
         }
       }
     }
-    
   });
 
   // Setup Chat
