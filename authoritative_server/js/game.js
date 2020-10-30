@@ -30,7 +30,7 @@ const config = {
 const ROOM_TIMEOUT_LENGTH = 1800000; // 30 min
 // How often the server will check if there are any players
 const CHECK_ROOM_INTERVAL = 300000; // 5 min
-// The game ticks at the rate of 1 tick per 100 milliseconds
+// The game ticks at the rate of 1 tick per 100 milliseconds (10Hz)
 const GAME_TICK_RATE = 100
 
 const roomName = roomInfo.roomName;
@@ -46,12 +46,25 @@ const objectInfoToSend = {};
 // Info of all the current players in the game session
 const players = {};
 
-// Number of current players in the game session
-//let numPlayers = 0;
+const cardNames = ['back', 
+  'clubsAce', 'clubs2', 'clubs3', 'clubs4', 'clubs5', 'clubs6', 'clubs7', 'clubs8', 'clubs9', 'clubs10', 'clubsJack', 'clubsQueen', 'clubsKing',
+  'diamondsAce', 'diamonds2', 'diamonds3', 'diamonds4', 'diamonds5', 'diamonds6', 'diamonds7','diamonds8', 'diamonds9', 'diamonds10', 'diamondsJack', 'diamondsQueen', 'diamondsKing',
+  'heartsAce', 'hearts2', 'hearts3', 'hearts4', 'hearts5', 'hearts6', 'hearts7', 'hearts8', 'hearts9', 'hearts10', 'heartsJack', 'heartsQueen', 'heartsKing',
+  'spadesAce', 'spades2', 'spades3', 'spades4', 'spades5', 'spades6', 'spades7', 'spades8', 'spades9', 'spades10', 'spadesJack', 'spadesQueen', 'spadesKing',
+  'joker'
+];
 
-// Depth of the highest card
-var overallDepth = 0;
+const spriteIdToName = [];
+let overallDepth = 0;       // Depth of the highest card
 
+
+/* Global Variables Set outside game.js (Needed to communicate to / from server.js)
+const room_io;             // Pass the socket io namespace name
+const IS_LOCAL = IS_LOCAL; // Let game.js know if it's running locally for developers
+const pool = pool;         // Pass the pool for the database
+const roomInfo = roomInfo; // Pass room info to the server instance
+const numPlayers = 0;
+*/
 
 
 function preload() {
@@ -145,39 +158,21 @@ function create() {
       console.log("Bottomstack after combining ([0] is bottom)");
       i = 0;
       bottomStack.getAll().forEach(function (sprite) {
-        console.log("[" + i + "]: " + sprite.spriteId);
+        console.log("[" + i + "]: " + cardNames[sprite.spriteId]);
         i++;
       });
-      topStack.isActive = false;
-      objectInfoToSend[topStack.objectId] = null;
+      topStack.isActive = false;  // Keep for later use
+      objectInfoToSend[topStack.objectId] = null; // Don't send to client
     });
-    
-    /*
-    // Listens for object movement by the player
-    socket.on('objectFlip', function (inputData) {
-      objectInfoToSend[inputData.objectId].isFaceUp = inputData.isFaceUp;
-    });
-    */
   });
 }
 
 function update() {
-  /*
-  // Update the object info to send to clients from game objects
-  this.tableObjects.getChildren().forEach((object) => {
-    objectInfoToSend[object.objectId].x = object.x;
-    objectInfoToSend[object.objectId].y = object.y;
-  });
-  // Sends the card positions to clients
-  io.emit('objectUpdates', objectInfoToSend);
-  */
 }
 
 // This is the update() function for the server
 function startGameDataTicker(self) {
-  
   let tickInterval = setInterval(() => {
-
       // Update the object info to send to clients from game objects
       self.tableObjects.getChildren().forEach((object) => {
         if(object.isActive) {
@@ -185,22 +180,25 @@ function startGameDataTicker(self) {
           objectInfoToSend[object.objectId].y = object.y;
         }
       });
+
       // Sends the card positions to clients
       io.emit('objectUpdates', objectInfoToSend);
 
   }, GAME_TICK_RATE);
 }
 
+/*---------- objectInfoToSend Example -------------------
+objectInfoToSend[3] = {
+  objectId: 3,
+  items: [3, 5, 8], // SpriteId of the Items in the stack ([0] is bottom of stack and always the same as objectId)
+  isFacingUp: [false, false, false] // For flipping Not implemented yet
+  x: 100,
+  y: 200,
+  objectDepth: 200, 
+};
+---------------------------------------------------------*/
 function loadCards(self) {
   let frames = self.textures.get('cards').getFrameNames();
-
-  let cardNames = ['back', 
-    'clubsAce', 'clubs2', 'clubs3', 'clubs4', 'clubs5', 'clubs6', 'clubs7', 'clubs8', 'clubs9', 'clubs10', 'clubsJack', 'clubsQueen', 'clubsKing',
-    'diamondsAce', 'diamonds2', 'diamonds3', 'diamonds4', 'diamonds5', 'diamonds6', 'diamonds7','diamonds8', 'diamonds9', 'diamonds10', 'diamondsJack', 'diamondsQueen', 'diamondsKing',
-    'heartsAce', 'hearts2', 'hearts3', 'hearts4', 'hearts5', 'hearts6', 'hearts7', 'hearts8', 'hearts9', 'hearts10', 'heartsJack', 'heartsQueen', 'heartsKing',
-    'spadesAce', 'spades2', 'spades3', 'spades4', 'spades5', 'spades6', 'spades7', 'spades8', 'spades9', 'spades10', 'spadesJack', 'spadesQueen', 'spadesKing',
-    'joker'
-  ];
 
   const xStart = 100;
   const yStart = 100;
@@ -210,51 +208,49 @@ function loadCards(self) {
 
   //add 52 playing cards in order
   for (let i = 1; i <= 52; i++) {
-    let nextCard = frames[frames.indexOf(cardNames[i])];
     overallDepth++;
+    var initialX = ((i-1)%perRow) * xSpacing + xStart;
+    var initialY = Math.floor((i-1)/perRow) * ySpacing + yStart;
     // Assigns the info to send to clients
     objectInfoToSend[i] = {
       objectId: i,
       items: [i], // Items in the stack, initially just the spriteId for the card
-      x: ((i-1)%perRow) * xSpacing + xStart,
-      y: Math.floor((i-1)/perRow) * ySpacing + yStart,
-      objectDepth: overallDepth, 
+      x: initialX,
+      y: initialY,
+      objectDepth: overallDepth
     };
-    addObject(self, objectInfoToSend[i], cardNames[i], nextCard);
+    spriteIdToName[i] = cardNames[i];
+    addObject(self, [i], initialX, initialY, frames);
   }
-
-  /*
-  //display joker card
-  let jokerFrame = frames[frames.indexOf("joker")];
-  let jokerId = 53;
-  objectInfoToSend[jokerId] = {
-    x: ((jokerId-1)%perRow) * xSpacing + xStart,
-    y: Math.floor((jokerId-1)/perRow) * ySpacing + yStart,
-    objectId: jokerId,
-    isFaceUp: true  
-  };
-  addObject(self, objectInfoToSend[jokerId], cardNames[jokerId], jokerFrame);
-  */
 }
 
-function addObject(self, objectInfo, objectName, frame) {
-  // Create object 
-  // physics is used for future features
+function addObject(self, spriteIds, x, y, frames) {
+  const spritesToAdd = [];
+  for(let i = 0; i < spriteIds.length; i++) {
+    var spriteId = spriteIds[i];
+    spritesToAdd[i] = createSprite(self, spriteId, spriteIdToName[spriteId], frames);
+  }
+
+  // Create object that acts like a stack (can have multiple sprites in it) 
+  const object = self.add.container(x, y, spritesToAdd);
+  object.objectId = spriteIds[0]; // First spriteId is always objectId
+  object.setSize(70, 95);
+  object.isActive = true;
+
+  self.tableObjects.add(object);  // Add it to the object group
+}
+
+// **This might not be needed. We could just keep track of sprite ids in objectInfoToSend
+function createSprite(self, spriteId, spriteName, frames) {
+  var frame = frames[frames.indexOf(spriteName)];
+  // Create sprite
   const sprite = self.add.sprite(0, 0, 'cards', frame);
-  // Assign the individual game object an id
-  sprite.spriteId = objectInfo.objectId;
-  sprite.name = objectName;
+  sprite.spriteId = spriteId;
+  sprite.name = spriteName;
   sprite.displayWidth = 70;
   sprite.displayHeight = 95;
-  //sprite.isFaceUp = true;
-
-  const object = self.add.container(objectInfo.x, objectInfo.y, sprite);
-  object.objectId = objectInfo.objectId;  
-  object.isActive = true;
-  object.setSize(70, 95);
-
-  // Add it to the object group
-  self.tableObjects.add(object);
+  sprite.isFaceUp = true;
+  return sprite;
 }
 
 function getRandomColor() {
