@@ -18,20 +18,17 @@ var config = {
 const STACK_SNAP_DISTANCE = 25;
 const MENU_DEPTH = 1000;
 const cardNames = ['back', 
-    'clubsAce', 'clubs2', 'clubs3', 'clubs4', 'clubs5', 'clubs6', 'clubs7', 'clubs8', 'clubs9', 'clubs10', 'clubsJack', 'clubsQueen', 'clubsKing',
-    'diamondsAce', 'diamonds2', 'diamonds3', 'diamonds4', 'diamonds5', 'diamonds6', 'diamonds7','diamonds8', 'diamonds9', 'diamonds10', 'diamondsJack', 'diamondsQueen', 'diamondsKing',
-    'heartsAce', 'hearts2', 'hearts3', 'hearts4', 'hearts5', 'hearts6', 'hearts7', 'hearts8', 'hearts9', 'hearts10', 'heartsJack', 'heartsQueen', 'heartsKing',
-    'spadesAce', 'spades2', 'spades3', 'spades4', 'spades5', 'spades6', 'spades7', 'spades8', 'spades9', 'spades10', 'spadesJack', 'spadesQueen', 'spadesKing',
-    'joker'
-  ];
-
+  'clubsAce', 'clubs2', 'clubs3', 'clubs4', 'clubs5', 'clubs6', 'clubs7', 'clubs8', 'clubs9', 'clubs10', 'clubsJack', 'clubsQueen', 'clubsKing',
+  'diamondsAce', 'diamonds2', 'diamonds3', 'diamonds4', 'diamonds5', 'diamonds6', 'diamonds7','diamonds8', 'diamonds9', 'diamonds10', 'diamondsJack', 'diamondsQueen', 'diamondsKing',
+  'heartsAce', 'hearts2', 'hearts3', 'hearts4', 'hearts5', 'hearts6', 'hearts7', 'hearts8', 'hearts9', 'hearts10', 'heartsJack', 'heartsQueen', 'heartsKing',
+  'spadesAce', 'spades2', 'spades3', 'spades4', 'spades5', 'spades6', 'spades7', 'spades8', 'spades9', 'spades10', 'spadesJack', 'spadesQueen', 'spadesKing',
+  'joker'
+];
 
 var players = {};           // List of all the current players in the game 
 var isDragging = -1;        // The id of an object being currently dragged. -1 if not
 var updatedCount = 0;       // Keeps track of what items get updated. 
                             // If it doesn't match this val then it should be deleted
-
-
 
 // This player's info
 var playerNickname = getParameterByName('nickname');
@@ -259,8 +256,6 @@ function addObject(self, spriteIds, frames) {
 
     // Stack's Parallax Visual Effect 
     stackVisualEffect(spritesToAdd[i], i, spriteIds.length-1);
-    //spritesToAdd[i].x = -Math.floor((spriteIds.length-i)/7);
-    //spritesToAdd[i].y = Math.floor((spriteIds.length-i)/4);
   }
   // Create a stack-like object (can have multiple sprites in it)/(No physics for client side)
   const object = self.add.container(0,0, spritesToAdd); // Server will move it with 'ObjectUpdates'
@@ -287,7 +282,7 @@ function createSprite(self, spriteId, spriteName, frames) {
 
 // Makes a stack of cards look 3D
 function stackVisualEffect(sprite, pos, size) {
-  sprite.x = -Math.floor((size-pos)/10);
+  sprite.x = -Math.floor((size-pos)/12);
   sprite.y = Math.floor((size-pos)/5);
 }
 
