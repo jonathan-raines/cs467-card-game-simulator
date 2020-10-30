@@ -27,7 +27,6 @@ const cardNames = ['back',
 
 
 var players = {};           // List of all the current players in the game 
-const spriteIdToName = [];  // For the given spriteId returns the cardName
 var isDragging = -1;        // The id of an object being currently dragged. -1 if not
 var updatedCount = 0;       // Keeps track of what items get updated. 
                             // If it doesn't match this val then it should be deleted
@@ -117,13 +116,6 @@ function loadMenu(self) {
 function loadCards(self) {
   let frames = self.textures.get('cards').getFrameNames();
 
-  //add 52 playing cards in order
-  for (let i = 1; i <= 52; i++) {
-    spriteIdToName[i] = cardNames[i]; // Info to find name from spriteId
-    // Don't need to add objects as 'objectUpdates' will
-    //addObject(self, [i], frames);
-  }
-
   // for Thomas this doesnt work
   self.input.mouse.disableContextMenu();
 
@@ -132,11 +124,9 @@ function loadCards(self) {
 
   // When the mouse starts dragging the object
   self.input.on('dragstart', function (pointer, gameObject) {
-    //gameObject.setTint(0xff0000);
     isDragging = gameObject.objectId;
-    // Tells the server to increase the object's depth and bring to front
-    gameObject.depth = MENU_DEPTH-1;
-    self.socket.emit('objectDepth', { 
+    gameObject.depth = MENU_DEPTH-1;  // Bring to front
+    self.socket.emit('objectDepth', { // Tells the server to increase the object's depth
       objectId: gameObject.objectId
     });
   });
@@ -146,9 +136,7 @@ function loadCards(self) {
     // Locally changes the object's position
     gameObject.x = dragX;
     gameObject.y = dragY;
-
-    // update to server on "objectInput"
-    // This sends the input to the server
+    // Send the input to the server
     self.socket.emit('objectInput', { 
       objectId: gameObject.objectId,
       x: dragX, 
@@ -158,17 +146,15 @@ function loadCards(self) {
   
   // When the mouse finishes dragging
   self.input.on('dragend', function (pointer, gameObject) {
-
     self.time.delayedCall(500, function() { // Waits for the chance of lag
       isDragging = -1;                      // Assumes the player is still dragging
     });                                     // would move the cards
-
-    onObjectDrop(self, gameObject);
+    onObjectDrop(self, gameObject); 
   });  
 
   // Start the object listener for commands from server
   self.socket.on('objectUpdates', function (objectsInfo) {
-    updatedCount = (updatedCount+1)%100; // keeps track of what local items are updated
+    updatedCount = (updatedCount+1)%100; // keeps track of what local items are updated from server
     Object.keys(objectsInfo).forEach(function (id) {
       if(objectsInfo[id] != null) {
         var updatedAnObject = false;     // if a tableObjec is updated = true
@@ -186,11 +172,10 @@ function loadCards(self) {
         }
       }
     });
-    // check for objects that weren't updated, then delete them
+    // check for objects that weren't updated from the server, then delete them
     self.tableObjects.getChildren().forEach(function (object) {
-      // if objects dont have the updated count then they got deleted on the server
+      // if objects dont have the same updated count then they get deleted on the server
       if(updatedCount != object.updated) {
-        //self.tableObjects.remove(object, true, true);
         object.removeAll(true);
         object.destroy();
       }
@@ -218,22 +203,25 @@ function updateObject(self, objectsInfo, id, object, frames) {
     }
     // Update sprite list
     var serverSpriteIdArray = objectsInfo[id].items; // array of spriteId
-    var localSpriteArray = object.getAll();   // array of sprites gameobjects
+    //var object.getAll() = object.getAll();   // array of sprites gameobjects
     for (var i = 0; i < serverSpriteIdArray.length; i++) {
       var serverSpriteId = serverSpriteIdArray[i];
-      if(i >= localSpriteArray.length) {   // There are more server sprites than local
+      if(i >= object.getAll().length) {   // There are more server sprites than local
         // Create a new sprite
-        var newSprite = createSprite(self, serverSpriteId, spriteIdToName[serverSpriteId], frames);
+        var newSprite = createSprite(self, serverSpriteId, cardNames[serverSpriteId], frames);
         object.addAt(newSprite, i);
       } 
-      else if(localSpriteArray[i].spriteId != serverSpriteId) {
-        localSpriteArray[i].spriteId = serverSpriteId;
-        localSpriteArray[i].name = spriteIdToName[serverSpriteId];
-        localSpriteArray[i].setFrame(frames[frames.indexOf(spriteIdToName[serverSpriteId])]);
-        localSpriteArray[i].isFaceUp = true;
+      // Update sprite
+      else if(object.getAll()[i].spriteId == serverSpriteId) {
+        object.getAll()[i].spriteId = serverSpriteId;
+        object.getAll()[i].name = cardNames[serverSpriteId];
+        object.getAll()[i].setFrame(frames[frames.indexOf(cardNames[serverSpriteId])]);
+        object.getAll()[i].isFaceUp = true;
       }
+      // Stack's Parallax Visual Effect 
+      stackVisualEffect(object.getAll()[i], i, serverSpriteIdArray.length-1);
     }
-    localSpriteArray.splice(i, localSpriteArray.length); // Delete all the extra sprites
+    object.getAll().splice(i, object.getAll().length); // Delete all the extra sprites
   }
 }
 
@@ -267,9 +255,14 @@ function addObject(self, spriteIds, frames) {
   // first spriteId will always equal the objectId
   for(let i = 0; i < spriteIds.length; i++) {
     var spriteId = spriteIds[i];
-    spritesToAdd[i] = createSprite(self, spriteId, spriteIdToName[spriteId], frames);
+    spritesToAdd[i] = createSprite(self, spriteId, cardNames[spriteId], frames);
+
+    // Stack's Parallax Visual Effect 
+    stackVisualEffect(spritesToAdd[i], i, spriteIds.length-1);
+    //spritesToAdd[i].x = -Math.floor((spriteIds.length-i)/7);
+    //spritesToAdd[i].y = Math.floor((spriteIds.length-i)/4);
   }
-  // Create object that acts like a stack (can have multiple sprites in it) 
+  // Create a stack-like object (can have multiple sprites in it)/(No physics for client side)
   const object = self.add.container(0,0, spritesToAdd); // Server will move it with 'ObjectUpdates'
   object.objectId = spriteIds[0];  // First spriteId is always objectId
   object.setSize(70, 95);
@@ -282,7 +275,7 @@ function addObject(self, spriteIds, frames) {
 
 function createSprite(self, spriteId, spriteName, frames) {
   var frame = frames[frames.indexOf(spriteName)];
-  // Create sprite (No physics for client side)
+  // Create sprite
   const sprite = self.add.sprite(0, 0, 'cards', frame);
   sprite.spriteId = spriteId;
   sprite.name = spriteName;
@@ -292,9 +285,15 @@ function createSprite(self, spriteId, spriteName, frames) {
   return sprite;
 }
 
+// Makes a stack of cards look 3D
+function stackVisualEffect(sprite, pos, size) {
+  sprite.x = -Math.floor((size-pos)/10);
+  sprite.y = Math.floor((size-pos)/5);
+}
+
 // Called when an object is dropped
 function onObjectDrop(self, gameObject) {
-  // Find closest object
+  // Find closest object to snap to
   var closest = findSnapObject(self, gameObject);
   if(closest != null) {
     // Snap to position

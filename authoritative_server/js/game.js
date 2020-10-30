@@ -54,7 +54,6 @@ const cardNames = ['back',
   'joker'
 ];
 
-const spriteIdToName = [];
 let overallDepth = 0;       // Depth of the highest card
 
 
@@ -63,7 +62,7 @@ const room_io;             // Pass the socket io namespace name
 const IS_LOCAL = IS_LOCAL; // Let game.js know if it's running locally for developers
 const pool = pool;         // Pass the pool for the database
 const roomInfo = roomInfo; // Pass room info to the server instance
-const numPlayers = 0;
+let numPlayers = 0;        // Current number of players
 */
 
 
@@ -139,35 +138,41 @@ function create() {
     // Updates the depth when player picks up a card
     socket.on('objectDepth', function (inputData) {
       overallDepth++; // increases the depth everytime the player picks it up
-      objectInfoToSend[inputData.objectId].objectDepth = overallDepth;
+      if(objectInfoToSend[inputData.objectId] != null)
+        objectInfoToSend[inputData.objectId].objectDepth = overallDepth;
     });
 
     socket.on('mergeStacks', function (inputData) {
       // take all items in top stack and put in bottom stack
       // then delete top stack
-      var topStack = self.tableObjects.getChildren()[inputData.topStack-1];
-      var bottomStack = self.tableObjects.getChildren()[inputData.bottomStack-1];
-      console.log("topstack:" + topStack.objectId);
-      console.log("bottomstack:" + bottomStack.objectId);
-      var topSprites = topStack.getAll();
-      var i;
-      for(i = 0; i < topSprites.length; i++) {
-        bottomStack.add(topSprites[i]);
+      const topStack = self.tableObjects.getChildren()[inputData.topStack-1];
+      const bottomStack = self.tableObjects.getChildren()[inputData.bottomStack-1];
+
+      const topSprites = topStack.getAll();
+      for(var i = 0; i < topSprites.length; i++) {
+        bottomStack.add(topSprites[i]); // Copy sprites to bottom stack
         objectInfoToSend[bottomStack.objectId].items.push(topSprites[i].spriteId);
       }
-      console.log("Bottomstack after combining ([0] is bottom)");
-      i = 0;
-      bottomStack.getAll().forEach(function (sprite) {
-        console.log("[" + i + "]: " + cardNames[sprite.spriteId]);
-        i++;
-      });
-      topStack.isActive = false;  // Keep for later use
+
+      debugObjectContents(bottomStack);
+      
+      topStack.isActive = false;       // Keep for later use
       objectInfoToSend[topStack.objectId] = null; // Don't send to client
     });
   });
 }
 
+function debugObjectContents(object) {
+  console.log("Object #" + object.objectId + " contents ([0] is bottom):");
+  var i = 0;
+  object.getAll().forEach(function (sprite) {
+    console.log("   [" + i + "]: " + cardNames[sprite.spriteId]);
+    i++;
+  });
+}
+
 function update() {
+
 }
 
 // This is the update() function for the server
@@ -219,7 +224,6 @@ function loadCards(self) {
       y: initialY,
       objectDepth: overallDepth
     };
-    spriteIdToName[i] = cardNames[i];
     addObject(self, [i], initialX, initialY, frames);
   }
 }
@@ -228,7 +232,7 @@ function addObject(self, spriteIds, x, y, frames) {
   const spritesToAdd = [];
   for(let i = 0; i < spriteIds.length; i++) {
     var spriteId = spriteIds[i];
-    spritesToAdd[i] = createSprite(self, spriteId, spriteIdToName[spriteId], frames);
+    spritesToAdd[i] = createSprite(self, spriteId, cardNames[spriteId], frames);
   }
 
   // Create object that acts like a stack (can have multiple sprites in it) 
