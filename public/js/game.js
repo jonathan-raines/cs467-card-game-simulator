@@ -29,6 +29,10 @@ var players = {};           // List of all the current players in the game
 var isDragging = -1;        // The id of an object being currently dragged. -1 if not
 var updatedCount = 0;       // Keeps track of what items get updated. 
                             // If it doesn't match this val then it should be deleted
+var drawnSpriteStack = false;
+var moveStack = false;
+var drawTop = false;
+var drawTopOnServer = false;
 
 // This player's info
 var playerNickname = getParameterByName('nickname');
@@ -56,7 +60,7 @@ function create() {
   
   loadMenu(self);
   loadCards(self);
-  startSocketUpdates(self);
+  startSocketUpdates(self); 
 }
 
 function update() {}
@@ -130,15 +134,25 @@ function loadCards(self) {
   
   // While the mouse is dragging
   self.input.on('drag', function (pointer, gameObject, dragX, dragY) {
-    // Locally changes the object's position
-    gameObject.x = dragX;
-    gameObject.y = dragY;
-    // Send the input to the server
-    self.socket.emit('objectInput', { 
-      objectId: gameObject.objectId,
-      x: dragX, 
-      y: dragY 
-    });
+    //if the cursor is held in place before moving, move whole object
+    if (gameObject.length == 1 && !drawTop) {
+      dragGameObject(self, gameObject, dragX, dragY);
+    }
+    else{
+      //if holding click in 1 space for > 500 without moving too fard
+      if(pointer.moveTime - pointer.downTime > 500 && pointer.getDistance() < 5){
+        moveStack = true;
+      }
+
+      //if moving a stack, drag object as usual
+      if(moveStack){
+        dragGameObject(self, gameObject, dragX, dragY);
+      }
+      else{// quick click and drag top sprite draw
+        drawTop = true; 
+        drawTopSprite(self, gameObject, dragX, dragY, frames);
+      }
+    } 
   });
   
   // When the mouse finishes dragging
@@ -146,7 +160,16 @@ function loadCards(self) {
     self.time.delayedCall(500, function() { // Waits for the chance of lag
       isDragging = -1;                      // Assumes the player is still dragging
     });                                     // would move the cards
-    onObjectDrop(self, gameObject); 
+    
+    if(drawnSpriteStack){
+      onObjectDrop(self, drawnSpriteStack);
+      drawnSpriteStack = false;
+    }else{
+      onObjectDrop(self, gameObject); 
+    }
+    moveStack = false;
+    drawTop = false;
+    drawTopOnServer = false;
   });  
 
   // Start the object listener for commands from server
@@ -185,8 +208,8 @@ function updateObject(self, objectsInfo, id, object, frames) {
     console.log("No local object to update.");
   } else if(objectsInfo[id] != null) {
     object.updated = updatedCount; // Show that this object was updated
-    // Check if it is not being currently dragged
-    if(isDragging != object.objectId) {
+    // Check if it is not being currently dragged or drawn
+    if(isDragging != object.objectId && drawnSpriteStack != object.objectId) {
       // Check if it's not in the same position
       if(object.x != objectsInfo[id].x || object.y != objectsInfo[id].y) {
         // Update position
@@ -200,10 +223,11 @@ function updateObject(self, objectsInfo, id, object, frames) {
     }
     // Update sprite list
     var serverSpriteIdArray = objectsInfo[id].items; // array of spriteId
-    //var object.getAll() = object.getAll();   // array of sprites gameobjects
     for (var i = 0; i < serverSpriteIdArray.length; i++) {
       var serverSpriteId = serverSpriteIdArray[i];
-      if(i >= object.getAll().length) {   // There are more server sprites than local
+      // if there are more server sprites than local
+      if(i >= object.getAll().length) {   
+        console.log('creating new sprite')
         // Create a new sprite
         var newSprite = createSprite(self, serverSpriteId, cardNames[serverSpriteId], frames);
         object.addAt(newSprite, i);
@@ -266,6 +290,7 @@ function addObject(self, spriteIds, frames) {
   self.input.setDraggable(object);
 
   self.tableObjects.add(object);   // Add it to the object group
+  return object;
 }
 
 function createSprite(self, spriteId, spriteName, frames) {
@@ -321,4 +346,59 @@ function findSnapObject(self, gameObject) {
     }
   });
   return closestObj;
+}
+
+function dragGameObject(self, gameObject, dragX, dragY){
+  // Locally changes the object's position
+  gameObject.x = dragX;
+  gameObject.y = dragY;
+  // Send the input to the server
+  self.socket.emit('objectInput', { 
+    objectId: gameObject.objectId,
+    x: dragX, 
+    y: dragY 
+  });
+}
+
+function drawTopSprite(self, gameObject, dragX, dragY, frames){
+  //if the sprite has already been moved to another stack
+  if(drawnSpriteStack){
+    //drag the new stack instead
+    dragGameObject(self, drawnSpriteStack, dragX, dragY);
+  }
+  else{
+    //find the top sprite in the stack to draw from
+    let drawnSpriteId = gameObject.last.spriteId;
+
+    //make server do the work of drawing the card, but do not emit twice
+    if(!drawTopOnServer){
+      //tell server to update bottomStack and update stack that card was previously in
+      self.socket.emit('drawTopSprite', {
+        bottomStack: gameObject.objectId
+      });
+      drawTopOnServer = true;
+    }
+    
+    //remove and destroy the top sprite in the stack drawn from
+    gameObject.remove(gameObject.last, true);
+
+    //look to see if a new object with the new sprite has been updated to client yet
+    //after emitting drawTopSprite
+    self.tableObjects.getChildren().forEach(function(object){
+      //if the new stack has been created, move it locally
+      if(object.objectId == drawnSpriteId){
+        drawnSpriteStack = object;
+        dragGameObject(self, drawnSpriteStack, dragX, dragY)
+      }
+    })
+  }
+}
+
+function debugObjectContents(object) {
+  console.log("Object #" + object.objectId + " contents ([0] is bottom/first):");
+  var i = 0;
+  object.getAll().forEach(function (sprite) {
+    console.log("   [" + i + "]: " + cardNames[sprite.spriteId]);
+    i++;
+  });
 }

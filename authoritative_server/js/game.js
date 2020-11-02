@@ -159,11 +159,51 @@ function create() {
       topStack.isActive = false;       // Keep for later use
       objectInfoToSend[topStack.objectId] = null; // Don't send to client
     });
+
+    socket.on('drawTopSprite', function(inputData){
+      //find the stack to be drawn from
+      const bottomStack = self.tableObjects.getChildren()[inputData.bottomStack-1];
+      //select the top sprite in the stack
+      const topSprite = bottomStack.last;
+      console.log('removing top sprite: ' +  bottomStack.last.frame.name + ', id: ' + topSprite)
+
+      //find the original stack that the sprite was created with
+      const topStack = self.tableObjects.getChildren()[topSprite.spriteId-1];
+      
+      //re-define the stack and put its original sprite back into it
+      topStack.isActive = true;
+      topStack.x = bottomStack.x;
+      topStack.y = bottomStack.y;
+      topStack.add(topSprite);
+
+      let string = 'bottom local contains: ';
+      bottomStack.getAll().forEach(function(sprite){
+        string += (sprite.spriteId + ', ')
+      });
+      console.log(string)
+
+      string = 'top local contains: ';
+      topStack.getAll().forEach(function(sprite){
+        string += (sprite.spriteId + ', ')
+      });
+      console.log(string)
+
+      //update clients telling them to create the new stack
+      objectInfoToSend[topStack.objectId]={
+        objectId: topSprite.spriteId,
+        items: [objectInfoToSend[bottomStack.objectId].items.pop()],
+        isFaceUp: [topSprite.isFaceUp],
+        x: bottomStack.x,
+        y: bottomStack.y
+      }
+      console.log('bottomObjectInfo: ' +objectInfoToSend[bottomStack.objectId].items)
+      console.log('topObjectInfo: ' +objectInfoToSend[topStack.objectId].items+'\n')
+    });
   });
 }
 
 function debugObjectContents(object) {
-  console.log("Object #" + object.objectId + " contents ([0] is bottom):");
+  console.log("Object #" + object.objectId + " contents ([0] is bottom/first):");
   var i = 0;
   object.getAll().forEach(function (sprite) {
     console.log("   [" + i + "]: " + cardNames[sprite.spriteId]);
@@ -196,7 +236,7 @@ function startGameDataTicker(self) {
 objectInfoToSend[3] = {
   objectId: 3,
   items: [3, 5, 8], // SpriteId of the Items in the stack ([0] is bottom of stack and always the same as objectId)
-  isFacingUp: [false, false, false] // For flipping Not implemented yet
+  isFaceUp: [false, false, false] // For flipping Not implemented yet
   x: 100,
   y: 200,
   objectDepth: 200, 
