@@ -1,0 +1,30 @@
+.menu-area {
+    background-color: white; 
+    height: 400px; 
+    width: 400px; 
+    border-radius: 25px;
+}
+
+.menu-title {
+    text-align: center; 
+    font-size: 28px; 
+    font-weight: bold; 
+    padding-top: 20px;
+}
+
+div.menu-area {
+    padding-left: 20px;
+}
+
+.button-div {
+    position: absolute; 
+    right: 20px; 
+    bottom: 10px;
+}
+
+.menu-button {
+    background-color: #3CB371; 
+    color: white; 
+    border-radius: 10px; 
+    font-weight: bold;
+}
