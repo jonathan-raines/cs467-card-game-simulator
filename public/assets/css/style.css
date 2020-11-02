@@ -69,3 +69,19 @@ div.menu-area {
     width: 80%; 
     position: relative
 }
+
+.nickname-form {
+    margin: auto;
+    background: #8B4513;
+    width: 300px;
+    height: 100px;
+    position: absolute;
+    top: 50%; 
+    left: 50%;
+    margin: -50px 0 0 -150px;
+    text-align: center;
+}
+
+#nickname-form {
+    margin: 31px 0 0 29px;
+}
