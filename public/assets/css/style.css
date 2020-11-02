@@ -28,3 +28,44 @@ div.menu-area {
     border-radius: 10px; 
     font-weight: bold;
 }
+
+#messages { 
+    list-style-type: none; 
+    margin: 0; 
+    padding: 0; 
+    overflow: auto; 
+    height: 95%; 
+    background-color: white; }
+
+#messages li { 
+    padding: 5px 10px; 
+}
+
+#messages li:nth-child(odd) { 
+    background: rgb(223, 218, 218); 
+}
+
+#chat-msg {
+    position: absolute; 
+    bottom: 0; 
+    width: 95%;
+}
+
+#chat-send {
+    position: absolute; 
+    bottom: 0; 
+    right: 0;
+}
+
+#chat-area {
+    height: 100%; 
+    width: 20%; 
+    position: absolute; 
+    right: 0; 
+    background-color: white;
+}
+
+#game-area {
+    width: 80%; 
+    position: relative
+}
