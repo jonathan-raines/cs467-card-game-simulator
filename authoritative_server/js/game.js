@@ -82,6 +82,7 @@ function create() {
   let frames = self.textures.get('cards').getFrameNames();
   
   startGameDataTicker(self);
+  //debugTicker(self)
 
   // When a connection is made
   io.on('connection', function (socket) {
@@ -165,7 +166,7 @@ function create() {
       const bottomStack = self.tableObjects.getChildren()[inputData.bottomStack-1];
       //select the top sprite in the stack
       const topSprite = bottomStack.last;
-      console.log('removing top sprite: ' +  bottomStack.last.frame.name + ', id: ' + topSprite)
+      console.log('removing top sprite: ' +  bottomStack.last.frame.name + ', id: ' + topSprite.spriteId)
 
       //find the original stack that the sprite was created with
       const topStack = self.tableObjects.getChildren()[topSprite.spriteId-1];
@@ -174,28 +175,30 @@ function create() {
       topStack.isActive = true;
       topStack.x = bottomStack.x;
       topStack.y = bottomStack.y;
+      bottomStack.remove(topSprite);
       topStack.add(topSprite);
 
       let string = 'bottom local contains: ';
       bottomStack.getAll().forEach(function(sprite){
-        string += (sprite.spriteId + ', ')
+        string += (sprite.name + ', ')
       });
       console.log(string)
 
       string = 'top local contains: ';
       topStack.getAll().forEach(function(sprite){
-        string += (sprite.spriteId + ', ')
+        string += (sprite.name + ', ')
       });
       console.log(string)
 
       //update clients telling them to create the new stack
       objectInfoToSend[topStack.objectId]={
         objectId: topSprite.spriteId,
-        items: [objectInfoToSend[bottomStack.objectId].items.pop()],
-        isFaceUp: [topSprite.isFaceUp],
+        items: [ objectInfoToSend[bottomStack.objectId].items.pop() ],
         x: bottomStack.x,
-        y: bottomStack.y
+        y: bottomStack.y,
+        objectDepth: overallDepth
       }
+
       console.log('bottomObjectInfo: ' +objectInfoToSend[bottomStack.objectId].items)
       console.log('topObjectInfo: ' +objectInfoToSend[topStack.objectId].items+'\n')
     });
@@ -231,6 +234,21 @@ function startGameDataTicker(self) {
 
   }, GAME_TICK_RATE);
 }
+
+
+function debugTicker(self) {
+  let tickInterval = setInterval(() => {
+
+      var totalCards = 0;
+      self.tableObjects.getChildren().forEach((object) => {
+        totalCards += object.length;
+      });
+
+      console.log("Total number of objects: " + totalCards);
+
+  }, 10000); // 10 sec
+}
+
 
 /*---------- objectInfoToSend Example -------------------
 objectInfoToSend[3] = {
