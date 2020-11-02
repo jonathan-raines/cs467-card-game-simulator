@@ -42,17 +42,12 @@ let backgroundColor = getRandomColor();
 // This has to be updated with information from the game environment as it 
 // is seperate from the game objects
 const objectInfoToSend = {};
-
 // Info of all the current players in the game session
 const players = {};
-
 // Number of current players in the game session
-//let numPlayers = 0;
-
+let numPlayers = 0;
 // Depth of the highest card
 var overallDepth = 0;
-
-
 
 function preload() {
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
@@ -61,7 +56,6 @@ function preload() {
 function create() {
   // For passing this pointer to other functions
   const self = this;
-
   // Makes this.objects a group of sprites with physics
   // This is the gameScene's group of objects
   this.tableObjects = this.physics.add.group();
@@ -73,25 +67,30 @@ function create() {
 
   // When a connection is made
   io.on('connection', function (socket) {
-    numPlayers++;
-    players[socket.id] = {
-      playerId: socket.id,
-      name: "player" + numPlayers,
-      playerNum: numPlayers       // player's number that's not long
-    };
+      numPlayers++;
+      players[socket.id] = {
+        playerId: socket.id,
+        name: "player" + numPlayers,
+        playerNum: numPlayers,       // player's number that's not long
+        playerSpacing: Phaser.Math.DegToRad(360/numPlayers)
+    }
+    // Need to recalculate player spacing when a new user joins
+    for (x in players) {
+      if (players[x].playerNum !== 1) {
+        players[x].playerSpacing = Phaser.Math.DegToRad(360/numPlayers);
+      }
+    }
     // Assigns a nickname 
     socket.on('playerNickname', function(name) {
       players[socket.id].name = name;
       console.log('[Room ' +  roomName + '] Player ' + players[socket.id].playerNum + 
-                  ' changed their name to ' + name);      
-      // Send the new info out
-      socket.emit('currentPlayers', players);
+                  ' changed their name to ' + name);
     });
 
     console.log('[Room ' +  roomName + '] Player ' + players[socket.id].playerNum + 
                 ' (' + players[socket.id].name + ') connected');
 
-    socket.emit('currentPlayers', players);
+    //socket.emit('currentPlayers', players);
     socket.emit('backgroundColor', backgroundColor);
 
     socket.on('backgroundColor', function(color) {
@@ -109,8 +108,14 @@ function create() {
                   ' (' + players[socket.id].name + ') disconnected');
       delete players[socket.id];
       numPlayers--;
+      // Need to recalculate player spacing when a new user joins
+      for (x in players) {
+        if (players[x].playerNum !== 1) {
+          players[x].playerSpacing = Phaser.Math.DegToRad(360/numPlayers);
+        }
+      }
       // emit a message to all players to remove this player
-      socket.emit('currentPlayers', players);
+      //socket.emit('currentPlayers', players);
     });
 
     // Listens for object movement by the player
@@ -133,6 +138,11 @@ function create() {
     socket.on('objectFlip', function (inputData) {
       objectInfoToSend[inputData.objectId].isFaceUp = inputData.isFaceUp;
     });
+
+    socket.on('cardRotate', function(inputData) {
+      objectInfoToSend[inputData.objectId].rotation = inputData.rotation;
+    });
+
   });
 }
 
@@ -158,6 +168,8 @@ function startGameDataTicker(self) {
         objectInfoToSend[object.objectId].x = object.x;
         objectInfoToSend[object.objectId].y = object.y;
       });
+
+      io.emit('currentPlayers', players);
       // Sends the card positions to clients
       io.emit('objectUpdates', objectInfoToSend);
 
@@ -194,6 +206,7 @@ function loadCards(self) {
       objectId: i,
       objectName: cardNames[i],
       objectDepth: overallDepth,
+      rotation: 0,
       isFaceUp: true  
     };
     addObject(self, objectInfoToSend[i], cardNames[i], nextCard);
@@ -207,6 +220,7 @@ function loadCards(self) {
     x: ((jokerId-1)%perRow) * xSpacing + xStart,
     y: Math.floor((jokerId-1)/perRow) * ySpacing + yStart,
     objectId: jokerId,
+    rotation: 0,
     isFaceUp: true  
   };
   addObject(self, objectInfoToSend[jokerId], cardNames[jokerId], jokerFrame);
@@ -219,6 +233,8 @@ function addObject(self, objectInfo, objectName, frame) {
   // Assign the individual game object an id
   object.objectId = objectInfo.objectId;
   object.name = objectName;
+  object.rotation = objectInfo.rotation;
+
   // Add it to the object group
   self.tableObjects.add(object);
 }

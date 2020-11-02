@@ -14,23 +14,26 @@ var config = {
     update: update
   }
 };
-
 // List of all the current players in the game 
 var players = {};
-
 // The id of an object being currently dragged. -1 if not
 var isDragging = -1;
-
 // This player's info
 var playerNickname = getParameterByName('nickname');
 // Room's infrom from url query
 const roomName = '/' + getParameterByName('roomId');
 
+var playerIndicator;
+
+var cam;
+
 var game = new Phaser.Game(config);
 
 function preload() {
   this.load.html('nameform', 'assets/nameform.html');
+  this.load.html('playerIndicator', 'assets/playerIndicator.html');
   this.load.html('menu', 'assets/menu.html');
+  this.load.html('help', 'assets/help.html');
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
 }
 
@@ -38,23 +41,45 @@ function create() {
   var self = this;
   this.socket = io(roomName);
 
+  cam = this.cameras.main;
+  cam.setZoom(0.5);
+
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
-  console.log(backgroundColor);
 
   if(playerNickname)
     self.socket.emit('playerNickname', playerNickname);
 
-  // Not in use (implemented in lobby) Keep for reference
-  //showNicknamePrompt(self);
-
   this.tableObjects = this.add.group();
   
+  startSocketUpdates(self);
   loadMenu(self);
   loadCards(self);
-  startSocketUpdates(self);
+  loadPlayer(self);
+
+  menuCam = self.cameras.add(0, 0, game.config.width, game.config.height);
+  menuCam.ignore(self.tableObjects);
+
+  cursors = this.input.keyboard.createCursorKeys();
+
+  this.input.on('pointermove', pointer => {
+    if (pointer.middleButtonDown()) {
+      cam.pan(pointer.x, pointer.y);
+    }
+  });
+
 }
 
-function update() {}
+function update() {
+
+  if (cursors.up.isDown)
+  {
+    cam.zoom += 0.005;
+  }
+  else if (cursors.down.isDown)
+  {
+    cam.zoom -= 0.005;
+  }
+}
 
 // Gets url parameters/queries for a name and returns the value
 function getParameterByName(name, url = window.location.href) {
@@ -66,12 +91,21 @@ function getParameterByName(name, url = window.location.href) {
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
+function loadPlayer(self) {
+  playerIndicator = self.add.dom(635, 1250).createFromCache('playerIndicator');
+  document.getElementById('btn').innerText = playerNickname;
+  
+  playerIndicator.on('pointerdown', function() {
+    console.log(playerIndicator.x);
+    console.log(playerIndicator.y);
+  });
+}
+
 function loadMenu(self) {
   var menu = self.add.text(20, 10, 'Menu', { 
     color: 'White',
     font: 'bold 34px Arial', 
     align: 'left',
-    backgroundColor: "Black"
   }).setInteractive();
 
   menu.depth = 1000;
@@ -103,6 +137,30 @@ function loadMenu(self) {
       element.destroy();
     });
   });
+
+  var help = self.add.text(game.config.width - 80, 10, 'Help', { 
+    color: 'White',
+    font: 'bold 34px Arial', 
+    align: 'left',
+  }).setInteractive();
+
+  help.depth = 1000;
+
+  help.on('pointerdown', function() {
+    var element = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('help');
+
+    self.input.keyboard.on('keyup-ESC', function (event) {
+      element.destroy();
+    });
+
+    $('#exit-help').click(function() {
+      element.destroy();
+    });
+  });
+
+  self.cameras.main.ignore(menu);
+  self.cameras.main.ignore(help);
+  
 }
 
 function loadCards(self) {
@@ -201,19 +259,6 @@ function loadCards(self) {
       if(obj)
         updateObjects(objectsInfo, id, obj, frames);
     });
-    
-    /*
-    // This is wasteful, it iterates all the tableobjects
-    Object.keys(objectsInfo).forEach(function (id) {
-      self.tableObjects.getChildren().forEach(function (object) {
-        // Compares local players to auth server's players
-        //   ▼ auth players          ▼ local players
-        if (objectsInfo[id].objectId === object.objectId) {
-          updateObjects(objectsInfo, id, object, frames);
-        }
-      });
-    });
-    */
   });
 }
 
@@ -232,24 +277,39 @@ function updateObjects(objectsInfo, id, object, frames) {
     if(object.frame.name != frames[frames.indexOf(object.name)]) {
       object.setFrame(frames[frames.indexOf(object.name)]);
     }
-  } else { // face down
+  }  else { // face down
     // check if the card is not down
     if(object.frame.name != "back") {
       object.setFrame(frames[frames.indexOf("back")]);
     }
+  }
+  if (object.rotation !== objectsInfo[id].rotation) {
+    object.rotation = objectsInfo[id].rotation;
   }
 }
 
 function startSocketUpdates(self) {
   // Get background color
   self.socket.on('backgroundColor', function(color) {
-    console.log(color);
     self.backgroundColor = self.cameras.main.setBackgroundColor(color);
   });
 
   // Gets the list of current players from the server
   self.socket.on('currentPlayers', function (playersInfo) {
     players = playersInfo;
+
+
+    for (x in players) {
+      if (players[x].playerId === self.socket.id) {
+        if (players[x].playerNum % 4 === 0) {
+          cam.rotation = 2 * players[x].playerSpacing;
+        } else if (players[x].playerNum % 2 === 0) {
+          cam.rotation = -(players[x].playerSpacing);
+        } else {
+          cam.rotation = players[x].playerSpacing;
+        }
+      }
+    }
   });
 
   // Setup Chat
@@ -264,51 +324,6 @@ function startSocketUpdates(self) {
     $('#messages').append($('<li>').text(msg));
   });
 }
-
-/*
-// At the start of the game it asks the player to enter a nickname
-function showNicknamePrompt(self) {
-  var text = self.add.text(self.cameras.main.centerX-150, self.cameras.main.centerY-100, 
-    'Please enter a nickname:', { 
-      color: 'Black', 
-      boundsAlignH: 'center',
-      fontFamily: 'Arial', 
-      fontSize: '32px '
-  });
-  text.depth = 1000;
-  var element = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('nameform');
-  element.setPerspective(800);
-  element.addListener('click');
-
-  $('#nickname-form').submit(function(e) {
-    e.preventDefault(); // prevents page reloading
-    var inputNickname = $('#nickname').val();
-    $('#nickname').val('');
-    if(inputNickname !== '') {
-      // Fade Out
-      self.tweens.add({
-        targets: element,
-        alpha: 0,
-        duration: 300,
-        ease: 'Power2',
-        onComplete: function() {
-          element.setVisible(false);
-          element.destroy();
-        }
-      }, this);
-      playerNickname = inputNickname;
-      //  Populate the text with whatever they typed in as the username
-      text.destroy();
-      // Send to server
-      self.socket.emit('playerNickname', playerNickname);
-    } else {
-      //  Flash the prompt
-      self.tweens.add({ targets: text, alpha: 0.1, duration: 200, ease: 'Power3', yoyo: true });
-    }
-    return false;
-  });
-}
-*/
 
 function addObject(self, objectId, objectName, frame) {
   // Create object
@@ -331,6 +346,11 @@ function addObject(self, objectId, objectName, frame) {
   object.on('pointerout', function () {
     this.clearTint();
   });
+
+  object.on('pointerdown', function() {
+    self.socket.emit('cardRotate', {
+      objectId: object.objectId,
+      rotation: cam.rotation > 0 ? -(cam.rotation) : cam.rotation
+    });  
+  });
 }
-
-
