@@ -38,17 +38,26 @@ var playerNickname = getParameterByName('nickname');
 // Room's infrom from url query
 const roomName = '/' + getParameterByName('roomId');
 
+var playerIndicator;
+
+var cam;
+
 var game = new Phaser.Game(config);
 
 function preload() {
   this.load.html('nameform', 'assets/nameform.html');
+  this.load.html('playerIndicator', 'assets/playerIndicator.html');
   this.load.html('menu', 'assets/menu.html');
+  this.load.html('help', 'assets/help.html');
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
 }
 
 function create() {
   var self = this;
   this.socket = io(roomName);
+
+  cam = this.cameras.main;
+  cam.setZoom(0.5);
 
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
 
@@ -59,12 +68,24 @@ function create() {
 
   this.tableObjects = this.add.group();
   
+  startSocketUpdates(self);
   loadMenu(self);
   loadCards(self);
+
   startSocketUpdates(self); 
 }
 
-function update() {}
+function update() {
+
+  if (cursors.up.isDown)
+  {
+    cam.zoom += 0.005;
+  }
+  else if (cursors.down.isDown)
+  {
+    cam.zoom -= 0.005;
+  }
+}
 
 // Gets url parameters/queries for a name and returns the value
 function getParameterByName(name, url = window.location.href) {
@@ -76,12 +97,21 @@ function getParameterByName(name, url = window.location.href) {
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
+function loadPlayer(self) {
+  playerIndicator = self.add.dom(635, 1250).createFromCache('playerIndicator');
+  document.getElementById('btn').innerText = playerNickname;
+  
+  playerIndicator.on('pointerdown', function() {
+    console.log(playerIndicator.x);
+    console.log(playerIndicator.y);
+  });
+}
+
 function loadMenu(self) {
   var menu = self.add.text(20, 10, 'Menu', { 
     color: 'White',
     font: 'bold 34px Arial', 
     align: 'left',
-    backgroundColor: "Black"
   }).setInteractive();
 
   menu.depth = MENU_DEPTH;
@@ -113,6 +143,30 @@ function loadMenu(self) {
       element.destroy();
     });
   });
+
+  var help = self.add.text(game.config.width - 80, 10, 'Help', { 
+    color: 'White',
+    font: 'bold 34px Arial', 
+    align: 'left',
+  }).setInteractive();
+
+  help.depth = 1000;
+
+  help.on('pointerdown', function() {
+    var element = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('help');
+
+    self.input.keyboard.on('keyup-ESC', function (event) {
+      element.destroy();
+    });
+
+    $('#exit-help').click(function() {
+      element.destroy();
+    });
+  });
+
+  self.cameras.main.ignore(menu);
+  self.cameras.main.ignore(help);
+  
 }
 
 function loadCards(self) {
@@ -236,6 +290,9 @@ function updateObject(self, objectsInfo, id, object, frames) {
     }
     object.getAll().splice(i, object.getAll().length); // Delete all the extra sprites
   }
+  if (object.rotation !== objectsInfo[id].rotation) {
+    object.rotation = objectsInfo[id].rotation;
+  }
 }
 
 function startSocketUpdates(self) {
@@ -247,6 +304,19 @@ function startSocketUpdates(self) {
   // Gets the list of current players from the server
   self.socket.on('currentPlayers', function (playersInfo) {
     players = playersInfo;
+
+
+    for (x in players) {
+      if (players[x].playerId === self.socket.id) {
+        if (players[x].playerNum % 4 === 0) {
+          cam.rotation = 2 * players[x].playerSpacing;
+        } else if (players[x].playerNum % 2 === 0) {
+          cam.rotation = -(players[x].playerSpacing);
+        } else {
+          cam.rotation = players[x].playerSpacing;
+        }
+      }
+    }
   });
 
   // Setup Chat
