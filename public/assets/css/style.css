@@ -70,6 +70,12 @@ div.menu-area {
     position: relative
 }
 
+#player-button {
+    background-color: blue; 
+    color: white; 
+    border-radius: 15px;
+}
+
 .nickname-form {
     margin: auto;
     background: #8B4513;

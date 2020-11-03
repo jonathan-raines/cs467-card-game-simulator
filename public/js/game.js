@@ -93,7 +93,7 @@ function getParameterByName(name, url = window.location.href) {
 
 function loadPlayer(self) {
   playerIndicator = self.add.dom(635, 1250).createFromCache('playerIndicator');
-  document.getElementById('btn').innerText = playerNickname;
+  document.getElementById('player-button').innerText = playerNickname;
   
   playerIndicator.on('pointerdown', function() {
     console.log(playerIndicator.x);
