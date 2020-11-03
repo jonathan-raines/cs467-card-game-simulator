@@ -1,4 +1,3 @@
-
 var config = {
   type: Phaser.AUTO,
   parent: 'game-area',
