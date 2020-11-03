@@ -34,7 +34,7 @@ div.menu-area {
     margin: 0; 
     padding: 0; 
     overflow: auto; 
-    height: 95%; 
+    height: 100%;
     background-color: white; }
 
 #messages li { 
@@ -67,7 +67,7 @@ div.menu-area {
 
 #game-area {
     width: 80%; 
-    position: relative
+    position: absolute
 }
 
 #player-button {
