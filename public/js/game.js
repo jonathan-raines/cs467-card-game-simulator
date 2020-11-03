@@ -148,8 +148,9 @@ function loadMenu(self) {
     });
   });
 
-  self.cameras.main.ignore(menu, help);
-  
+  self.cameras.main.ignore(menu);
+  self.cameras.main.ignore(help);
+
 }
 
 function loadCards(self) {
