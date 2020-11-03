@@ -51,7 +51,6 @@ function create() {
 
   this.tableObjects = this.add.group();
   
-  startSocketUpdates(self);
   loadMenu(self);
   loadCards(self);
   loadPlayer(self);
@@ -61,7 +60,7 @@ function create() {
 
   cursors = this.input.keyboard.createCursorKeys();
 
-  this.input.on('pointermove', pointer => {
+ this.input.on('pointermove', pointer => {
     if (pointer.middleButtonDown()) {
       cam.pan(pointer.x, pointer.y);
     }
