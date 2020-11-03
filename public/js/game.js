@@ -15,7 +15,7 @@ var config = {
   }
 };
 
-const STACK_SNAP_DISTANCE = 25;
+const STACK_SNAP_DISTANCE = 40;
 const MENU_DEPTH = 1000;
 const cardNames = ['back', 
   'clubsAce', 'clubs2', 'clubs3', 'clubs4', 'clubs5', 'clubs6', 'clubs7', 'clubs8', 'clubs9', 'clubs10', 'clubsJack', 'clubsQueen', 'clubsKing',
@@ -31,7 +31,7 @@ var draggingObj = null;     // The pointer to the object being currently dragged
 var drewAnObject = false;   // Keep track if you drew an item so you don't draw multiple
 var updatedCount = 0;       // Keeps track of what items get updated. 
                             // If it doesn't match this val then it should be deleted
-var drawnSpriteStack = false;
+
 
 // This player's info
 var playerNickname = getParameterByName('nickname');
@@ -52,7 +52,7 @@ function create() {
 
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
 
-  //debugTicker(self);
+  debugTicker(self);
 
   if(playerNickname)
     self.socket.emit('playerNickname', playerNickname);
@@ -124,6 +124,7 @@ function loadCards(self) {
   // Only pick up the top object
   self.input.topOnly = true;
 
+
   // When the mouse starts dragging the object
   self.input.on('dragstart', function (pointer, gameObject) {
     isDragging = gameObject.objectId;
@@ -131,6 +132,7 @@ function loadCards(self) {
 
     console.log("dragging " + draggingObj.first.name + " with " + draggingObj.length + " cards");
     
+    draggingObj.depth = MENU_DEPTH-1;
     self.socket.emit('objectDepth', { // Tells the server to increase the object's depth
       objectId: gameObject.objectId
     });
@@ -140,7 +142,7 @@ function loadCards(self) {
   self.input.on('drag', function (pointer, gameObject, dragX, dragY) {
     if( 
       gameObject === draggingObj && 
-      gameObject.length > 1 && 
+      draggingObj.length > 1 && 
       pointer.moveTime - pointer.downTime < 500 && 
       pointer.getDistance() > 5
     ) {
@@ -160,8 +162,10 @@ function loadCards(self) {
     draggingObj = null;
   });  
 
+
   // Start the object listener for commands from server
   self.socket.on('objectUpdates', function (objectsInfo) {
+    
     updatedCount = (updatedCount+1)%1000; // keeps track of what local items are updated from server
     Object.keys(objectsInfo).forEach(function (id) {
       if(objectsInfo[id] != null) {
@@ -187,13 +191,21 @@ function loadCards(self) {
     // check for objects that weren't updated from the server, then delete them
     self.tableObjects.getChildren().forEach(function (object) {
       // if objects dont have the same updated count then they get deleted on the server
-      if(updatedCount != object.updated) {
+      if(updatedCount > object.updated) {
         object.removeAll(true);
         object.destroy();
       }
     });
+    
+    //updateTableObjects(self, objectsInfo);
   });
 }
+
+function updateTableObjects(self, objectsInfo) {
+
+}
+
+
 
 function updateObject(self, objectsInfo, id, object, frames) {
   if(!object) { 
@@ -201,7 +213,7 @@ function updateObject(self, objectsInfo, id, object, frames) {
   } else {
     object.updated = updatedCount; // Show that this object was updated
     // Check if it is not being currently dragged or drawn
-    if(isDragging != object.objectId && drawnSpriteStack != object.objectId) {
+    if(isDragging != object.objectId) {
       // Check if it's not in the same position
       if(object.x != objectsInfo[id].x || object.y != objectsInfo[id].y) {
         // Update position
@@ -219,13 +231,13 @@ function updateObject(self, objectsInfo, id, object, frames) {
       var serverSpriteId = serverSpriteIdArray[i];
       // if there are more server sprites than local
       if(i >= object.getAll().length) {   
-        //console.log('creating new sprite')
         // Create a new sprite
         var newSprite = createSprite(self, serverSpriteId, cardNames[serverSpriteId], frames);
         object.addAt(newSprite, i);
       } 
       // Update sprite
       else if(object.getAll()[i].spriteId == serverSpriteId) {
+      //else {
         object.getAll()[i].spriteId = serverSpriteId;
         object.getAll()[i].name = cardNames[serverSpriteId];
         object.getAll()[i].setFrame(frames[frames.indexOf(cardNames[serverSpriteId])]);
@@ -343,7 +355,6 @@ function findSnapObject(self, gameObject) {
 function dragGameObject(self, gameObject, dragX, dragY){
   if(gameObject) {
     // Locally changes the object's position
-    gameObject.depth = MENU_DEPTH-1;
     gameObject.x = dragX;
     gameObject.y = dragY;
     // Send the input to the server
@@ -391,7 +402,7 @@ function debugTicker(self) {
         totalCards += object.length;
       });
 
-      console.log("Total number of objects: " + totalCards);
+      console.log("--Total number of objects: " + totalCards);
 
   }, 10000); // 10 sec
 }

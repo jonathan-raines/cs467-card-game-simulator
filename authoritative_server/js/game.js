@@ -79,10 +79,11 @@ function create() {
   this.tableObjects = this.physics.add.group();
 
   loadCards(self);
+
   let frames = self.textures.get('cards').getFrameNames();
   
   startGameDataTicker(self);
-  //debugTicker(self)
+  debugTicker(self)
 
   // When a connection is made
   io.on('connection', function (socket) {
@@ -148,17 +149,7 @@ function create() {
       // then delete top stack
       const topStack = self.tableObjects.getChildren()[inputData.topStack-1];
       const bottomStack = self.tableObjects.getChildren()[inputData.bottomStack-1];
-
-      const topSprites = topStack.getAll();
-      for(var i = 0; i < topSprites.length; i++) {
-        bottomStack.add(topSprites[i]); // Copy sprites to bottom stack
-        objectInfoToSend[bottomStack.objectId].items.push(topSprites[i].spriteId);
-      }
-
-      debugObjectContents(bottomStack);
-      
-      topStack.isActive = false;       // Keep for later use
-      objectInfoToSend[topStack.objectId] = null; // Don't send to client
+      mergeStacks(topStack, bottomStack);
     });
 
     socket.on('drawTopSprite', function(inputData){
@@ -190,6 +181,8 @@ function create() {
       });
       console.log(string)
 
+
+      console.log("Changing objectInfoToSend: ")
       //update clients telling them to create the new stack
       objectInfoToSend[topStack.objectId]={
         objectId: topSprite.spriteId,
@@ -244,7 +237,7 @@ function debugTicker(self) {
         totalCards += object.length;
       });
 
-      console.log("Total number of objects: " + totalCards);
+      console.log("--Total number of objects: " + totalCards);
 
   }, 10000); // 10 sec
 }
@@ -254,7 +247,7 @@ function debugTicker(self) {
 objectInfoToSend[3] = {
   objectId: 3,
   items: [3, 5, 8], // SpriteId of the Items in the stack ([0] is bottom of stack and always the same as objectId)
-  isFaceUp: [false, false, false] // For flipping Not implemented yet
+  isFaceUp: [false, false, false], // For flipping Not implemented yet
   x: 100,
   y: 200,
   objectDepth: 200, 
@@ -283,6 +276,37 @@ function loadCards(self) {
       objectDepth: overallDepth
     };
     addObject(self, [i], initialX, initialY, frames);
+  }
+  //gatherAllCards(self);
+}
+
+function gatherAllCards(self) {
+  const bottomStack = self.tableObjects.getChildren()[0];
+  for(let i = 2; i <= 52; i++) {
+    let topStack = self.tableObjects.getChildren()[i-1];
+    mergeStacks(topStack, bottomStack);
+  }
+}
+
+function mergeStacks(topStack, bottomStack) {
+  // take all items in top stack and put in bottom stack
+  // then delete top stack
+
+  if(objectInfoToSend[topStack.objectId] == null) 
+    console.log("Cannnot merge: topStack is null");
+  else if(objectInfoToSend[bottomStack.objectId] == null) 
+    console.log("Cannnot merge: bottomStack is null");
+  else {
+
+    const topSprites = topStack.getAll();
+    for(var i = 0; i < topSprites.length; i++) {
+      bottomStack.add(topSprites[i]); // Copy sprites to bottom stack
+      objectInfoToSend[bottomStack.objectId].items.push(topSprites[i].spriteId);
+    }
+    debugObjectContents(bottomStack);
+
+    topStack.isActive = false;       // Keep for later use
+    objectInfoToSend[topStack.objectId] = null; // Don't send to client
   }
 }
 
