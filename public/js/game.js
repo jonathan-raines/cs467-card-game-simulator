@@ -59,7 +59,6 @@ function create() {
   cam = this.cameras.main;
   cam.setZoom(0.5);
 
-
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
 
   //debugTicker(self);
@@ -69,14 +68,9 @@ function create() {
 
   this.tableObjects = this.add.group();
   
+  startSocketUpdates(self);
   loadMenu(self);
   loadCards(self);
-  loadPlayer(self);
-
-  menuCam = self.cameras.add(0, 0, game.config.width, game.config.height);
-  menuCam.ignore(self.tableObjects);
-
-  cursors = this.input.keyboard.createCursorKeys();
 
   startSocketUpdates(self); 
 }
@@ -169,7 +163,6 @@ function loadMenu(self) {
       element.destroy();
     });
   });
-
 
   self.cameras.main.ignore(menu);
   self.cameras.main.ignore(help);
