@@ -41,6 +41,8 @@ function create() {
   this.socket = io(roomName);
 
   cam = this.cameras.main;
+  cam.setZoom(0.5);
+
 
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
 
@@ -49,7 +51,6 @@ function create() {
 
   this.tableObjects = this.add.group();
   
-  startSocketUpdates(self);
   loadMenu(self);
   loadCards(self);
   loadPlayer(self);
@@ -58,9 +59,17 @@ function create() {
   menuCam.ignore(self.tableObjects);
 
   cursors = this.input.keyboard.createCursorKeys();
+
+/*  this.input.on('pointermove', pointer => {
+    if (pointer.middleButtonDown()) {
+      cam.pan(pointer.x, pointer.y);
+    }
+  });*/
+
 }
 
 function update() {
+
   if (cursors.up.isDown)
   {
     cam.zoom += 0.005;
@@ -148,7 +157,9 @@ function loadMenu(self) {
     });
   });
 
-  self.cameras.main.ignore(menu, help);
+
+  self.cameras.main.ignore(menu);
+  self.cameras.main.ignore(help);
   
 }
 
