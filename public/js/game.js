@@ -1,4 +1,3 @@
-
 var config = {
   type: Phaser.AUTO,
   parent: 'game-area',
@@ -42,7 +41,10 @@ function create() {
   this.socket = io(roomName);
 
   cam = this.cameras.main;
+<<<<<<< HEAD
   cam.setZoom(0.5);
+=======
+>>>>>>> ebe0ef9b2818f78f5f3a6cf0546de6d4be533634
 
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
 
@@ -51,6 +53,7 @@ function create() {
 
   this.tableObjects = this.add.group();
   
+  startSocketUpdates(self);
   loadMenu(self);
   loadCards(self);
   loadPlayer(self);
@@ -59,6 +62,7 @@ function create() {
   menuCam.ignore(self.tableObjects);
 
   cursors = this.input.keyboard.createCursorKeys();
+<<<<<<< HEAD
 
  this.input.on('pointermove', pointer => {
     if (pointer.middleButtonDown()) {
@@ -66,10 +70,11 @@ function create() {
     }
   });
 
+=======
+>>>>>>> ebe0ef9b2818f78f5f3a6cf0546de6d4be533634
 }
 
 function update() {
-
   if (cursors.up.isDown)
   {
     cam.zoom += 0.005;
@@ -159,7 +164,7 @@ function loadMenu(self) {
 
   self.cameras.main.ignore(menu);
   self.cameras.main.ignore(help);
-  
+
 }
 
 function loadCards(self) {
