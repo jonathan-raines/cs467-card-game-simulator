@@ -44,6 +44,7 @@ function create() {
   cam = this.cameras.main;
   cam.setZoom(0.5);
 
+
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
 
   if(playerNickname)
@@ -51,7 +52,6 @@ function create() {
 
   this.tableObjects = this.add.group();
   
-  startSocketUpdates(self);
   loadMenu(self);
   loadCards(self);
   loadPlayer(self);
@@ -61,11 +61,11 @@ function create() {
 
   cursors = this.input.keyboard.createCursorKeys();
 
-  this.input.on('pointermove', pointer => {
+/*  this.input.on('pointermove', pointer => {
     if (pointer.middleButtonDown()) {
       cam.pan(pointer.x, pointer.y);
     }
-  });
+  });*/
 
 }
 
@@ -157,6 +157,7 @@ function loadMenu(self) {
       element.destroy();
     });
   });
+
 
   self.cameras.main.ignore(menu);
   self.cameras.main.ignore(help);
