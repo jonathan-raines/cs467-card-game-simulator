@@ -41,10 +41,7 @@ function create() {
   this.socket = io(roomName);
 
   cam = this.cameras.main;
-<<<<<<< HEAD
   cam.setZoom(0.5);
-=======
->>>>>>> ebe0ef9b2818f78f5f3a6cf0546de6d4be533634
 
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
 
@@ -62,7 +59,6 @@ function create() {
   menuCam.ignore(self.tableObjects);
 
   cursors = this.input.keyboard.createCursorKeys();
-<<<<<<< HEAD
 
  this.input.on('pointermove', pointer => {
     if (pointer.middleButtonDown()) {
@@ -70,8 +66,6 @@ function create() {
     }
   });
 
-=======
->>>>>>> ebe0ef9b2818f78f5f3a6cf0546de6d4be533634
 }
 
 function update() {
