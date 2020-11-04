@@ -5,7 +5,7 @@ var config = {
     createContainer: true
   },
   // Initial dimensions based on window size
-  width: window.innerWidth*.8,
+  width: window.innerWidth,
   height: window.innerHeight,
   scale: {
     mode: Phaser.Scale.RESIZE,
@@ -29,6 +29,9 @@ const roomName = '/' + getParameterByName('roomId');
 var playerIndicator;
 
 var cam;
+
+/* var menu;
+var help; */
 
 var game = new Phaser.Game(config);
 
@@ -73,6 +76,12 @@ function create() {
 }
 
 function update() {
+  if (game.config.width !== window.innerWidth) {
+    game.config.width = window.innerWidth;
+    /* menu.destroy();
+    help.destroy(); */
+    loadMenu(this);
+  }
   if (cursors.up.isDown)
   {
     cam.zoom += 0.005;
@@ -104,15 +113,8 @@ function loadPlayer(self) {
 }
 
 function loadMenu(self) {
-  var menu = self.add.text(20, 10, 'Menu', { 
-    color: 'White',
-    font: 'bold 34px Arial', 
-    align: 'left',
-  }).setInteractive();
-
-  menu.depth = 1000;
-
-  menu.on('pointerdown', function() {
+  // jQuery to  interact with Menu HTML element
+  $('#menu-button').click(function() {
     var element = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('menu');
 
     $('#user-name').val(playerNickname);
@@ -140,15 +142,8 @@ function loadMenu(self) {
     });
   });
 
-  var help = self.add.text(game.config.width - 80, 10, 'Help', { 
-    color: 'White',
-    font: 'bold 34px Arial', 
-    align: 'left',
-  }).setInteractive();
-
-  help.depth = 1000;
-
-  help.on('pointerdown', function() {
+  // jQuery to intereact with Help HTML element
+  $('#help-button').click(function() {
     var element = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('help');
 
     self.input.keyboard.on('keyup-ESC', function (event) {
@@ -159,10 +154,6 @@ function loadMenu(self) {
       element.destroy();
     });
   });
-
-  self.cameras.main.ignore(menu);
-  self.cameras.main.ignore(help);
-
 }
 
 function loadCards(self) {
