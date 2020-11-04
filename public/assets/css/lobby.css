@@ -1,0 +1,64 @@
+body,h1 {
+    font-family: "Raleway", sans-serif
+}
+
+body, html {
+    height: 100%
+}
+
+body {
+  background-image: url('/assets/lobby_background.jpg');
+  min-height: 100%;
+  background-position: center;
+  background-size: cover;
+  position: relative;
+}
+
+input[type=text], select {
+  width: 100%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+input[type=submit] {
+  width: 100%;
+  background-color: #4CAF50;
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.form-box {
+  border-radius: 10px;
+  background-color: #f2f2f2;
+  padding: 20px;
+}
+
+.center-div {
+  margin: 1em auto;
+  min-width: 20em;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  opacity: 1.0;
+  background-color: #ffffff;
+}
+
+h1 {
+  text-align: center;
+}
+
+hr {
+  margin:auto;
+  width:40%;
+}

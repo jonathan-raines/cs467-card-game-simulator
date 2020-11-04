@@ -7,6 +7,10 @@ var config = {
   // Initial dimensions based on window size
   width: window.innerWidth*.8,
   height: window.innerHeight,
+  scale: {
+    mode: Phaser.Scale.RESIZE,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
   scene: {
     preload: preload,
     create: create,
@@ -41,6 +45,7 @@ function create() {
   this.socket = io(roomName);
 
   cam = this.cameras.main;
+  cam.setZoom(0.5);
 
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
 
@@ -58,6 +63,13 @@ function create() {
   menuCam.ignore(self.tableObjects);
 
   cursors = this.input.keyboard.createCursorKeys();
+
+ this.input.on('pointermove', pointer => {
+    if (pointer.middleButtonDown()) {
+      cam.pan(pointer.x, pointer.y);
+    }
+  });
+
 }
 
 function update() {
@@ -83,7 +95,7 @@ function getParameterByName(name, url = window.location.href) {
 
 function loadPlayer(self) {
   playerIndicator = self.add.dom(635, 1250).createFromCache('playerIndicator');
-  document.getElementById('btn').innerText = playerNickname;
+  document.getElementById('player-button').innerText = playerNickname;
   
   playerIndicator.on('pointerdown', function() {
     console.log(playerIndicator.x);

@@ -1,0 +1,105 @@
+.menu-area {
+    background-color: white; 
+    height: 400px; 
+    width: 400px; 
+    border-radius: 25px;
+}
+
+.menu-title {
+    text-align: center; 
+    font-size: 28px; 
+    font-weight: bold; 
+    padding-top: 20px;
+}
+
+div.menu-area {
+    padding-left: 20px;
+}
+
+.button-div {
+    position: absolute; 
+    right: 20px; 
+    bottom: 10px;
+}
+
+.menu-button {
+    background-color: #3CB371; 
+    color: white; 
+    border-radius: 10px; 
+    font-weight: bold;
+}
+
+.row {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: royalblue;
+}
+
+#game-area {
+    position: relative;
+    width: 85%;
+    height: 100%;
+}
+
+#chat-area {
+    background-color: violet;
+    position: relative;
+    width: 15%;
+    height: 100%;
+}
+
+#chat-msg {
+    position: absolute;
+    width: 100%;
+    bottom: 0;
+    border-radius: 10px;
+}
+
+#chat-send {
+    background-color: #3CB371;
+    color: white;
+    border-radius: 10px;
+    font-weight: bold;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+}
+
+#messages { 
+    list-style-type: none; 
+    margin: 0; 
+    padding: 0; 
+    overflow: auto; 
+    height: 100%;
+    background-color: whitesmoke; }
+
+#messages li { 
+    padding: 5px 10px; 
+}
+
+#messages li:nth-child(odd) { 
+    background: rgb(223, 218, 218); 
+}
+
+#player-button {
+    background-color: blue; 
+    color: white; 
+    border-radius: 15px;
+}
+
+.nickname-form {
+    margin: auto;
+    background: #8B4513;
+    width: 300px;
+    height: 100px;
+    position: absolute;
+    top: 50%; 
+    left: 50%;
+    margin: -50px 0 0 -150px;
+    text-align: center;
+}
+
+#nickname-form {
+    margin: 31px 0 0 29px;
+}
