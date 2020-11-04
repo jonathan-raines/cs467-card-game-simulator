@@ -191,7 +191,6 @@ function loadCards(self) {
 
   // When the mouse starts dragging the object
   self.input.on('dragstart', function (pointer, gameObject) {
-    gameObject.setTint(0xff0000);
     isDragging = gameObject.objectId;
     draggingObj = gameObject;
 
@@ -268,31 +267,29 @@ function loadCards(self) {
   });
 }
 
-/*
-function updateTableObjects(self, objectsInfo, frames) {
-  Object.keys(objectsInfo).forEach(function (id) {
-    var updatedAnObject = false;
-    self.tableObjects.getChildren().forEach(function (object) {
-      // Check if server has object
-      if(objectsInfo[object.objectId] == null) {
-        object.removeAll(true);
-        object.destroy();
-      }
+// function updateTableObjects(self, objectsInfo, frames) {
+//   Object.keys(objectsInfo).forEach(function (id) {
+//     var updatedAnObject = false;
+//     self.tableObjects.getChildren().forEach(function (object) {
+//       // Check if server has object
+//       if(objectsInfo[object.objectId] == null) {
+//         object.removeAll(true);
+//         object.destroy();
+//       }
 
-      // Check if object is same as server's object
-      if(object.objectId == id && objectsInfo[id] != null) {
-        updateObject(self, objectsInfo, id, object, frames);
-        updatedAnObject = true;
-      } 
+//       // Check if object is same as server's object
+//       if(object.objectId == id && objectsInfo[id] != null) {
+//         updateObject(self, objectsInfo, id, object, frames);
+//         updatedAnObject = true;
+//       } 
       
-    });
+//     });
 
-    if(!updatedAnObject) {
-      addObject(self, objectsInfo[id].items, frames);
-    }
-  });
-}
-*/
+//     if(!updatedAnObject) {
+//       addObject(self, objectsInfo[id].items, frames);
+//     }
+//   });
+// }
 
 
 function updateObject(self, objectsInfo, id, object, frames) {
@@ -409,13 +406,7 @@ function createSprite(self, spriteId, spriteName, frames) {
   sprite.displayWidth = 70;
   sprite.displayHeight = 95;
   sprite.isFaceUp = true;
-  // Change color on hover
-  sprite.on('pointerover', function () {
-    this.setTint(0x00ff00);
-  });
-  sprite.on('pointerout', function () {
-    this.clearTint();
-  });
+
   return sprite;
 }
 
