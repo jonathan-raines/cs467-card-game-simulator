@@ -26,12 +26,7 @@ var playerNickname = getParameterByName('nickname');
 // Room's infrom from url query
 const roomName = '/' + getParameterByName('roomId');
 
-var playerIndicator;
-
 var cam;
-
-/* var menu;
-var help; */
 
 var game = new Phaser.Game(config);
 
@@ -62,9 +57,6 @@ function create() {
   loadCards(self);
   loadPlayer(self);
 
-  menuCam = self.cameras.add(0, 0, game.config.width, game.config.height);
-  menuCam.ignore(self.tableObjects);
-
   cursors = this.input.keyboard.createCursorKeys();
 
  this.input.on('pointermove', pointer => {
@@ -76,12 +68,6 @@ function create() {
 }
 
 function update() {
-  if (game.config.width !== window.innerWidth) {
-    game.config.width = window.innerWidth;
-    /* menu.destroy();
-    help.destroy(); */
-    loadMenu(this);
-  }
   if (cursors.up.isDown)
   {
     cam.zoom += 0.005;
@@ -100,16 +86,6 @@ function getParameterByName(name, url = window.location.href) {
     if (!results) return null;
     if (!results[2]) return '';
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
-}
-
-function loadPlayer(self) {
-  playerIndicator = self.add.dom(635, 1250).createFromCache('playerIndicator');
-  document.getElementById('player-button').innerText = playerNickname;
-  
-  playerIndicator.on('pointerdown', function() {
-    console.log(playerIndicator.x);
-    console.log(playerIndicator.y);
-  });
 }
 
 function loadMenu(self) {
