@@ -7,6 +7,10 @@ var config = {
   // Initial dimensions based on window size
   width: window.innerWidth*.8,
   height: window.innerHeight,
+  scale: {
+    mode: Phaser.Scale.RESIZE,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
   scene: {
     preload: preload,
     create: create,
