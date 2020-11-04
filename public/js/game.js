@@ -46,7 +46,9 @@ var game = new Phaser.Game(config);
 
 function preload() {
   this.load.html('nameform', 'assets/nameform.html');
+  this.load.html('playerIndicator', 'assets/playerIndicator.html');
   this.load.html('menu', 'assets/menu.html');
+  this.load.html('help', 'assets/help.html');
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
 }
 
@@ -84,7 +86,16 @@ function create() {
 
 }
 
-function update() {}
+function update() {
+  if (cursors.up.isDown)
+  {
+    cam.zoom += 0.005;
+  }
+  else if (cursors.down.isDown)
+  {
+    cam.zoom -= 0.005;
+  }
+}
 
 // Gets url parameters/queries for a name and returns the value
 function getParameterByName(name, url = window.location.href) {
@@ -143,6 +154,29 @@ function loadMenu(self) {
       element.destroy();
     });
   });
+   var help = self.add.text(game.config.width - 80, 10, 'Help', { 
+    color: 'White',
+    font: 'bold 34px Arial', 
+    align: 'left',
+  }).setInteractive();
+
+  help.depth = 1000;
+
+  help.on('pointerdown', function() {
+    var element = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('help');
+
+    self.input.keyboard.on('keyup-ESC', function (event) {
+      element.destroy();
+    });
+
+    $('#exit-help').click(function() {
+      element.destroy();
+    });
+  });
+
+  self.cameras.main.ignore(menu);
+  self.cameras.main.ignore(help);
+
 }
 
 function loadCards(self) {
@@ -157,6 +191,7 @@ function loadCards(self) {
 
   // When the mouse starts dragging the object
   self.input.on('dragstart', function (pointer, gameObject) {
+    gameObject.setTint(0xff0000);
     isDragging = gameObject.objectId;
     draggingObj = gameObject;
 
@@ -300,6 +335,10 @@ function updateObject(self, objectsInfo, id, object, frames) {
       stackVisualEffect(object.getAll()[i], i, serverSpriteIdArray.length-1);
     }
     object.getAll().splice(i, object.getAll().length); // Delete all the extra sprites
+    //rotate the object for each player camera
+    if (object.rotation !== objectsInfo[id].rotation) {
+      object.setRotation = objectsInfo[id].rotation;
+    }
   }
 }
 
@@ -312,6 +351,17 @@ function startSocketUpdates(self) {
   // Gets the list of current players from the server
   self.socket.on('currentPlayers', function (playersInfo) {
     players = playersInfo;
+    for (x in players) {
+      if (players[x].playerId === self.socket.id) {
+        if (players[x].playerNum % 4 === 0) {
+          cam.rotation = 2 * players[x].playerSpacing;
+        } else if (players[x].playerNum % 2 === 0) {
+          cam.rotation = -(players[x].playerSpacing);
+        } else {
+          cam.rotation = players[x].playerSpacing;
+        }
+      }
+    }
   });
 
   // Setup Chat
@@ -359,6 +409,13 @@ function createSprite(self, spriteId, spriteName, frames) {
   sprite.displayWidth = 70;
   sprite.displayHeight = 95;
   sprite.isFaceUp = true;
+  // Change color on hover
+  sprite.on('pointerover', function () {
+    this.setTint(0x00ff00);
+  });
+  sprite.on('pointerout', function () {
+    this.clearTint();
+  });
   return sprite;
 }
 
