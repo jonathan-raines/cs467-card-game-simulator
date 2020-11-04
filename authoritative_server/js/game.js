@@ -251,7 +251,7 @@ function debugTicker(self) {
         totalCards += object.length;
       });
 
-      console.log("--Total number of objects: " + totalCards);
+      //console.log("--Total number of objects: " + totalCards);
 
   }, 10000); // 10 sec
 }
@@ -311,7 +311,7 @@ function mergeStacks(topStack, bottomStack) {
   else if(objectInfoToSend[bottomStack.objectId] == null) 
     console.log("Cannnot merge: bottomStack is null");
   else {
-
+    console.log("Merging stacks")
     const topSprites = topStack.getAll();
     for(var i = 0; i < topSprites.length; i++) {
       bottomStack.add(topSprites[i]); // Copy sprites to bottom stack

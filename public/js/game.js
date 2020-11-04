@@ -35,7 +35,7 @@ var updatedCount = 0;       // Keeps track of what items get updated.
 
 // This player's info
 var playerNickname = getParameterByName('nickname');
-// Room's infrom from url query
+// Room's info from url query
 const roomName = '/' + getParameterByName('roomId');
 
 var playerIndicator;
@@ -76,7 +76,7 @@ function create() {
 }
 
 function update() {
-
+  cursors = this.input.keyboard.createCursorKeys();
   if (cursors.up.isDown)
   {
     cam.zoom += 0.005;
@@ -223,7 +223,7 @@ function loadCards(self) {
     updatedCount = (updatedCount+1)%1000; // keeps track of what local items are updated from server
     Object.keys(objectsInfo).forEach(function (id) {
       if(objectsInfo[id] != null) {
-        var updatedAnObject = false;     // if a tableObjec is updated = true
+        var updatedAnObject = false;     // if a tableObject is updated = true
 
         // Go through current objects on table
         self.tableObjects.getChildren().forEach(function (tableObject) {
@@ -246,6 +246,7 @@ function loadCards(self) {
     self.tableObjects.getChildren().forEach(function (object) {
       // if objects dont have the same updated count then they get deleted on the server
       if(updatedCount > object.updated) {
+        console.log("removing object deleted from server");
         object.removeAll(true);
         object.destroy();
       }
@@ -302,8 +303,10 @@ function updateObject(self, objectsInfo, id, object, frames) {
     }
     object.getAll().splice(i, object.getAll().length); // Delete all the extra sprites
   }
+  // set the rotation of cards locally. Setting object.rotation directly does not work
+  // properly for some reason
   if (object.rotation !== objectsInfo[id].rotation) {
-    object.rotation = objectsInfo[id].rotation;
+    object.setRotation = objectsInfo[id].rotation;
   }
 }
 
@@ -422,6 +425,7 @@ function findSnapObject(self, gameObject) {
   return closestObj;
 }
 
+//updates gameObject location by dragX, dragY
 function dragGameObject(self, gameObject, dragX, dragY){
   if(gameObject) {
     // Locally changes the object's position
