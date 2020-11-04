@@ -87,12 +87,19 @@ function create() {
 
   // When a connection is made
   io.on('connection', function (socket) {
-    numPlayers++;
-    players[socket.id] = {
-      playerId: socket.id,
-      name: "player" + numPlayers,
-      playerNum: numPlayers       // player's number that's not long
-    };
+      numPlayers++;
+      players[socket.id] = {
+        playerId: socket.id,
+        name: "player" + numPlayers,
+        playerNum: numPlayers,       // player's number that's not long
+        playerSpacing: Phaser.Math.DegToRad(360/numPlayers)
+    }
+    // Need to recalculate player spacing when a new user joins
+    for (x in players) {
+      if (players[x].playerNum !== 1) {
+        players[x].playerSpacing = Phaser.Math.DegToRad(360/numPlayers);
+      }
+    }
     // Assigns a nickname 
     socket.on('playerNickname', function(name) {
       players[socket.id].name = name;
@@ -105,7 +112,7 @@ function create() {
     console.log('[Room ' +  roomName + '] Player ' + players[socket.id].playerNum + 
                 ' (' + players[socket.id].name + ') connected');
 
-    socket.emit('currentPlayers', players);
+    //socket.emit('currentPlayers', players);
     socket.emit('backgroundColor', backgroundColor);
 
     socket.on('backgroundColor', function(color) {
@@ -123,8 +130,14 @@ function create() {
                   ' (' + players[socket.id].name + ') disconnected');
       delete players[socket.id];
       numPlayers--;
+      // Need to recalculate player spacing when a new user joins
+      for (x in players) {
+        if (players[x].playerNum !== 1) {
+          players[x].playerSpacing = Phaser.Math.DegToRad(360/numPlayers);
+        }
+      }
       // emit a message to all players to remove this player
-      socket.emit('currentPlayers', players);
+      //socket.emit('currentPlayers', players);
     });
 
     // Listens for object movement by the player
@@ -209,7 +222,15 @@ function debugObjectContents(object) {
 }
 
 function update() {
-
+  /*
+  // Update the object info to send to clients from game objects
+  this.tableObjects.getChildren().forEach((object) => {
+    objectInfoToSend[object.objectId].x = object.x;
+    objectInfoToSend[object.objectId].y = object.y;
+  });
+  // Sends the card positions to clients
+  io.emit('objectUpdates', objectInfoToSend);
+  */
 }
 
 // This is the update() function for the server
@@ -274,7 +295,8 @@ function loadCards(self) {
       items: [i], // Items in the stack, initially just the spriteId for the card
       x: initialX,
       y: initialY,
-      objectDepth: overallDepth
+      objectDepth: overallDepth,
+      rotation: 0
     };
     addObject(self, [i], initialX, initialY, frames);
   }
