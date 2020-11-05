@@ -36,6 +36,7 @@ var isDragging = -1;        // The id of an object being currently dragged. -1 i
 var wasDragging = -1;       // Obj id that was recently dragged. For lag compensation.
 var draggingObj = null;     // The pointer to the object being currently dragged
 var drewAnObject = false;   // Keep track if you drew an item so you don't draw multiple
+var stackToShuffle = null;
 
 
 // This player's info
@@ -212,8 +213,14 @@ function loadCards(self) {
     setTimeout(function(){ 
       wasDragging = -1;
     }, 300);
+
+    stackToShuffle = gameObject;
   });  
 
+  //toggle whether to shuffle the next dragged stack or not
+  self.input.keyboard.on('keyup-R', function () {
+    shuffleStack(self, stackToShuffle);
+  });
 
   // Start the object listener for commands from server
   self.socket.on('objectUpdates', function (objectsInfo) {
@@ -539,4 +546,14 @@ function debugTicker(self) {
       console.log("--Total number of objects: " + totalCards);
 
   }, 10000); // 10 sec
+}
+
+function shuffleStack(self){
+  if(stackToShuffle){
+    console.log('shuffling stack');
+    self.socket.emit('shuffleStack', {
+      objectId: stackToShuffle.objectId
+    });
+    stackToShuffle= null;
+  }
 }
