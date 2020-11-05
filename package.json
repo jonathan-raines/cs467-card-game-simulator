@@ -1,6 +1,6 @@
 {
   "name": "card-game-simulator",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "description": "An online multiplayer card game simulator.",
   "main": "server.js",
   "scripts": {
@@ -8,7 +8,11 @@
     "start": "node --inspect server.js"
   },
   "keywords": [],
-  "author": "",
+  "contributors": [
+    "Thomas Sugimoto",
+    "Jonathan Raines",
+    "Phillip Wellheuser"
+  ],
   "license": "MIT",
   "dependencies": {
     "canvas": "^2.1.0",
