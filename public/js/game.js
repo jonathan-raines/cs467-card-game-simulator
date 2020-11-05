@@ -43,7 +43,6 @@ function create() {
   this.socket = io(roomName);
 
   cam = this.cameras.main;
-  cam.setZoom(0.5);
 
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
 
@@ -55,28 +54,22 @@ function create() {
   startSocketUpdates(self);
   loadMenu(self);
   loadCards(self);
-  loadPlayer(self);
 
   cursors = this.input.keyboard.createCursorKeys();
 
- this.input.on('pointermove', pointer => {
+  this.input.on('pointermove', pointer => {
     if (pointer.middleButtonDown()) {
       cam.pan(pointer.x, pointer.y);
     }
   });
 
+  this.input.on('wheel', function(pointer, currentlyOver, dx, dy, dz, event) { 
+    cam.zoom += dy * -.001;
+  });
+
 }
 
-function update() {
-  if (cursors.up.isDown)
-  {
-    cam.zoom += 0.005;
-  }
-  else if (cursors.down.isDown)
-  {
-    cam.zoom -= 0.005;
-  }
-}
+function update() {}
 
 // Gets url parameters/queries for a name and returns the value
 function getParameterByName(name, url = window.location.href) {
@@ -89,9 +82,10 @@ function getParameterByName(name, url = window.location.href) {
 }
 
 function loadMenu(self) {
+  var menu, help;
   // jQuery to  interact with Menu HTML element
   $('#menu-button').click(function() {
-    var element = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('menu');
+    menu = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('menu');
 
     $('#user-name').val(playerNickname);
 
@@ -110,24 +104,24 @@ function loadMenu(self) {
     });
 
     self.input.keyboard.on('keyup-ESC', function (event) {
-      element.destroy();
+      menu.destroy();
     });
 
     $('#exit-menu').click(function() {
-      element.destroy();
+      menu.destroy();
     });
   });
 
   // jQuery to intereact with Help HTML element
   $('#help-button').click(function() {
-    var element = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('help');
+    help = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('help');
 
     self.input.keyboard.on('keyup-ESC', function (event) {
-      element.destroy();
+      help.destroy();
     });
 
     $('#exit-help').click(function() {
-      element.destroy();
+      help.destroy();
     });
   });
 }
@@ -298,6 +292,7 @@ function addObject(self, objectId, objectName, frame) {
   // Create object
   // No physics for client side
   const object = self.add.sprite(0, 0, 'cards', frame).setInteractive();
+  object.setScale(0.65);
 
   // Assign the individual game object an id and name
   object.objectId = objectId;
