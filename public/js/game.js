@@ -548,11 +548,11 @@ function debugTicker(self) {
   }, 10000); // 10 sec
 }
 
-function shuffleStack(self){
+function shuffleStack(self, object){
   if(stackToShuffle){
     console.log('shuffling stack');
     self.socket.emit('shuffleStack', {
-      objectId: stackToShuffle.objectId
+      objectId: object.objectId
     });
     stackToShuffle= null;
   }
