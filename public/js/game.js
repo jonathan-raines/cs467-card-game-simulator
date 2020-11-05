@@ -63,8 +63,8 @@ function create() {
     }
   });
 
-  this.input.on('wheel', function(pointer, currentlyOver, dx, dy, dz, event) { 
-    cam.zoom += dy * -.001;
+  this.input.on('wheel', function(pointer, currentlyOver, deltaX, deltaY, deltaZ, event) { 
+    cam.zoom += deltaY * -.001;
   });
 
 }
