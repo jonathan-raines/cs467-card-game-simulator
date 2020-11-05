@@ -29,6 +29,22 @@ div.menu-area {
     font-weight: bold;
 }
 
+#menu-button {
+    position: absolute; 
+    color: white;
+    font: bold 34px Arial;
+    left: 30px;
+    top: 10px;
+}
+
+#help-button {
+    position: absolute; 
+    color: white; 
+    font: bold 34px Arial; 
+    right: 10px; 
+    top: 10px;
+}
+
 .row {
     position: relative;
     width: 100%;

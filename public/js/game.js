@@ -6,7 +6,7 @@ var config = {
     createContainer: true
   },
   // Initial dimensions based on window size
-  width: window.innerWidth*.8,
+  width: window.innerWidth,
   height: window.innerHeight,
   scale: {
     mode: Phaser.Scale.RESIZE,
@@ -42,6 +42,8 @@ var playerNickname = getParameterByName('nickname');
 // Room's infrom from url query
 const roomName = '/' + getParameterByName('roomId');
 
+var cam;
+
 var game = new Phaser.Game(config);
 
 function preload() {
@@ -57,7 +59,6 @@ function create() {
   this.socket = io(roomName);
 
   cam = this.cameras.main;
-  cam.setZoom(0.5);
 
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
 
@@ -70,11 +71,6 @@ function create() {
   
   loadMenu(self);
   loadCards(self);
-  startSocketUpdates(self); 
-  loadPlayer(self);
-
-  // menuCam = self.cameras.add(0, 0, game.config.width, game.config.height);
-  // menuCam.ignore(self.tableObjects);
 
   cursors = this.input.keyboard.createCursorKeys();
 
@@ -84,18 +80,13 @@ function create() {
     }
   });
 
+  this.input.on('wheel', function(pointer, currentlyOver, deltaX, deltaY, deltaZ, event) { 
+    cam.zoom += deltaY * -.001;
+  });
+
 }
 
-function update() {
-  if (cursors.up.isDown)
-  {
-    cam.zoom += 0.005;
-  }
-  else if (cursors.down.isDown)
-  {
-    cam.zoom -= 0.005;
-  }
-}
+function update() {}
 
 // Gets url parameters/queries for a name and returns the value
 function getParameterByName(name, url = window.location.href) {
@@ -107,28 +98,11 @@ function getParameterByName(name, url = window.location.href) {
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
-function loadPlayer(self) {
-  playerIndicator = self.add.dom(635, 1250).createFromCache('playerIndicator');
-  document.getElementById('player-button').innerText = playerNickname;
-  
-  playerIndicator.on('pointerdown', function() {
-    console.log(playerIndicator.x);
-    console.log(playerIndicator.y);
-  });
-}
-
 function loadMenu(self) {
-  var menu = self.add.text(20, 10, 'Menu', { 
-    color: 'White',
-    font: 'bold 34px Arial', 
-    align: 'left',
-    backgroundColor: "Black"
-  }).setInteractive();
-
-  menu.depth = MENU_DEPTH;
-
-  menu.on('pointerdown', function() {
-    var element = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('menu');
+  var menu, help;
+  // jQuery to  interact with Menu HTML element
+  $('#menu-button').click(function() {
+    menu = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('menu');
 
     $('#user-name').val(playerNickname);
 
@@ -147,36 +121,26 @@ function loadMenu(self) {
     });
 
     self.input.keyboard.on('keyup-ESC', function (event) {
-      element.destroy();
+      menu.destroy();
     });
 
     $('#exit-menu').click(function() {
-      element.destroy();
+      menu.destroy();
     });
   });
-   var help = self.add.text(game.config.width - 80, 10, 'Help', { 
-    color: 'White',
-    font: 'bold 34px Arial', 
-    align: 'left',
-  }).setInteractive();
 
-  help.depth = 1000;
-
-  help.on('pointerdown', function() {
-    var element = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('help');
+  // jQuery to intereact with Help HTML element
+  $('#help-button').click(function() {
+    help = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('help');
 
     self.input.keyboard.on('keyup-ESC', function (event) {
-      element.destroy();
+      help.destroy();
     });
 
     $('#exit-help').click(function() {
-      element.destroy();
+      help.destroy();
     });
   });
-
-  self.cameras.main.ignore(menu);
-  self.cameras.main.ignore(help);
-
 }
 
 function loadCards(self) {
