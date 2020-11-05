@@ -83,7 +83,7 @@ function create() {
   let frames = self.textures.get('cards').getFrameNames();
   
   startGameDataTicker(self);
-  debugTicker(self)
+  //debugTicker(self)
 
   // When a connection is made
   io.on('connection', function (socket) {
@@ -92,12 +92,12 @@ function create() {
         playerId: socket.id,
         name: "player" + numPlayers,
         playerNum: numPlayers,       // player's number that's not long
-        playerSpacing: Phaser.Math.DegToRad(360/numPlayers)
+        playerSpacing: 0
     }
     // Need to recalculate player spacing when a new user joins
     for (x in players) {
       if (players[x].playerNum !== 1) {
-        players[x].playerSpacing = Phaser.Math.DegToRad(360/numPlayers);
+        players[x].playerSpacing = (players[x].playerNum - 1) * 360/numPlayers;
       }
     }
     // Assigns a nickname 
@@ -112,7 +112,6 @@ function create() {
     console.log('[Room ' +  roomName + '] Player ' + players[socket.id].playerNum + 
                 ' (' + players[socket.id].name + ') connected');
 
-    //socket.emit('currentPlayers', players);
     socket.emit('backgroundColor', backgroundColor);
 
     socket.on('backgroundColor', function(color) {
@@ -133,11 +132,9 @@ function create() {
       // Need to recalculate player spacing when a new user joins
       for (x in players) {
         if (players[x].playerNum !== 1) {
-          players[x].playerSpacing = Phaser.Math.DegToRad(360/numPlayers);
+          players[x].playerSpacing = (players[x].playerNum - 1) * 360/numPlayers;
         }
       }
-      // emit a message to all players to remove this player
-      //socket.emit('currentPlayers', players);
     });
 
     // Listens for object movement by the player
@@ -148,6 +145,11 @@ function create() {
       var obj = self.tableObjects.getChildren()[inputData.objectId-1];
       if(obj)
           obj.setPosition(inputData.x, inputData.y);
+    });
+
+    socket.on('objectRotation', function (inputData) {
+      const object = self.tableObjects.getChildren()[inputData.objectId-1];
+      object.angle = inputData.angle;
     });
 
     // Updates the depth when player picks up a card
@@ -168,49 +170,20 @@ function create() {
     socket.on('drawTopSprite', function(inputData){
       //find the stack to be drawn from
       const bottomStack = self.tableObjects.getChildren()[inputData.bottomStack-1];
-      //select the top sprite in the stack
-      const topSprite = bottomStack.last;
-      console.log('removing top sprite: ' +  bottomStack.last.frame.name + ', id: ' + topSprite.spriteId)
-
-      //find the original stack that the sprite was created with
-      const topStack = self.tableObjects.getChildren()[topSprite.spriteId-1];
-      
-      //re-define the stack and put its original sprite back into it
-      topStack.isActive = true;
-      topStack.x = bottomStack.x;
-      topStack.y = bottomStack.y;
-      topStack.objectId = topSprite.spriteId;
-      bottomStack.remove(topSprite);
-      topStack.add(topSprite);
-
-      let string = 'bottom local contains: ';
-      bottomStack.getAll().forEach(function(sprite){
-        string += (sprite.name + ', ')
-      });
-      console.log(string)
-
-      string = 'top local contains: ';
-      topStack.getAll().forEach(function(sprite){
-        string += (sprite.name + ', ')
-      });
-      console.log(string)
-
-
-      console.log("Changing objectInfoToSend: ")
-      //update clients telling them to create the new stack
-      objectInfoToSend[topStack.objectId]={
-        objectId: topStack.objectId,
-        items: [ objectInfoToSend[bottomStack.objectId].items.pop() ],
-        x: bottomStack.x,
-        y: bottomStack.y,
-        objectDepth: overallDepth
-      }
-
-      console.log('bottomObjectInfo: ' +objectInfoToSend[bottomStack.objectId].items)
-      console.log('topObjectInfo: ' +objectInfoToSend[topStack.objectId].items+'\n')
+      drawTopSprite(self, bottomStack);
     });
+
+    /*
+    // ****************** BUGGY *************************
+    // Updates the card face when player picks up a card
+    socket.on('objectFlip', function (inputData) {
+      var objToFlip = self.tableObjects.getChildren()[inputData.objectId-1];
+      flipObject(self, objToFlip, frames);
+    });
+    */
   });
 }
+
 
 function debugObjectContents(object) {
   console.log("Object #" + object.objectId + " contents ([0] is bottom/first):");
@@ -222,15 +195,7 @@ function debugObjectContents(object) {
 }
 
 function update() {
-  /*
-  // Update the object info to send to clients from game objects
-  this.tableObjects.getChildren().forEach((object) => {
-    objectInfoToSend[object.objectId].x = object.x;
-    objectInfoToSend[object.objectId].y = object.y;
-  });
-  // Sends the card positions to clients
-  io.emit('objectUpdates', objectInfoToSend);
-  */
+
 }
 
 // This is the update() function for the server
@@ -241,11 +206,13 @@ function startGameDataTicker(self) {
         if(object.isActive) {
           objectInfoToSend[object.objectId].x = object.x;
           objectInfoToSend[object.objectId].y = object.y;
+          objectInfoToSend[object.objectId].angle = object.angle;
         }
       });
 
       // Sends the card positions to clients
       io.emit('objectUpdates', objectInfoToSend);
+      io.emit('currentPlayers', players);
 
   }, GAME_TICK_RATE);
 }
@@ -293,14 +260,15 @@ function loadCards(self) {
     objectInfoToSend[i] = {
       objectId: i,
       items: [i], // Items in the stack, initially just the spriteId for the card
+      isFaceUp: [true],
       x: initialX,
       y: initialY,
       objectDepth: overallDepth,
       rotation: 0
     };
-    addObject(self, [i], initialX, initialY, frames);
+    addObject(self, [i], initialX, initialY, [true], frames);
   }
-  //gatherAllCards(self);
+  gatherAllCards(self);
 }
 
 function gatherAllCards(self) {
@@ -309,12 +277,13 @@ function gatherAllCards(self) {
     let topStack = self.tableObjects.getChildren()[i-1];
     mergeStacks(topStack, bottomStack);
   }
+  bottomStack.x = 400;
+  bottomStack.y = 400;
 }
 
 function mergeStacks(topStack, bottomStack) {
   // take all items in top stack and put in bottom stack
   // then delete top stack
-
   if(objectInfoToSend[topStack.objectId] == null) 
     console.log("Cannnot merge: topStack is null");
   else if(objectInfoToSend[bottomStack.objectId] == null) 
@@ -325,19 +294,81 @@ function mergeStacks(topStack, bottomStack) {
     for(var i = 0; i < topSprites.length; i++) {
       bottomStack.add(topSprites[i]); // Copy sprites to bottom stack
       objectInfoToSend[bottomStack.objectId].items.push(topSprites[i].spriteId);
+      objectInfoToSend[bottomStack.objectId].isFaceUp.push(objectInfoToSend[topStack.objectId].isFaceUp[i]);
     }
-    debugObjectContents(bottomStack);
+    //debugObjectContents(bottomStack);
 
     topStack.isActive = false;       // Keep for later use
     objectInfoToSend[topStack.objectId] = null; // Don't send to client
   }
 }
 
-function addObject(self, spriteIds, x, y, frames) {
+/*
+// ************ BUGGY ***********************
+function flipObject(self, gameObject, frames) {
+  if(gameObject) {
+    for(var i = 0; i < Math.floor(gameObject.length*0.5)+1; i++) {
+      var firstSprite = gameObject.getAt(i);
+      var secondSprite = gameObject.getAt(gameObject.length-1-i);
+
+      var newSprite1 = createSprite(self, firstSprite.spriteId, firstSprite.name, !firstSprite.isFaceUp, frames);
+      var newSprite2 = createSprite(self, secondSprite.spriteId, secondSprite.name, !secondSprite.isFaceUp, frames);
+      gameObject.replace(firstSprite, newSprite2, true);
+      gameObject.replace(secondSprite, newSprite1, true);
+      objectInfoToSend[gameObject.objectId].items[i] = secondSprite.objectId;
+      objectInfoToSend[gameObject.objectId].items[gameObject.length-1-i] = firstSprite.objectId;
+      objectInfoToSend[gameObject.objectId].isFaceUp[i] = !secondSprite.isFaceUp;
+      objectInfoToSend[gameObject.objectId].isFaceUp[gameObject.length-1-i] = !firstSprite.isFaceUp;
+    }
+  }
+}
+*/
+
+function drawTopSprite(self, bottomStack) {
+  //select the top sprite in the stack
+  const topSprite = bottomStack.last;
+
+  //find the original stack that the sprite was created with
+  const topStack = self.tableObjects.getChildren()[topSprite.spriteId-1];
+  
+  //re-define the stack and put its original sprite back into it
+  topStack.isActive = true;
+  topStack.x = bottomStack.x;
+  topStack.y = bottomStack.y;
+  topStack.objectId = topSprite.spriteId;
+  bottomStack.remove(topSprite);
+  topStack.add(topSprite);
+
+  /*
+  let string = 'bottom local contains: ';
+  bottomStack.getAll().forEach(function(sprite){
+    string += (sprite.name + ', ')
+  });
+  console.log(string)
+
+  string = 'top local contains: ';
+  topStack.getAll().forEach(function(sprite){
+    string += (sprite.name + ', ')
+  });
+  console.log(string)
+  */
+
+  //update clients telling them to create the new stack
+  objectInfoToSend[topStack.objectId]={
+    objectId: topStack.objectId,
+    items: [ objectInfoToSend[bottomStack.objectId].items.pop() ],
+    x: bottomStack.x,
+    y: bottomStack.y,
+    objectDepth: overallDepth,
+    isFaceUp: [ objectInfoToSend[bottomStack.objectId].isFaceUp.pop() ]
+  }
+}
+
+function addObject(self, spriteIds, x, y, spriteOrientations, frames) {
   const spritesToAdd = [];
   for(let i = 0; i < spriteIds.length; i++) {
     var spriteId = spriteIds[i];
-    spritesToAdd[i] = createSprite(self, spriteId, cardNames[spriteId], frames);
+    spritesToAdd[i] = createSprite(self, spriteId, cardNames[spriteId], spriteOrientations[i], frames);
   }
 
   // Create object that acts like a stack (can have multiple sprites in it) 
@@ -350,7 +381,7 @@ function addObject(self, spriteIds, x, y, frames) {
 }
 
 // **This might not be needed. We could just keep track of sprite ids in objectInfoToSend
-function createSprite(self, spriteId, spriteName, frames) {
+function createSprite(self, spriteId, spriteName, isFaceUp, frames) {
   var frame = frames[frames.indexOf(spriteName)];
   // Create sprite
   const sprite = self.add.sprite(0, 0, 'cards', frame);
