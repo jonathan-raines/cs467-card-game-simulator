@@ -73,8 +73,8 @@ function create() {
   startSocketUpdates(self); 
   loadPlayer(self);
 
-  menuCam = self.cameras.add(0, 0, game.config.width, game.config.height);
-  menuCam.ignore(self.tableObjects);
+  // menuCam = self.cameras.add(0, 0, game.config.width, game.config.height);
+  // menuCam.ignore(self.tableObjects);
 
   cursors = this.input.keyboard.createCursorKeys();
 
