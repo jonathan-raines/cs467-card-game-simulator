@@ -102,6 +102,7 @@ app.get('/host-a-game', function(req, res) {
   res.redirect('/?' + query + nickname);
 });
 
+// Start listening for html requests
 server.listen(port, function () {
   console.log(`Listening on port ${server.address().port}`);
 });
@@ -140,7 +141,7 @@ function setupAuthoritativePhaser(roomInfo) {
     // Add to the room's socket io namespace
     let room_io = io.of('/' + roomInfo.roomName);
     // Run a JSDOM script for the server game engine
-    JSDOM.fromFile(path.join(__dirname, 'authoritative_server/index.html'), {
+    JSDOM.fromFile(path.join(__dirname, 'authoritative_server/room_host.html'), {
       // To run the scripts in the html file
       runScripts: "dangerously",
       // Also load supported external resources
@@ -176,14 +177,6 @@ function setupAuthoritativePhaser(roomInfo) {
   }
 }
 
-Object.size = function(obj) {
-  var size = 0, key;
-  for (key in obj) {
-      if (obj.hasOwnProperty(key)) size++;
-  }
-  return size;
-};
-
 
 // create a uniqueId to assign to clients on auth
 const uniqueId = function () {
@@ -211,7 +204,7 @@ function initializeDatabase() {
   })().catch( e => { console.error(e) }).then(() => {
     // -----------  For testing  ------------------
     createRoom('testing', 8).catch( e => { console.error(e) });
-    createRoom('testing2', 8).catch( e => { console.error(e) });
+    //createRoom('testing2', 8).catch( e => { console.error(e) });
     //----------------------------------------------
   });
 }
