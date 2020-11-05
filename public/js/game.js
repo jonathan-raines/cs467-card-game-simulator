@@ -59,7 +59,6 @@ function create() {
   this.socket = io(roomName);
 
   cam = this.cameras.main;
-  cam.setZoom(0.5);
 
   var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
 
