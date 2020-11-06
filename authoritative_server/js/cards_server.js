@@ -152,3 +152,43 @@ function createSprite(self, spriteId, spriteName, isFaceUp, frames) {
   sprite.isFaceUp = true;
   return sprite;
 }
+
+function shuffleStack(self, originStack){
+  //shuffle the container
+  originStack.shuffle();
+
+  //find the new bottom sprite of the container
+  const shuffledBottomSprite = originStack.first;
+
+  //find the original stack for the new bottom sprite
+  const shuffledStack = self.tableObjects.getChildren()[shuffledBottomSprite.spriteId-1];
+
+  //re-define the shuffledStack 
+  shuffledStack.active = true;
+  shuffledStack.x = originStack.x;
+  shuffledStack.y = originStack.y;
+  shuffledStack.objectId = shuffledBottomSprite.spriteId;
+
+  //put all of the old originStack sprites into shuffledStack
+  const originSprites = originStack.getAll();
+  let tempItems = [];
+  let tempIsFaceUp = [];
+  for(var i = 0; i < originSprites.length; i++) {
+    shuffledStack.add(originSprites[i]);
+    tempItems.push(originSprites[i].spriteId);
+    tempIsFaceUp.push(originSprites[i].isFaceUp);
+  }
+
+  //update clients telling them about the new stack
+  objectInfoToSend[shuffledStack.objectId] = {
+    objectId: shuffledStack.objectId,
+    items: tempItems,
+    x: originStack.x,
+    y: originStack.y,
+    objectDepth: overallDepth,
+    isFaceUp: tempIsFaceUp
+  }
+
+  originStack.active = false;       // Keep for later use
+  objectInfoToSend[originStack.objectId] = null; // Don't send to client
+}

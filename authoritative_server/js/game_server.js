@@ -154,6 +154,11 @@ function startSocketUpdates(self, socket) {
     flipObject(self, objToFlip, frames);
   });
   */
+
+  socket.on('shuffleStack', function(inputData){
+    const originStack = self.tableObjects.getChildren()[inputData.objectId-1];
+    shuffleStack(self, originStack);
+  });
 }
 
 function update() {
