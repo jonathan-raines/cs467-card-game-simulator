@@ -1,5 +1,5 @@
 import { debugTicker } from './debug.js'
-import { loadGameUI } from './playerUI.js';
+import { loadGameUI } from './gameUI.js';
 
 var config = {
   type: Phaser.AUTO,
@@ -42,7 +42,7 @@ function preload() {
 function create() {
   var self = this;
   this.socket = io(roomName);
-  
+
   this.tableObjects = this.add.group();
 
   cam = this.cameras.main;
