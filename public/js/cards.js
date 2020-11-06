@@ -1,14 +1,9 @@
 import { players } from './game.js';
 import { updateTableObjects } from './update.js'
 
-export const MENU_DEPTH = 1000;
+const MENU_DEPTH = 1000;
 const STACK_SNAP_DISTANCE = 40;
 const LONG_PRESS_TIME = 300;
-
-export var isDragging = -1;        // The id of an object being currently dragged. -1 if not
-export var wasDragging = -1;       // Obj id that was recently dragged. For lag compensation.
-export var draggingObj = null;     // The pointer to the object being currently dragged
-var drewAnObject = false;   // Keep track if you drew an item so you don't draw multiple
 
 export const cardNames = ['back', 
   'clubsAce', 'clubs2', 'clubs3', 'clubs4', 'clubs5', 'clubs6', 'clubs7', 'clubs8', 'clubs9', 'clubs10', 'clubsJack', 'clubsQueen', 'clubsKing',
@@ -17,6 +12,11 @@ export const cardNames = ['back',
   'spadesAce', 'spades2', 'spades3', 'spades4', 'spades5', 'spades6', 'spades7', 'spades8', 'spades9', 'spades10', 'spadesJack', 'spadesQueen', 'spadesKing',
   'joker'
 ];
+
+export var isDragging = -1;        // The id of an object being currently dragged. -1 if not
+export var wasDragging = -1;       // Obj id that was recently dragged. For lag compensation.
+var draggingObj = null;     // The pointer to the object being currently dragged
+var drewAnObject = false;   // Keep track if you drew an item so you don't draw multiple
 
 export function loadCards(self) {
     let frames = self.textures.get('cards').getFrameNames();
