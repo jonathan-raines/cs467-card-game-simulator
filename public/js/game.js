@@ -1,5 +1,6 @@
-import { debugTicker } from './debug.js'
+import { debugTicker } from './debug.js';
 import { loadGameUI } from './gameUI.js';
+import { isDragging } from './cards.js';
 
 var config = {
   type: Phaser.AUTO,
@@ -54,19 +55,24 @@ function create() {
   loadGameUI(self);
   getPlayerUpdates(self); 
 
-  cursors = this.input.keyboard.createCursorKeys();
+  cursors = self.input.keyboard.createCursorKeys();
 
-  this.input.on('pointermove', pointer => {
-    if (pointer.middleButtonDown()) {
-      cam.scrollX -= (pointer.x - pointer.prevPosition.x) / cam.zoom;
-      cam.scrollY -= (pointer.y - pointer.prevPosition.y) / cam.zoom;
+  self.input.on('pointermove', function(pointer, currentlyOver) {
+    if (pointer.leftButtonDown() && !currentlyOver[0] && isDragging == -1) {
+      var camAngle = Phaser.Math.DegToRad(players[self.socket.id].playerSpacing); // in radians
+      var deltaX = pointer.x - pointer.prevPosition.x;
+      var deltaY = pointer.y-pointer.prevPosition.y;
+      cam.scrollX -= (Math.cos(camAngle) * deltaX +
+                      Math.sin(camAngle) * deltaY) / cam.zoom;
+      cam.scrollY -= (Math.cos(camAngle) * deltaY -
+                      Math.sin(camAngle) * deltaX) / cam.zoom;
     }
   });
 
-  this.input.on('wheel', function(pointer, currentlyOver, deltaX, deltaY, deltaZ, event) { 
-    cam.zoom += deltaY * -.001;
+  self.input.on('wheel', function(pointer, currentlyOver, deltaX, deltaY, deltaZ, event) { 
+    if(cam.zoom + deltaY * -.0005 > 0)
+      cam.zoom += deltaY * -.0005;
   });
-
 }
 
 function update() {}
