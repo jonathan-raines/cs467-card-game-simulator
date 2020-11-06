@@ -1,6 +1,6 @@
-import { cardNames } from './cards.js'
 import { 
     addObject, 
+    cardNames,
     createSprite, 
     isDragging, 
     stackVisualEffect, 

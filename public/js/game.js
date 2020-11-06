@@ -1,6 +1,5 @@
-import { loadMenu } from './menu.js';
-import { loadCards } from './cards.js';
 import { debugTicker } from './debug.js'
+import { loadGameUI } from './playerUI.js';
 
 var config = {
   type: Phaser.AUTO,
@@ -24,12 +23,12 @@ var config = {
 
 export var players = {};           // List of all the current players in the game 
 // This player's info
-var playerNickname = getParameterByName('nickname');
+export var playerNickname = getParameterByName('nickname');
 // Room's infrom from url query
 const roomName = '/' + getParameterByName('roomId');
 // Main camera for this player and Keyboard input catcher
 var cam, cursors;
-
+// Create Phaser3 Game
 var game = new Phaser.Game(config);
 
 function preload() {
@@ -47,16 +46,15 @@ function create() {
   cam = this.cameras.main;
   cam.setBackgroundColor('#3CB371');
 
-  debugTicker(self);
-
   if(playerNickname)
     self.socket.emit('playerNickname', playerNickname);
 
   this.tableObjects = this.add.group();
   
-  loadMenu(self);
-  loadCards(self);
-  startSocketUpdates(self); 
+  debugTicker(self);
+  
+  loadGameUI(self);
+  getPlayerUpdates(self); 
 
   cursors = this.input.keyboard.createCursorKeys();
 
@@ -76,31 +74,19 @@ function update() {}
 
 // Gets url parameters/queries for a name and returns the value
 function getParameterByName(name, url = window.location.href) {
-    name = name.replace(/[\[\]]/g, '\\$&');
-    var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-        results = regex.exec(url);
-    if (!results) return null;
-    if (!results[2]) return '';
-    return decodeURIComponent(results[2].replace(/\+/g, ' '));
+  name = name.replace(/[\[\]]/g, '\\$&');
+  var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+      results = regex.exec(url);
+  if (!results) return null;
+  if (!results[2]) return '';
+  return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
-function startSocketUpdates(self) {
+function getPlayerUpdates(self) {
   // Gets the list of current players from the server
   self.socket.on('currentPlayers', function (playersInfo) {
     players = playersInfo;
     cam.setAngle(players[self.socket.id].playerSpacing);
-  });
-
-  // Setup Chat
-  $('#chat-form').submit(function(e) {
-    e.preventDefault(); // prevents page reloading
-    self.socket.emit('chat message', playerNickname + ': ' + $('#chat-msg').val());
-    $('#chat-msg').val('');
-    return false;
-  });
-
-  self.socket.on('chat message', function(msg){
-    $('#messages').append($('<li>').text(msg));
   });
 }
 
