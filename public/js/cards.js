@@ -106,7 +106,7 @@ export function addObject(self, spriteIds, x, y, spriteOrientations, frames) {
     return object;
 }
 
-function createSprite(self, spriteId, spriteName, isFaceUp, frames) {
+export function createSprite(self, spriteId, spriteName, isFaceUp, frames) {
     var frame;
     if(isFaceUp)
       frame = frames[frames.indexOf(spriteName)];

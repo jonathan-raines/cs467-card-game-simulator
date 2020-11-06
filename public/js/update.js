@@ -1,5 +1,13 @@
 import { cardNames, players } from './game.js'
-import { addObject, draggingObj, isDragging, MENU_DEPTH, wasDragging, stackVisualEffect } from './cards.js'
+import { 
+    addObject, 
+    createSprite, 
+    draggingObj, 
+    isDragging, 
+    MENU_DEPTH, 
+    stackVisualEffect, 
+    wasDragging 
+} from './cards.js'
 
 // Updates all the objects on the table
 export function updateTableObjects(self, objectsInfo, frames) {
@@ -29,6 +37,24 @@ export function updateTableObjects(self, objectsInfo, frames) {
         }
       }
     });
+}
+
+export function dragGameObject(self, gameObject, dragX, dragY){
+    if(gameObject) {
+      // Locally changes the object's position
+      gameObject.x = dragX;
+      gameObject.y = dragY;
+      gameObject.depth = MENU_DEPTH-1;
+  
+      rotateObject(self, draggingObj);
+  
+      // Send the input to the server
+      self.socket.emit('objectInput', { 
+        objectId: gameObject.objectId,
+        x: dragX, 
+        y: dragY 
+      });
+    }
 }
 
 // Updates a single table object
@@ -90,24 +116,6 @@ function updateSprite(oldSprite, newId, newIsFaceUp, frames) {
       else
         oldSprite.setFrame(frames[frames.indexOf('back')]);
       oldSprite.isFaceUp = newIsFaceUp;
-    }
-}
-
-export function dragGameObject(self, gameObject, dragX, dragY){
-    if(gameObject) {
-      // Locally changes the object's position
-      gameObject.x = dragX;
-      gameObject.y = dragY;
-      gameObject.depth = MENU_DEPTH-1;
-  
-      rotateObject(self, draggingObj);
-  
-      // Send the input to the server
-      self.socket.emit('objectInput', { 
-        objectId: gameObject.objectId,
-        x: dragX, 
-        y: dragY 
-      });
     }
 }
 
