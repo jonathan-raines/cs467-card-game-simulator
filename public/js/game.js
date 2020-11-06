@@ -32,8 +32,6 @@ var cam, cursors;
 var game = new Phaser.Game(config);
 
 function preload() {
-  this.load.html('nameform', 'assets/nameform.html');
-  this.load.html('playerIndicator', 'assets/playerIndicator.html');
   this.load.html('menu', 'assets/menu.html');
   this.load.html('help', 'assets/help.html');
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
