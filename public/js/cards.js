@@ -20,7 +20,6 @@ export var isDragging = -1;        // The id of an object being currently dragge
 export var wasDragging = -1;       // Obj id that was recently dragged. For lag compensation.
 var draggingObj = null;     // The pointer to the object being currently dragged
 var drewAnObject = false;   // Keep track if you drew an item so you don't draw multiple
-var stackToShuffle = null;  // track last selected active stack for shuffling purposes
 var hoveringObj = null;     // Pointer to the object being hovered over (null if not)
 
 export function loadCards(self) {
@@ -88,13 +87,13 @@ export function loadCards(self) {
     setTimeout(function(){ 
       wasDragging = -1;
     }, 300);
-
-    stackToShuffle = gameObject;
   });  
 
   //shuffle stacToShuffle on R key
-  self.input.keyboard.on('keyup-R', function () {
-    shuffleStack(self, hoveringObj);
+  self.input.keyboard.on('keydown_R', function () {
+    if(hoveringObj && self.tableObjects.contains(hoveringObj)) {
+      shuffleStack(self, hoveringObj);
+    }
   });
 
   self.input.keyboard.on('keydown_F', function (event) {
@@ -275,11 +274,10 @@ function rotateObject(self, gameObject) {
 
 function shuffleStack(self, object){
   if(object && object.length > 1){
-    console.log('shuffling stack');
+    //console.log('shuffling stack');
     self.socket.emit('shuffleStack', {
       objectId: object.objectId
     });
-    stackToShuffle= null;
   }
 } 
 
