@@ -22,6 +22,7 @@ const SERVER_TIMEOUT = 86400000; // 24 hrs
 const activeGameRooms = {};
 
 let pool;
+
 if(!IS_LOCAL) {
   // Setting up the postgres database
   pool = new Pool({
@@ -81,7 +82,6 @@ function lobbyRouter(requestedRoom, req, res) {
   }
 }
 
-
 app.get('/host-a-game', function(req, res) {
   // Make a new roomId
   var newRoomId = uniqueId();
@@ -100,10 +100,6 @@ app.get('/host-a-game', function(req, res) {
       "roomId": newRoomId
   });
   res.redirect('/?' + query + nickname);
-});
-
-server.listen(port, function () {
-  console.log(`Listening on port ${server.address().port}`);
 });
 
 // You must catch this async function for example: createRoom(**,**)).catch( e => { console.error(e) });
@@ -215,3 +211,7 @@ function initializeDatabase() {
     //----------------------------------------------
   });
 }
+
+server.listen(port, function () {
+  console.log(`Listening on port ${server.address().port}`);
+});
