@@ -1,4 +1,4 @@
-import { cardNames, players } from './game.js';
+import { players } from './game.js';
 import { updateTableObjects } from './update.js'
 
 export const MENU_DEPTH = 1000;
@@ -9,6 +9,14 @@ export var isDragging = -1;        // The id of an object being currently dragge
 export var wasDragging = -1;       // Obj id that was recently dragged. For lag compensation.
 export var draggingObj = null;     // The pointer to the object being currently dragged
 var drewAnObject = false;   // Keep track if you drew an item so you don't draw multiple
+
+export const cardNames = ['back', 
+  'clubsAce', 'clubs2', 'clubs3', 'clubs4', 'clubs5', 'clubs6', 'clubs7', 'clubs8', 'clubs9', 'clubs10', 'clubsJack', 'clubsQueen', 'clubsKing',
+  'diamondsAce', 'diamonds2', 'diamonds3', 'diamonds4', 'diamonds5', 'diamonds6', 'diamonds7','diamonds8', 'diamonds9', 'diamonds10', 'diamondsJack', 'diamondsQueen', 'diamondsKing',
+  'heartsAce', 'hearts2', 'hearts3', 'hearts4', 'hearts5', 'hearts6', 'hearts7', 'hearts8', 'hearts9', 'hearts10', 'heartsJack', 'heartsQueen', 'heartsKing',
+  'spadesAce', 'spades2', 'spades3', 'spades4', 'spades5', 'spades6', 'spades7', 'spades8', 'spades9', 'spades10', 'spadesJack', 'spadesQueen', 'spadesKing',
+  'joker'
+];
 
 export function loadCards(self) {
     let frames = self.textures.get('cards').getFrameNames();

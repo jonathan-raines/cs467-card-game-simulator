@@ -1,4 +1,4 @@
-import { cardNames } from './game.js'
+import { cardNames } from './cards.js'
 import { 
     addObject, 
     createSprite, 
