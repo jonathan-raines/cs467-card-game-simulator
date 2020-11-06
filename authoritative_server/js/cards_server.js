@@ -142,7 +142,6 @@ function drawTopSprite(self, bottomStack) {
   topStack.x = bottomStack.x;
   topStack.y = bottomStack.y;
   topStack.objectId = topSprite.spriteId;
-  bottomStack.remove(topSprite);
   topStack.add(topSprite);
   /*
   console.log('bottom local contains: ');
@@ -199,11 +198,11 @@ function shuffleStack(self, originStack){
 
   //find the new bottom sprite of the container
   const shuffledBottomSprite = originStack.first;
+
   if(!shuffledBottomSprite) {
     console.log("Cannot shuffle stack #" + originStack.objectId);
     return;
   }
-
   //find the original stack for the new bottom sprite
   const shuffledStack = getTableObject(self, shuffledBottomSprite.spriteId);
 
@@ -211,6 +210,7 @@ function shuffleStack(self, originStack){
   shuffledStack.active = true;
   shuffledStack.x = originStack.x;
   shuffledStack.y = originStack.y;
+  shuffledStack.rotation = originStack.rotation;
   shuffledStack.objectId = shuffledBottomSprite.spriteId;
 
   //put all of the old originStack sprites into shuffledStack
@@ -221,8 +221,14 @@ function shuffleStack(self, originStack){
     shuffledStack.add(originSprites[i]);
     tempItems.push(originSprites[i].spriteId);
     tempIsFaceUp.push(originSprites[i].isFaceUp);
+    
   }
-
+  /*
+  console.log('originalStack contains: ');
+  debugObjectContents(originStack);
+  console.log('shuffledStack contains: ');
+  debugObjectContents(shuffledStack);
+  */
   //update clients telling them about the new stack
   objectInfoToSend[shuffledStack.objectId] = {
     objectId: shuffledStack.objectId,
@@ -230,7 +236,8 @@ function shuffleStack(self, originStack){
     x: originStack.x,
     y: originStack.y,
     objectDepth: overallDepth,
-    isFaceUp: tempIsFaceUp
+    isFaceUp: tempIsFaceUp,
+    rotation: shuffledStack.rotation
   }
 
   originStack.active = false;       // Keep for later use

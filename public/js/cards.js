@@ -2,7 +2,7 @@ import { players } from './game.js';
 import { 
     updateTableObjects,
     updateSprite 
-} from './update.js'
+} from './update.js';
 
 const MENU_DEPTH = 1000;
 const STACK_SNAP_DISTANCE = 40;
@@ -94,7 +94,7 @@ export function loadCards(self) {
 
   //shuffle stacToShuffle on R key
   self.input.keyboard.on('keyup-R', function () {
-    shuffleStack(self, stackToShuffle);
+    shuffleStack(self, hoveringObj);
   });
 
   self.input.keyboard.on('keydown_F', function (event) {

@@ -5,13 +5,14 @@ import {
     isDragging, 
     stackVisualEffect, 
     wasDragging 
-} from './cards.js'
+} from './cards.js';
 
 // Updates all the objects on the table
 export function updateTableObjects(self, objectsInfo, frames) {
   Object.keys(objectsInfo).forEach(function (id) {
     if(objectsInfo[id] != null) {
       var updatedAnObject = false;
+      var count = 0;
       self.tableObjects.getChildren().forEach(function (object) {
         // Check if server has object
         if(objectsInfo[object.objectId] == null) {
@@ -26,8 +27,12 @@ export function updateTableObjects(self, objectsInfo, frames) {
         else if(object.objectId == id) {
           updateObject(self, objectsInfo, id, object, frames);
           updatedAnObject = true;
+          count++;
         } 
       });
+
+      if(count > 1)
+        console.log("Error: Found " + count + " of the same object id when updating from server");
 
       // If no object was updated, there is no local object and must be created
       if(!updatedAnObject) {
