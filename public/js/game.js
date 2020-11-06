@@ -1,6 +1,6 @@
 import { loadMenu } from './menu.js';
 import { loadCards } from './cards.js';
-import { debugTicker, debugObjectContents } from './debug.js'
+import { debugTicker } from './debug.js'
 
 var config = {
   type: Phaser.AUTO,

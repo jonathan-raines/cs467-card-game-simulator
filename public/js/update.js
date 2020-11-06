@@ -1,10 +1,8 @@
-import { cardNames, players } from './game.js'
+import { cardNames } from './game.js'
 import { 
     addObject, 
     createSprite, 
-    draggingObj, 
     isDragging, 
-    MENU_DEPTH, 
     stackVisualEffect, 
     wasDragging 
 } from './cards.js'
@@ -37,24 +35,6 @@ export function updateTableObjects(self, objectsInfo, frames) {
         }
       }
     });
-}
-
-export function dragGameObject(self, gameObject, dragX, dragY){
-    if(gameObject) {
-      // Locally changes the object's position
-      gameObject.x = dragX;
-      gameObject.y = dragY;
-      gameObject.depth = MENU_DEPTH-1;
-  
-      rotateObject(self, draggingObj);
-  
-      // Send the input to the server
-      self.socket.emit('objectInput', { 
-        objectId: gameObject.objectId,
-        x: dragX, 
-        y: dragY 
-      });
-    }
 }
 
 // Updates a single table object
@@ -116,17 +96,5 @@ function updateSprite(oldSprite, newId, newIsFaceUp, frames) {
       else
         oldSprite.setFrame(frames[frames.indexOf('back')]);
       oldSprite.isFaceUp = newIsFaceUp;
-    }
-}
-
-function rotateObject(self, gameObject) {
-    var player = players[self.socket.id];
-    if(gameObject.angle != -player.playerSpacing) {
-      gameObject.angle = -player.playerSpacing;
-  
-      self.socket.emit('objectRotation', { 
-        objectId: gameObject.objectId,
-        angle: gameObject.angle
-      });
     }
 }

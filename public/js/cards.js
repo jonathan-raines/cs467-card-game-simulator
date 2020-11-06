@@ -1,5 +1,5 @@
-import { cardNames } from './game.js';
-import { dragGameObject, updateTableObjects } from './update.js'
+import { cardNames, players } from './game.js';
+import { updateTableObjects } from './update.js'
 
 export const MENU_DEPTH = 1000;
 const STACK_SNAP_DISTANCE = 40;
@@ -212,4 +212,34 @@ function updateStackVisualEffect(self, object) {
       stackVisualEffect(sprite, pos, size);
       pos++;
     });
+}
+
+function dragGameObject(self, gameObject, dragX, dragY){
+  if(gameObject) {
+    // Locally changes the object's position
+    gameObject.x = dragX;
+    gameObject.y = dragY;
+    gameObject.depth = MENU_DEPTH-1;
+
+    rotateObject(self, draggingObj);
+
+    // Send the input to the server
+    self.socket.emit('objectInput', { 
+      objectId: gameObject.objectId,
+      x: dragX, 
+      y: dragY 
+    });
+  }
+}
+
+function rotateObject(self, gameObject) {
+  var player = players[self.socket.id];
+  if(gameObject.angle != -player.playerSpacing) {
+    gameObject.angle = -player.playerSpacing;
+
+    self.socket.emit('objectRotation', { 
+      objectId: gameObject.objectId,
+      angle: gameObject.angle
+    });
+  }
 }
