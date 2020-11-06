@@ -1,23 +1,6 @@
 import { loadMenu } from './menu.js';
-
-import { 
-  loadCards, 
-  updateTableObjects, 
-  addObject, 
-  createSprite, 
-  stackVisualEffect, 
-  updateObject, 
-  onObjectDrop,
-  findSnapObject,
-  dragGameObject,
-  rotateObject,
-  drawTopSprite,
-  isDragging,
-  wasDragging,
-  draggingObj,
-  drewAnObject,
-  updateStackVisualEffect
-} from './cards.js';
+import { loadCards } from './cards.js';
+import { debugTicker, debugObjectContents } from './debug.js'
 
 var config = {
   type: Phaser.AUTO,
@@ -52,7 +35,7 @@ export var players = {};           // List of all the current players in the gam
 var playerNickname = getParameterByName('nickname');
 // Room's infrom from url query
 const roomName = '/' + getParameterByName('roomId');
-
+// Main camera for this player and Keyboard input catcher
 var cam, cursors;
 
 var game = new Phaser.Game(config);
@@ -70,8 +53,7 @@ function create() {
   this.socket = io(roomName);
 
   cam = this.cameras.main;
-
-  var backgroundColor = this.cameras.main.setBackgroundColor('#3CB371');
+  cam.setBackgroundColor('#3CB371');
 
   debugTicker(self);
 
@@ -111,11 +93,6 @@ function getParameterByName(name, url = window.location.href) {
 }
 
 function startSocketUpdates(self) {
-  // Get background color
-  self.socket.on('backgroundColor', function(color) {
-    self.backgroundColor = self.cameras.main.setBackgroundColor(color);
-  });
-
   // Gets the list of current players from the server
   self.socket.on('currentPlayers', function (playersInfo) {
     players = playersInfo;
@@ -152,25 +129,3 @@ function flipObject(self, gameObject, frames) {
   }
 }
 */
-
-function debugObjectContents(object) {
-  console.log("Object #" + object.objectId + " contents ([0] is bottom/first):");
-  var i = 0;
-  object.getAll().forEach(function (sprite) {
-    console.log("   [" + i + "]: " + cardNames[sprite.spriteId]);
-    i++;
-  });
-}
-
-function debugTicker(self) {
-  let tickInterval = setInterval(() => {
-
-      var totalCards = 0;
-      self.tableObjects.getChildren().forEach((object) => {
-        totalCards += object.length;
-      });
-
-      console.log("--Total number of objects: " + totalCards);
-
-  }, 10000); // 10 sec
-}

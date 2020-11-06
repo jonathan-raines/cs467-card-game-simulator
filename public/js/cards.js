@@ -1,20 +1,19 @@
-import { cardNames, players } from './game.js';
+import { cardNames } from './game.js';
+import { dragGameObject, updateTableObjects } from './update.js'
 
+export const MENU_DEPTH = 1000;
 const STACK_SNAP_DISTANCE = 40;
-const MENU_DEPTH = 1000;
 const LONG_PRESS_TIME = 300;
 
 export var isDragging = -1;        // The id of an object being currently dragged. -1 if not
 export var wasDragging = -1;       // Obj id that was recently dragged. For lag compensation.
 export var draggingObj = null;     // The pointer to the object being currently dragged
-export var drewAnObject = false;   // Keep track if you drew an item so you don't draw multiple
+var drewAnObject = false;   // Keep track if you drew an item so you don't draw multiple
 
 export function loadCards(self) {
     let frames = self.textures.get('cards').getFrameNames();
-  
     // for Thomas this doesnt work
     self.input.mouse.disableContextMenu();
-  
     // Only pick up the top object
     self.input.topOnly = true;
   
@@ -85,36 +84,6 @@ export function loadCards(self) {
     });
 }
 
-// Updates all the objects on the table
-export function updateTableObjects(self, objectsInfo, frames) {
-    Object.keys(objectsInfo).forEach(function (id) {
-      if(objectsInfo[id] != null) {
-        var updatedAnObject = false;
-        self.tableObjects.getChildren().forEach(function (object) {
-          // Check if server has object
-          if(objectsInfo[object.objectId] == null) {
-            // Check if it's being or was recently dragged
-            if(isDragging != object.objectId && wasDragging != object.objectId) {
-              object.removeAll(true);
-              object.destroy();
-            }
-          }
-  
-          // Check if object is same as server's object
-          else if(object.objectId == id) {
-            updateObject(self, objectsInfo, id, object, frames);
-            updatedAnObject = true;
-          } 
-        });
-  
-        // If no object was updated, there is no local object and must be created
-        if(!updatedAnObject && objectsInfo[id] != null) {
-          addObject(self, objectsInfo[id].items, objectsInfo[id].x, objectsInfo[id].y, objectsInfo[id].isFaceUp, frames);
-        }
-      }
-    });
-}
-
 // May have multiple sprites for an object (in the case of a stack)
 export function addObject(self, spriteIds, x, y, spriteOrientations, frames) {
     const spritesToAdd = []; // Array of sprite objects to add to stack container
@@ -137,7 +106,7 @@ export function addObject(self, spriteIds, x, y, spriteOrientations, frames) {
     return object;
 }
 
-export function createSprite(self, spriteId, spriteName, isFaceUp, frames) {
+function createSprite(self, spriteId, spriteName, isFaceUp, frames) {
     var frame;
     if(isFaceUp)
       frame = frames[frames.indexOf(spriteName)];
@@ -154,19 +123,6 @@ export function createSprite(self, spriteId, spriteName, isFaceUp, frames) {
     return sprite;
 }
 
-// Update a sprite
-function updateSprite(oldSprite, newId, newIsFaceUp, frames) {
-    if(oldSprite) {
-      oldSprite.spriteId = newId;
-      oldSprite.name = cardNames[newId];
-      if(newIsFaceUp) 
-        oldSprite.setFrame(frames[frames.indexOf(cardNames[newId])]);
-      else
-        oldSprite.setFrame(frames[frames.indexOf('back')]);
-      oldSprite.isFaceUp = newIsFaceUp;
-    }
-}
-
 // Makes a stack of cards look 3D
 export function stackVisualEffect(sprite, pos, size) {
     if(sprite) {
@@ -175,57 +131,8 @@ export function stackVisualEffect(sprite, pos, size) {
     }
 }
 
-// Updates a single table object
-export function updateObject(self, objectsInfo, id, object, frames) {
-    if(!object) { 
-      console.log("No local object to update.");
-    } else {
-      // Check if it is not being currently dragged or drawn
-      if(isDragging != object.objectId && wasDragging != object.objectId) {
-        // Check if it's not in the same position
-        if(object.x != objectsInfo[id].x || object.y != objectsInfo[id].y) {
-          // Update position
-          object.setPosition(objectsInfo[id].x, objectsInfo[id].y);
-        }
-        // Check if different depth
-        if(object.depth != objectsInfo[id].objectDepth) {
-          // Update Depth
-          object.depth = objectsInfo[id].objectDepth;
-        }
-  
-        object.angle = objectsInfo[id].angle;
-  
-      }
-      // Update all sprites (regardless if its being dragged)
-      var serverSpriteIdArray = objectsInfo[id].items;
-  
-      for (var i = 0; i < Math.max(object.length, serverSpriteIdArray.length); i++) {
-  
-        if(i >= object.length) {
-          // Create a new sprite
-          var newSprite = createSprite(self, serverSpriteId, cardNames[serverSpriteId], objectsInfo[id].isFaceUp[i], frames);
-          object.add(newSprite); // Add at end of list
-        }
-        else if(i >= serverSpriteIdArray.length) {
-          // Delete Sprite
-          object.removeAt(i, true);
-        }
-        else {
-          var serverSpriteId = serverSpriteIdArray[i];
-          var spriteToUpdate = object.getAt(i);
-  
-          // Update the sprite
-          updateSprite(spriteToUpdate, serverSpriteId, objectsInfo[id].isFaceUp[i], frames);
-  
-          // Stack's Parallax Visual Effect 
-          stackVisualEffect(spriteToUpdate, i, serverSpriteIdArray.length-1);
-        }
-      }
-    }
-}
-
 // Called when an object is dropped
-export function onObjectDrop(self, gameObject, frames) {
+function onObjectDrop(self, gameObject, frames) {
     // Find closest object to snap to
     var closest = findSnapObject(self, gameObject);
     if(closest) {
@@ -262,7 +169,7 @@ export function onObjectDrop(self, gameObject, frames) {
 }
   
 // Finds the first object within the snap distance, returns null if there are none
-export function findSnapObject(self, gameObject) {
+function findSnapObject(self, gameObject) {
     var closestObj = null;
     var distance = STACK_SNAP_DISTANCE;
     self.tableObjects.getChildren().forEach(function (tableObject) {
@@ -277,38 +184,8 @@ export function findSnapObject(self, gameObject) {
     return closestObj;
 }
   
-export function dragGameObject(self, gameObject, dragX, dragY){
-    if(gameObject) {
-      // Locally changes the object's position
-      gameObject.x = dragX;
-      gameObject.y = dragY;
-      gameObject.depth = MENU_DEPTH-1;
-  
-      rotateObject(self, draggingObj);
-  
-      // Send the input to the server
-      self.socket.emit('objectInput', { 
-        objectId: gameObject.objectId,
-        x: dragX, 
-        y: dragY 
-      });
-    }
-}
-  
-export function rotateObject(self, gameObject) {
-    var player = players[self.socket.id];
-    if(gameObject.angle != -player.playerSpacing) {
-      gameObject.angle = -player.playerSpacing;
-  
-      self.socket.emit('objectRotation', { 
-        objectId: gameObject.objectId,
-        angle: gameObject.angle
-      });
-    }
-}
-  
 // Updates the global variable draggingObj
-export function drawTopSprite(self, frames){
+function drawTopSprite(self, frames){
     // Make sure you only draw once
     if(!drewAnObject) {
       self.socket.emit('drawTopSprite', {
@@ -328,7 +205,7 @@ export function drawTopSprite(self, frames){
 }
 
 // Updates all the sprites in an object stack with the parallax visual effect
-export function updateStackVisualEffect(self, object) {
+function updateStackVisualEffect(self, object) {
     var pos = 0;
     var size = object.length-1;
     object.getAll().forEach(function (sprite) {
