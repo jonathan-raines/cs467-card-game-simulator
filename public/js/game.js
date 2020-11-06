@@ -88,21 +88,3 @@ function getPlayerUpdates(self) {
     cam.setAngle(players[self.socket.id].playerSpacing);
   });
 }
-
-/*
-// ************ BUGGY ****************
-function flipObject(self, gameObject, frames) {
-  self.socket.emit('objectFlip', { 
-      objectId: gameObject.objectId
-    });
-  for(var i = 0; i < Math.floor(gameObject.length*0.5)+1; i++) {
-    var firstSprite = gameObject.getAt(i);
-    var secondSprite = gameObject.getAt(gameObject.length-1-i);
-
-    var newSprite1 = createSprite(self, firstSprite.spriteId, firstSprite.name, !firstSprite.isFaceUp, frames);
-    var newSprite2 = createSprite(self, secondSprite.spriteId, secondSprite.name, !secondSprite.isFaceUp, frames);
-    gameObject.replace(firstSprite, newSprite2, true);
-    gameObject.replace(secondSprite, newSprite1, true);
-  }
-}
-*/

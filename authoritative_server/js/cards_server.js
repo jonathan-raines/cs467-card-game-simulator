@@ -75,28 +75,65 @@ function mergeStacks(topStack, bottomStack) {
   }
 }
 
-/*
-// ************ BUGGY ***********************
-function flipObject(self, gameObject, frames) {
+function flipObject(self, gameObject) {
   if(gameObject) {
-    for(var i = 0; i < Math.floor(gameObject.length*0.5)+1; i++) {
-      var firstSprite = gameObject.getAt(i);
-      var secondSprite = gameObject.getAt(gameObject.length-1-i);
+    // Only one card (don't need to switch game objects)
+    if(gameObject.length == 1) {
+      gameObject.first.isFaceUp = !(gameObject.first.isFaceUp);
+      objectInfoToSend[gameObject.objectId].isFaceUp[0] = gameObject.first.isFaceUp;
+    }
+    else {
+      // Get the container for the last card which will be the first sprite of the new stack
+      if(gameObject.last == null) {
+        console.log("Cannot access gameObject sprite in flipObject()");
+        return;
+      }
+      const newStack = getTableObject(self, gameObject.last.spriteId);
+      newStack.active = true;
+      newStack.objectId = gameObject.last.spriteId;
+      newStack.x = gameObject.x;
+      newStack.y = gameObject.y;
 
-      var newSprite1 = createSprite(self, firstSprite.spriteId, firstSprite.name, !firstSprite.isFaceUp, frames);
-      var newSprite2 = createSprite(self, secondSprite.spriteId, secondSprite.name, !secondSprite.isFaceUp, frames);
-      gameObject.replace(firstSprite, newSprite2, true);
-      gameObject.replace(secondSprite, newSprite1, true);
-      objectInfoToSend[gameObject.objectId].items[i] = secondSprite.objectId;
-      objectInfoToSend[gameObject.objectId].items[gameObject.length-1-i] = firstSprite.objectId;
-      objectInfoToSend[gameObject.objectId].isFaceUp[i] = !secondSprite.isFaceUp;
-      objectInfoToSend[gameObject.objectId].isFaceUp[gameObject.length-1-i] = !firstSprite.isFaceUp;
+      var newSprites = [];  // For sprite ids to send to client
+      var newIsFaceUp = []; // For card orientation to send to client
+      const numSprites = gameObject.length;
+
+      // Copy the sprites in reverse order
+      for(var i = 0; i < numSprites; i++) {
+        // Get sprite object
+        var sprite = gameObject.last;         // Take last sprite first
+        sprite.isFaceUp = !sprite.isFaceUp;   // Flip card
+        newStack.add(sprite);
+
+        // Remember info for client
+        newSprites.push(sprite.spriteId);
+        newIsFaceUp.push(sprite.isFaceUp);        
+      }
+      //debugObjectContents(newStack);
+      overallDepth++;
+
+      //update clients telling them to create the new stack
+      objectInfoToSend[newStack.objectId] = {
+        objectId: newStack.objectId,
+        items: newSprites,
+        x: gameObject.x,
+        y: gameObject.y,
+        objectDepth: overallDepth,
+        isFaceUp: newIsFaceUp
+      }
+      //console.log("----Flipped obj len: " + gameObject.length);
+      //console.log("----Newobj len:      " + newStack.length);
+      delete objectInfoToSend[gameObject.objectId];
+      gameObject.active = false;  // Save for later use
     }
   }
 }
-*/
 
 function drawTopSprite(self, bottomStack) {
+  if(!bottomStack || !bottomStack.last) {
+    console.log("Can't draw card");
+    return;
+  }
   const topSprite = bottomStack.last;                        //select the top sprite in the stack
   const topStack = getTableObject(self, topSprite.spriteId); //find the original stack that the sprite was created with
   
@@ -107,12 +144,12 @@ function drawTopSprite(self, bottomStack) {
   topStack.objectId = topSprite.spriteId;
   bottomStack.remove(topSprite);
   topStack.add(topSprite);
-  
+  /*
   console.log('bottom local contains: ');
   debugObjectContents(bottomStack);
   console.log('top local contains: ');
   debugObjectContents(topStack);
-  
+  */
   //update clients telling them to create the new stack
   objectInfoToSend[topStack.objectId]={
     objectId: topStack.objectId,
@@ -154,14 +191,21 @@ function createSprite(self, spriteId, spriteName, isFaceUp, frames) {
 }
 
 function shuffleStack(self, originStack){
+  // Can't shuffle a deck of 1
+  if(originStack.length == 1)
+    return;
   //shuffle the container
   originStack.shuffle();
 
   //find the new bottom sprite of the container
   const shuffledBottomSprite = originStack.first;
+  if(!shuffledBottomSprite) {
+    console.log("Cannot shuffle stack #" + originStack.objectId);
+    return;
+  }
 
   //find the original stack for the new bottom sprite
-  const shuffledStack = self.tableObjects.getChildren()[shuffledBottomSprite.spriteId-1];
+  const shuffledStack = getTableObject(self, shuffledBottomSprite.spriteId);
 
   //re-define the shuffledStack 
   shuffledStack.active = true;

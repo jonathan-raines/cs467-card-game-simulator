@@ -82,11 +82,11 @@ function create() {
   // When a connection is made
   io.on('connection', function (socket) {
     addPlayer(socket);
-    startSocketUpdates(self, socket);
+    startSocketUpdates(self, socket, frames);
   });
 }
 
-function startSocketUpdates(self, socket) {
+function startSocketUpdates(self, socket, frames) {
   // Assigns a nickname 
   socket.on('playerNickname', function(name) {
     
@@ -121,7 +121,8 @@ function startSocketUpdates(self, socket) {
 
   socket.on('objectRotation', function (inputData) {
     const object = getTableObject(self, inputData.objectId);
-    object.angle = inputData.angle;
+    if(object)
+      object.angle = inputData.angle;
   });
 
   // Updates the depth when player picks up a card
@@ -146,14 +147,11 @@ function startSocketUpdates(self, socket) {
     drawTopSprite(self, bottomStack);
   });
 
-  /*
-  // ****************** BUGGY *************************
   // Updates the card face when player picks up a card
   socket.on('objectFlip', function (inputData) {
-    var objToFlip = self.tableObjects.getChildren()[inputData.objectId-1];
-    flipObject(self, objToFlip, frames);
+    var objToFlip = getTableObject(self, inputData.objectId);
+    flipObject(self, objToFlip);
   });
-  */
 
   socket.on('shuffleStack', function(inputData){
     const originStack = self.tableObjects.getChildren()[inputData.objectId-1];
