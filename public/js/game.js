@@ -58,7 +58,8 @@ function create() {
 
   this.input.on('pointermove', pointer => {
     if (pointer.middleButtonDown()) {
-      cam.pan(pointer.x, pointer.y);
+      cam.scrollX -= (pointer.x - pointer.prevPosition.x) / cam.zoom;
+      cam.scrollY -= (pointer.y - pointer.prevPosition.y) / cam.zoom;
     }
   });
 
