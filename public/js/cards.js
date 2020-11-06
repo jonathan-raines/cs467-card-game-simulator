@@ -1,5 +1,8 @@
 import { players } from './game.js';
-import { updateTableObjects } from './update.js'
+import { 
+    updateTableObjects,
+    updateSprite 
+} from './update.js';
 
 const MENU_DEPTH = 1000;
 const STACK_SNAP_DISTANCE = 40;
@@ -17,218 +20,227 @@ export var isDragging = -1;        // The id of an object being currently dragge
 export var wasDragging = -1;       // Obj id that was recently dragged. For lag compensation.
 var draggingObj = null;     // The pointer to the object being currently dragged
 var drewAnObject = false;   // Keep track if you drew an item so you don't draw multiple
-var stackToShuffle = null;  // track last selected active stack for shuffling purposes
+var hoveringObj = null;     // Pointer to the object being hovered over (null if not)
 
 export function loadCards(self) {
-    let frames = self.textures.get('cards').getFrameNames();
-    // for Thomas this doesnt work
-    self.input.mouse.disableContextMenu();
-    // Only pick up the top object
-    self.input.topOnly = true;
+  let frames = self.textures.get('cards').getFrameNames();
+  // for Thomas this doesnt work
+  self.input.mouse.disableContextMenu();
+  // Only pick up the top object
+  self.input.topOnly = true;
   
-    /*
-    // ***************** BUGGY ******************
-    var keyF = self.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F);
-    self.input.on('pointerover', function(pointer, justOver){
-      
-      keyF.on('down', function (key, event) {
-  
-        var object = justOver[0];
-        console.log("card: " + object.first.name);
-        flipObject(self, object, frames);
-        
-        //keyF.off('down');
-      });
-    });  
-    self.input.on('pointerout', function(pointer, justOut){
-      keyF.off('down');
-    });
-    */
-  
-    // When the mouse starts dragging the object
-    self.input.on('dragstart', function (pointer, gameObject) {
-      isDragging = gameObject.objectId;
-      draggingObj = gameObject;
-      
-      draggingObj.depth = MENU_DEPTH-1;
-      self.socket.emit('objectDepth', { // Tells the server to increase the object's depth
-        objectId: gameObject.objectId
-      });
-    });
-    
-    // While the mouse is dragging
-    self.input.on('drag', function (pointer, gameObject, dragX, dragY) {
-      if( 
-        gameObject === draggingObj && 
-        draggingObj.length > 1 && 
-        pointer.moveTime - pointer.downTime < LONG_PRESS_TIME
-        // This makes the deck slightly drag when drawing from it
-         //&& pointer.getDistance() > 5
-      ) {
-        drawTopSprite(self, frames);
-      }
-  
-      dragGameObject(self, draggingObj, dragX, dragY);
-    });
-    
-    // When the mouse finishes dragging
-    self.input.on('dragend', function (pointer, gameObject) {
-  
-      onObjectDrop(self, draggingObj, frames); 
-  
-      wasDragging = isDragging;
-      isDragging = -1; 
-      draggingObj = null;
-      drewAnObject = false;
-  
-      setTimeout(function(){ 
-        wasDragging = -1;
-      }, 300);
+  self.input.on('pointerover', function(pointer, justOver){
+    hoveringObj = justOver[0];
+  });  
 
-      stackToShuffle = gameObject;
-    });  
+  self.input.on('pointermove', function(pointer, currentlyOver){
+    hoveringObj = currentlyOver[0];
+  }); 
 
-    //shuffle stacToShuffle on R key
-    self.input.keyboard.on('keyup-R', function () {
-      shuffleStack(self, stackToShuffle);
+  self.input.on('pointerout', function(pointer, justOut){
+    hoveringObj = null;
+  });
+
+  self.input.on('pointerdown', function (pointer, currentlyOver) {
+    if (pointer.rightButtonDown()) {
+      var object = currentlyOver[0];
+      flipObject(self, object, frames);
+    }
+  });
+
+  // When the mouse starts dragging the object
+  self.input.on('dragstart', function (pointer, gameObject) {
+    isDragging = gameObject.objectId;
+    draggingObj = gameObject;
+    
+    draggingObj.depth = MENU_DEPTH-1;
+    self.socket.emit('objectDepth', { // Tells the server to increase the object's depth
+      objectId: gameObject.objectId
     });
+  });
   
+  // While the mouse is dragging
+  self.input.on('drag', function (pointer, gameObject, dragX, dragY) {
+    if( 
+      gameObject === draggingObj && 
+      draggingObj.length > 1 && 
+      pointer.moveTime - pointer.downTime < LONG_PRESS_TIME
+      // This makes the deck slightly drag when drawing from it
+       //&& pointer.getDistance() > 5
+    ) {
+      drawTopSprite(self, frames);
+    }
+
+    dragGameObject(self, draggingObj, dragX, dragY);
+  });
   
-    // Start the object listener for commands from server
-    self.socket.on('objectUpdates', function (objectsInfo) {
-      updateTableObjects(self, objectsInfo, frames);
-    });
+  // When the mouse finishes dragging
+  self.input.on('dragend', function (pointer, gameObject) {
+
+    onObjectDrop(self, draggingObj, frames); 
+
+    wasDragging = isDragging;
+    isDragging = -1; 
+    draggingObj = null;
+    drewAnObject = false;
+
+    setTimeout(function(){ 
+      wasDragging = -1;
+    }, 300);
+  });  
+
+  //shuffle stacToShuffle on R key
+  self.input.keyboard.on('keydown_R', function () {
+    if(hoveringObj && self.tableObjects.contains(hoveringObj)) {
+      shuffleStack(self, hoveringObj);
+    }
+  });
+
+  self.input.keyboard.on('keydown_F', function (event) {
+    if(hoveringObj && self.tableObjects.contains(hoveringObj)) {
+      flipObject(self, hoveringObj, frames);
+    }
+  });
+
+
+  // Start the object listener for commands from server
+  self.socket.on('objectUpdates', function (objectsInfo) {
+    updateTableObjects(self, objectsInfo, frames);
+  });
 }
 
 // May have multiple sprites for an object (in the case of a stack)
 export function addObject(self, spriteIds, x, y, spriteOrientations, frames) {
-    const spritesToAdd = []; // Array of sprite objects to add to stack container
-    // first spriteId will always equal the objectId
-    for(let i = 0; i < spriteIds.length; i++) {
-        var spriteId = spriteIds[i];
-        spritesToAdd[i] = createSprite(self, spriteId, cardNames[spriteId], spriteOrientations[i], frames);
+  const spritesToAdd = []; // Array of sprite objects to add to stack container
+  // first spriteId will always equal the objectId
+  for(let i = 0; i < spriteIds.length; i++) {
+      var spriteId = spriteIds[i];
+      spritesToAdd[i] = createSprite(self, spriteId, cardNames[spriteId], spriteOrientations[i], frames);
 
-        // Stack's Parallax Visual Effect 
-        stackVisualEffect(spritesToAdd[i], i, spriteIds.length-1);
-    }
-    // Create a stack-like object (can have multiple sprites in it)/(No physics for client side)
-    const object = self.add.container(x, y, spritesToAdd); // Server will move it with 'ObjectUpdates'
-    object.objectId = spriteIds[0];  // First spriteId is always objectId
-    object.setSize(70, 95);
-    object.setInteractive();         // Make interactive with mouse
-    self.input.setDraggable(object);
+      // Stack's Parallax Visual Effect 
+      stackVisualEffect(spritesToAdd[i], i, spriteIds.length-1);
+  }
+  // Create a stack-like object (can have multiple sprites in it)/(No physics for client side)
+  const object = self.add.container(x, y, spritesToAdd); // Server will move it with 'ObjectUpdates'
+  object.objectId = spriteIds[0];  // First spriteId is always objectId
+  object.setSize(70, 95);
+  object.setInteractive();         // Make interactive with mouse
+  self.input.setDraggable(object);
 
-    self.tableObjects.add(object);   // Add it to the object group
-    return object;
+  self.tableObjects.add(object);   // Add it to the object group
+  //console.log("creating obj id=" + spriteIds[0] + " name=" + cardNames[spriteIds[0]] + " numSprites=" + spritesToAdd.length);
+  return object;
 }
 
 export function createSprite(self, spriteId, spriteName, isFaceUp, frames) {
-    var frame;
-    if(isFaceUp)
-      frame = frames[frames.indexOf(spriteName)];
-    else
-      frame = frames[frames.indexOf('back')];
-    // Create sprite
-    const sprite = self.add.sprite(0, 0, 'cards', frame);
-    sprite.spriteId = spriteId;
-    sprite.name = spriteName;
-    sprite.displayWidth = 70;
-    sprite.displayHeight = 95;
-    sprite.isFaceUp = isFaceUp;
-  
-    return sprite;
-}
+  var frame;
+  if(isFaceUp)
+    frame = frames[frames.indexOf(spriteName)];
+  else
+    frame = frames[frames.indexOf('back')];
+  // Create sprite
+  const sprite = self.add.sprite(0, 0, 'cards', frame);
+  sprite.spriteId = spriteId;
+  sprite.name = spriteName;
+  sprite.displayWidth = 70;
+  sprite.displayHeight = 95;
+  sprite.isFaceUp = isFaceUp;
 
-// Makes a stack of cards look 3D
-export function stackVisualEffect(sprite, pos, size) {
-    if(sprite) {
-      sprite.x = -Math.floor((size-pos)/12);
-      sprite.y = Math.floor((size-pos)/5);
-    }
-}
-
-// Called when an object is dropped
-function onObjectDrop(self, gameObject, frames) {
-    // Find closest object to snap to
-    var closest = findSnapObject(self, gameObject);
-    if(closest) {
-      // Move top card to bottom card's position
-      gameObject.x = closest.x;
-      gameObject.y = closest.y;
-  
-      // Tell server to merge the two stacks
-      self.socket.emit('mergeStacks', { 
-        topStack: gameObject.objectId,
-        bottomStack: closest.objectId
-      });
-      self.socket.emit('objectInput', { 
-        objectId: closest.objectId,
-        x: closest.x, 
-        y: closest.y 
-      });
-  
-      // Locally merge
-      const topSprites = gameObject.getAll();
-      for(var i = 0; i < topSprites.length; i++) {
-        var oldSprite = gameObject.getAt(i);
-        // You have to create a new sprite. Adding the oldSprite crashes phaser.
-        var newSprite = createSprite(self, oldSprite.spriteId, oldSprite.name, oldSprite.isFaceUp, frames);
-        closest.add(newSprite); // Copy sprites to bottom stack
-      }
-  
-      updateStackVisualEffect(self, closest);
-  
-      // Delete top stack
-      gameObject.removeAll(true);
-      gameObject.destroy();  
-    } 
-}
-  
-// Finds the first object within the snap distance, returns null if there are none
-function findSnapObject(self, gameObject) {
-    var closestObj = null;
-    var distance = STACK_SNAP_DISTANCE;
-    self.tableObjects.getChildren().forEach(function (tableObject) {
-      if (gameObject !== tableObject) {
-        var tempDistance = Phaser.Math.Distance.BetweenPoints(gameObject, tableObject);
-        if(tempDistance < distance) {
-        closestObj = tableObject;
-        distance = tempDistance;
-        }
-      }
-    });
-    return closestObj;
-}
-  
-// Updates the global variable draggingObj
-function drawTopSprite(self, frames){
-    // Make sure you only draw once
-    if(!drewAnObject) {
-      self.socket.emit('drawTopSprite', {
-        bottomStack: draggingObj.objectId
-      });
-  
-      let drawnSpriteId = draggingObj.last.spriteId;
-      draggingObj.remove(draggingObj.last, true);
-  
-      draggingObj = addObject(self, [drawnSpriteId], draggingObj.x, draggingObj.y, [draggingObj.last.isFaceUp], frames);
-      //rotateObject(self, draggingObj);
-      draggingObj.depth = MENU_DEPTH-1;
-      isDragging = draggingObj.objectId;
-      
-      drewAnObject = true;
-    }
+  return sprite;
 }
 
 // Updates all the sprites in an object stack with the parallax visual effect
 function updateStackVisualEffect(self, object) {
-    var pos = 0;
-    var size = object.length-1;
-    object.getAll().forEach(function (sprite) {
-      stackVisualEffect(sprite, pos, size);
-      pos++;
-    });
+  var pos = 0;
+  var size = object.length-1;
+  object.getAll().forEach(function (sprite) {
+    stackVisualEffect(sprite, pos, size);
+    pos++;
+  });
 }
+
+// Makes a stack of cards look 3D
+export function stackVisualEffect(sprite, pos, size) {
+  if(sprite) {
+    sprite.x = -Math.floor((size-pos)/12);
+    sprite.y = Math.floor((size-pos)/5);
+  }
+}
+
+// Called when an object is dropped
+function onObjectDrop(self, gameObject, frames) {
+  // Find closest object to snap to
+  var closest = findSnapObject(self, gameObject);
+  if(closest) {
+    // Move top card to bottom card's position
+    gameObject.x = closest.x;
+    gameObject.y = closest.y;
+
+    // Tell server to merge the two stacks
+    self.socket.emit('mergeStacks', { 
+      topStack: gameObject.objectId,
+      bottomStack: closest.objectId
+    });
+    self.socket.emit('objectInput', { 
+      objectId: closest.objectId,
+      x: closest.x, 
+      y: closest.y 
+    });
+
+    // Locally merge
+    const topSprites = gameObject.getAll();
+    for(var i = 0; i < topSprites.length; i++) {
+      var oldSprite = gameObject.getAt(i);
+      // You have to create a new sprite. Adding the oldSprite crashes phaser.
+      var newSprite = createSprite(self, oldSprite.spriteId, oldSprite.name, oldSprite.isFaceUp, frames);
+      closest.add(newSprite); // Copy sprites to bottom stack
+    }
+
+    updateStackVisualEffect(self, closest);
+
+    // Delete top stack
+    gameObject.removeAll(true);
+    gameObject.destroy();  
+  } 
+}
+  
+// Finds the first object within the snap distance, returns null if there are none
+function findSnapObject(self, gameObject) {
+  var closestObj = null;
+  var distance = STACK_SNAP_DISTANCE;
+  self.tableObjects.getChildren().forEach(function (tableObject) {
+    if (gameObject !== tableObject) {
+      var tempDistance = Phaser.Math.Distance.BetweenPoints(gameObject, tableObject);
+      if(tempDistance < distance) {
+      closestObj = tableObject;
+      distance = tempDistance;
+      }
+    }
+  });
+  return closestObj;
+}
+  
+// Updates the global variable draggingObj
+function drawTopSprite(self, frames){
+  // Make sure you only draw once
+  if(!drewAnObject) {
+    self.socket.emit('drawTopSprite', {
+      bottomStack: draggingObj.objectId
+    });
+
+    let drawnSpriteId = draggingObj.last.spriteId;
+    draggingObj.remove(draggingObj.last, true);
+
+    draggingObj = addObject(self, [drawnSpriteId], draggingObj.x, draggingObj.y, [draggingObj.last.isFaceUp], frames);
+    //rotateObject(self, draggingObj);
+    draggingObj.depth = MENU_DEPTH-1;
+    isDragging = draggingObj.objectId;
+    
+    drewAnObject = true;
+  }
+}
+
+
 
 function dragGameObject(self, gameObject, dragX, dragY){
   if(gameObject) {
@@ -261,11 +273,44 @@ function rotateObject(self, gameObject) {
 }
 
 function shuffleStack(self, object){
-  if(stackToShuffle){
-    console.log('shuffling stack');
+  if(object && object.length > 1){
+    //console.log('shuffling stack');
     self.socket.emit('shuffleStack', {
       objectId: object.objectId
     });
-    stackToShuffle= null;
   }
 } 
+
+function flipObject(self, gameObject, frames) {
+  if(gameObject) {
+    self.socket.emit('objectFlip', { 
+      objectId: gameObject.objectId
+    });
+    
+    if(gameObject.length == 1) {
+      // Flip the top sprite for appearences
+      var topSprite = gameObject.last;
+      var bottomSprite = gameObject.first;
+      if(!bottomSprite.isFaceUp) 
+        topSprite.setFrame(frames[frames.indexOf(cardNames[bottomSprite.spriteId])]);
+      else
+        topSprite.setFrame(frames[frames.indexOf('back')]); 
+    } 
+    else {
+      gameObject.objectId = gameObject.last.spriteId;
+      for (var i = 0; i < Math.floor(gameObject.length * 0.5); i++) {
+        var lowerSprite = gameObject.getAt(i);
+        var upperSprite = gameObject.getAt(gameObject.length - 1 - i);
+        var lowerSpriteId = lowerSprite.spriteId;
+        var upperSpriteId = upperSprite.spriteId;
+        var lowerOrientation = !lowerSprite.isFaceUp;
+        var upperOrientation = !upperSprite.isFaceUp;
+
+        // Flip the values
+        updateSprite(lowerSprite, upperSpriteId, upperOrientation, frames);
+        updateSprite(upperSprite, lowerSpriteId, lowerOrientation, frames);
+      }
+      gameObject.getAt(i).isFaceUp = !gameObject.getAt(i).isFaceUp;
+    }
+  }
+}
