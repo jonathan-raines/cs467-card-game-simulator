@@ -42,17 +42,17 @@ function preload() {
 function create() {
   var self = this;
   this.socket = io(roomName);
+  
+  this.tableObjects = this.add.group();
 
   cam = this.cameras.main;
   cam.setBackgroundColor('#3CB371');
 
   if(playerNickname)
     self.socket.emit('playerNickname', playerNickname);
-
-  this.tableObjects = this.add.group();
   
   debugTicker(self);
-  
+
   loadGameUI(self);
   getPlayerUpdates(self); 
 
