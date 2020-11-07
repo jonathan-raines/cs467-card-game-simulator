@@ -55,6 +55,8 @@ function create() {
   loadGameUI(self);
   getPlayerUpdates(self); 
 
+  self.input.setDefaultCursor('url(assets/customCursors/blue.cur), pointer');
+
   cursors = self.input.keyboard.createCursorKeys();
 
   self.input.on('pointermove', function(pointer, currentlyOver) {
