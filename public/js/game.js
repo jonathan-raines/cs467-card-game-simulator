@@ -39,6 +39,7 @@ function preload() {
 }
 
 function create() {
+
   var self = this;
   this.socket = io(roomName);
 
@@ -46,6 +47,7 @@ function create() {
 
   cam = this.cameras.main;
   cam.setBackgroundColor('#3CB371');
+  cam.setBounds(0, 0, game.config.width, game.config.height);
 
   if(playerNickname)
     self.socket.emit('playerNickname', playerNickname);
