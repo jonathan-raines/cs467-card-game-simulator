@@ -1,12 +1,12 @@
 const customCursors = [
-  {inUse: false, path: 'assets/customCursors/blue.png'},
-  {inUse: false, path: 'assets/customCursors/green.png'},
-  {inUse: false, path: 'assets/customCursors/orange.png'},
-  {inUse: false, path: 'assets/customCursors/pink.png'},
-  {inUse: false, path: 'assets/customCursors/purple.png'},
-  {inUse: false, path: 'assets/customCursors/red.png'},
-  {inUse: false, path: 'assets/customCursors/white.png'},
-  {inUse: false, path: 'assets/customCursors/yellow.png'}
+  {inUse: false, path: 'blue'},
+  {inUse: false, path: 'green'},
+  {inUse: false, path: 'orange'},
+  {inUse: false, path: 'pink'},
+  {inUse: false, path: 'purple'},
+  {inUse: false, path: 'red'},
+  {inUse: false, path: 'white'},
+  {inUse: false, path: 'yellow'}
 ];
 
 function addPlayer(socket) {
@@ -28,7 +28,7 @@ function addPlayer(socket) {
 
 function removePlayer(socket) {
   numPlayers--;
-  deselectPlayerCursor(players[socket.id].path);
+  deselectPlayerCursor(players[socket.id].playerCursor);
   
   console.log('[Room ' +  roomName + '] '+
               'Player ' + players[socket.id].playerNum + 
@@ -57,9 +57,9 @@ function selectPlayerCursor(){
   return playerCursor.path;
 }
 
-function deselectPlayerCursor(path){
+function deselectPlayerCursor(playerCursor){
   for (let i = 0; i < customCursors.length; i++) {
-    if(customCursors[i].path == path){
+    if(customCursors[i].path == playerCursor){
       customCursors[i].inUse = false;
       break;
     }

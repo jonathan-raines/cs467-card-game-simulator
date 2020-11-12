@@ -39,6 +39,7 @@ const GAME_TICK_RATE = 100
 //--------------------------------------------------------------------------------------------
 const objectInfoToSend = {};            // Object to send in objectUpdates
 const players = {};                     // Info of all the current players in the game session
+const cursorInfo = {};
 
 // Global Variables
 //--------------------------------------------------------------------------------------------
@@ -157,6 +158,10 @@ function startSocketUpdates(self, socket, frames) {
     const originStack = self.tableObjects.getChildren()[inputData.objectId-1];
     shuffleStack(self, originStack);
   });
+
+  socket.on('dummyCursorLocation', function(inputData){
+    cursorInfo[inputData.playerNum]=inputData;
+  });
 }
 
 function update() {
@@ -178,6 +183,7 @@ function startGameDataTicker(self) {
       // Sends the card positions to clients
       io.emit('objectUpdates', objectInfoToSend);
       io.emit('currentPlayers', players);
+      io.emit('moveDummyCursors', cursorInfo);
 
   }, GAME_TICK_RATE);
 }
