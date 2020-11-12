@@ -62,3 +62,21 @@ hr {
   margin:auto;
   width:40%;
 }
+
+.row {
+  display: flex;
+}
+
+.column-left {
+  flex: 35%;
+  padding: 10px;
+}
+
+.column-right {
+  flex: 65%;
+  padding: 10px;
+}
+
+table, th, td {
+  border: 1px solid black;
+}

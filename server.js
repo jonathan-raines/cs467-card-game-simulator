@@ -36,6 +36,7 @@ if(!IS_LOCAL) {
 
 initializeDatabase();
 
+app.set('view engine', 'ejs');
 app.use(express.static(__dirname + '/public'));
 
 app.get('/', function (req, res) {  
@@ -65,7 +66,7 @@ app.get('/', function (req, res) {
 function lobbyRouter(requestedRoom, req, res) {
   // For regular requests to lobby
   if(requestedRoom == '') {
-  res.sendFile(__dirname + '/views/lobby.html');
+    res.render(__dirname + '/views/lobby.ejs', {activeGameRooms: activeGameRooms});
   // For specific rooms
   } else if (activeGameRooms[requestedRoom]) {
     var nickname = req.query.nickname || '';
