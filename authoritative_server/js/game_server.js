@@ -160,7 +160,7 @@ function startSocketUpdates(self, socket, frames) {
   });
 
   socket.on('dummyCursorLocation', function(inputData){
-    cursorInfo[inputData.playerNum]=inputData;
+    cursorInfo[inputData.playerId]=inputData;
   });
 }
 
