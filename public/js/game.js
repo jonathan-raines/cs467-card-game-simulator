@@ -33,8 +33,6 @@ var cam, cursors;
 // Create Phaser3 Game
 var game = new Phaser.Game(config);
 
-let cursorTimer = 0;
-
 function preload() {
   this.load.html('menu', 'assets/menu.html');
   this.load.html('help', 'assets/help.html');
@@ -80,17 +78,13 @@ function create() {
                       Math.sin(camAngle) * deltaX) / cam.zoom;
     }
     //update server with pointer location
-    if(players[self.socket.id] && cursorTimer >=4){
+    if(players[self.socket.id]){
       let actualXY = cam.getWorldPoint(pointer.x, pointer.y)
 
       self.socket.emit('dummyCursorLocation', {
-        playerNum: players[self.socket.id].playerNum,
+        playerId: players[self.socket.id].playerId,
         actualXY: actualXY
       });
-      cursorTimer = 0;
-    }
-    else{
-      cursorTimer++;
     }
   });
 
@@ -144,7 +138,7 @@ function addNewDummyCursors(self, players){
       if(players[player].playerId != self.socket.id){
         //see if cursor is already present
         self.dummyCursors.getChildren().forEach(function(dummyCursor){
-          if(playerCursor.playerNum == players[player].playerNum){
+          if(playerCursor.playerId == players[player].playerId){
             playerCursor = dummyCursor;
           }
         });
@@ -154,8 +148,8 @@ function addNewDummyCursors(self, players){
         }
         else{//create a new cursor
           //add cursor sprite
-          playerCursor = self.add.sprite(players[player].playerNum*10, players[player].playerNum*10, players[player].playerCursor);
-          playerCursor.playerNum = players[player].playerNum;
+          playerCursor = self.add.sprite(0, 0, players[player].playerCursor);
+          playerCursor.playerId = players[player].playerId;
           playerCursor.setDepth(MENU_DEPTH+playerCursor.playerNum)
           //add playerCursor to a group for tracking
           self.dummyCursors.add(playerCursor);
@@ -170,7 +164,7 @@ function removeOldDummyCursors(self, players){
   self.dummyCursors.getChildren().forEach(function(dummyCursor){
     let playerExists = false;
     Object.keys(players).forEach(function(player){
-      if(dummyCursor.playerNum == players[player].playerNum){
+      if(dummyCursor.playerId == players[player].playerId){
         playerExists = true;
       }
     });
@@ -185,9 +179,9 @@ function moveDummyCursors(self){
   self.socket.on('moveDummyCursors', function(cursorUpdateInfo){
     Object.keys(cursorUpdateInfo).forEach(function(curCursor){
       //console.log(cursorUpdateInfo)
-      if(curCursor.playerNum != players[self.socket.id].playerNum){
+      if(curCursor.playerId != players[self.socket.id].playerId){
         self.dummyCursors.getChildren().forEach(function(dummyCursor){
-          if(dummyCursor.playerNum == cursorUpdateInfo[curCursor].playerNum){
+          if(dummyCursor.playerId == cursorUpdateInfo[curCursor].playerId){
             dummyCursor.x = cursorUpdateInfo[curCursor].actualXY.x 
             dummyCursor.y = cursorUpdateInfo[curCursor].actualXY.y
           }
