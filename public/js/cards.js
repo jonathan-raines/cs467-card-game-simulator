@@ -4,10 +4,11 @@ import {
     updateSprite 
 } from './update.js';
 
-const MENU_DEPTH = 1000;
+export const MENU_DEPTH = 1000;
 const STACK_SNAP_DISTANCE = 40;
 const LONG_PRESS_TIME = 300;
 
+//this array is set in the standard order of card suit ranking for organization puposes
 export const cardNames = ['back', 
   'clubsAce', 'clubs2', 'clubs3', 'clubs4', 'clubs5', 'clubs6', 'clubs7', 'clubs8', 'clubs9', 'clubs10', 'clubsJack', 'clubsQueen', 'clubsKing',
   'diamondsAce', 'diamonds2', 'diamonds3', 'diamonds4', 'diamonds5', 'diamonds6', 'diamonds7','diamonds8', 'diamonds9', 'diamonds10', 'diamondsJack', 'diamondsQueen', 'diamondsKing',
