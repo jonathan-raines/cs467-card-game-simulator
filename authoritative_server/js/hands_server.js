@@ -100,6 +100,7 @@ function takeFromHand(self, socket, playerId, objectId, x, y) {
   object.active = true;
   object.x = x;
   object.y = y;
+  object.angle = -players[playerId].playerSpacing;
   object.objectId = objectId;
   object.add(sprite);
 
@@ -187,10 +188,4 @@ function moveAroundInHand(self, playerId, objectId, newPos) {
   players[playerId].isFaceUp.splice(toDelete, 1);
 
   updateHandSpacing(playerId, -1);
-
-  var string = "";
-  for(var i = 0; i < players[playerId].hand.length; i++) {
-    string += "  " + cardNames[players[playerId].hand[i]];
-  }
-  console.log(string);
 }
