@@ -145,17 +145,6 @@ function updatePlayers(self, playersInfo) {
               playersInfo[id].isFaceUp, 
               -playersInfo[id].playerSpacing);
     }
-    // Check if server has player
-    else if(playersInfo[id] == null && hand != null) {
-      hand.zone.destroy();
-      self.handObjects.getChildren().forEach(function (handObject) {
-        if(handObject.playerId == id) {
-          handObject.removeAll(true); 
-          handObject.destroy();
-        }
-      });
-      delete hands[id];
-    }
     else {
       updateHand(self,
                  id, 
@@ -168,6 +157,28 @@ function updatePlayers(self, playersInfo) {
                  -playersInfo[id].playerSpacing);
     } 
   });
+  // Delete old hands
+  Object.keys(hands).forEach(function (id) {
+    if(playersInfo[id] == null) {
+      console.log("deleting hand");
+      hands[id].zone.destroy();
+      delete hands[id];
+    }
+  });
+  self.handObjects.getChildren().forEach(function (handObject) {
+    //console.log("Card " + cardNames[handObject.objectId]);
+    if(playersInfo[handObject.playerId] == null) {
+      console.log("Removing card from hand =" + cardNames[handObject.objectId]);
+      handObject.removeAll(true); 
+      handObject.destroy();
+    }
+  });
+  self.handSnapZones.getChildren().forEach(function (handSnapZone) {
+    if(playersInfo[handSnapZone.playerId] == null) {
+      handSnapZone.destroy();
+    }
+  });
+
 }
 
 

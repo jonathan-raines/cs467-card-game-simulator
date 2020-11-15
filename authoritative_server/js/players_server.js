@@ -12,11 +12,11 @@ const customCursors = [
 
 function addPlayer(self, socket) {
   numPlayers++;
-
+  playerCounter++;
   players[socket.id] = {
     playerId: socket.id,
-    name: "player" + numPlayers,
-    playerNum: numPlayers,       // player's number that's not long
+    name: "player" + playerCounter,
+    playerNum: playerCounter,       // player's number that's not long
     hand: [],                    // All the ids of the cards in the hand
     handX: [],
     handY: [],                   // location of the cards in the hand
@@ -36,6 +36,7 @@ function addPlayer(self, socket) {
 
 function removePlayer(self, socket) {
   numPlayers--;
+  removeAllFromHand(self, socket.id);
   deselectPlayerCursor(players[socket.id].playerCursor);
   
   console.log('[Room ' +  roomName + '] '+
@@ -47,12 +48,14 @@ function removePlayer(self, socket) {
 }
 
 function updatePlayerSpacing() {
+  var count = 0;
   for (x in players) {
-     var angle = (players[x].playerNum - 1) * 360/numPlayers;
-    
+    var angle = (count) * 360/numPlayers;
+    count++;
     players[x].playerSpacing = angle;
     players[x].x = TABLE_CENTER_X + DISTANCE_FROM_CENTER * Math.sin(Phaser.Math.DegToRad(angle));
     players[x].y = TABLE_CENTER_Y + DISTANCE_FROM_CENTER * Math.cos(Phaser.Math.DegToRad(angle));
+    updateHandSpacing(x, -1);
   }
 }
 

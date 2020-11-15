@@ -111,6 +111,7 @@ export function updateHand(self, playerId, xPos, yPos, spriteIds, objectXs, obje
     if(object.playerId == playerId && spriteIds[object.pos] != object.objectId &&
        isDragging != object.objectId
     ) {
+      console.log("deleting in updateHand()")
       object.removeAll(true); 
       object.destroy();
     }
@@ -196,8 +197,10 @@ function takeFromHand(self) {
 function updateHandObject(self, object, playerId, pos, angle, spriteId, x, y, isFaceUp) {
   var updated = updateObject(self, x, y, pos+5, angle, [spriteId], [isFaceUp], object);
   const isMe = self.socket.id == playerId;
-  if(!isMe && isFaceUp)
-      updated.first.setFrame(frames[frames.indexOf('joker')]);
+  if(!isMe && isFaceUp) {
+    console.log("card " + cardNames[spriteId]);
+    updated.first.setFrame(frames[frames.indexOf('joker')]);
+  }
   updated.playerId = playerId;
   updated.pos = pos;
   return updated;

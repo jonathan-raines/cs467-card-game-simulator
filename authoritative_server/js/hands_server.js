@@ -189,3 +189,41 @@ function moveAroundInHand(self, playerId, objectId, newPos) {
 
   updateHandSpacing(playerId, -1);
 }
+
+function removeAllFromHand(self, playerId) {
+  var x = 350;
+  var y = 500;
+  const player = players[playerId];
+  if(!player) {
+    console.log("Cannot remove card from hand (playerId not found).");
+    return;
+  }
+  for(var i = 0; i < players[playerId].hand.length; i++) {
+    var objectId = players[playerId].hand[i];
+    var isFaceUp = players[playerId].isFaceUp[i];
+    //var isFaceUp = false; // Hide cards
+
+    //re-define the stack and put its sprite back into it
+    const sprite = createSprite(self, objectId, cardNames[objectId], isFaceUp, frames);
+    const object = getTableObject(self, objectId); //find the original stack that the sprite was created with
+    object.active = true;
+    object.x = x;
+    object.y = y;
+    object.angle = 0;
+    object.objectId = objectId;
+    object.add(sprite);
+
+    overallDepth++;
+    //update clients telling them to create the new stack
+    objectInfoToSend[object.objectId]={
+      objectId: object.objectId,
+      items: [ objectId ],
+      isFaceUp: [ isFaceUp ],
+      x: x,
+      y: y,
+      objectDepth: overallDepth,
+      angle: -players[playerId].playerSpacing
+    }
+    x += 20;
+  }
+}

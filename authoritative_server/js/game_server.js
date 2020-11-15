@@ -62,6 +62,7 @@ let numPlayers = 0;        // Current number of players
 */
 const roomName = roomInfo.roomName;
 const maxPlayers = roomInfo.maxPlayers;
+let playerCounter = 0;
 let overallDepth = 0;                   // Depth of the highest card
 let tickCount = 0;                      // When
 
