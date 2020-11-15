@@ -160,7 +160,6 @@ function updatePlayers(self, playersInfo) {
   // Delete old hands
   Object.keys(hands).forEach(function (id) {
     if(playersInfo[id] == null) {
-      console.log("deleting hand");
       hands[id].zone.destroy();
       delete hands[id];
     }
@@ -168,7 +167,6 @@ function updatePlayers(self, playersInfo) {
   self.handObjects.getChildren().forEach(function (handObject) {
     //console.log("Card " + cardNames[handObject.objectId]);
     if(playersInfo[handObject.playerId] == null) {
-      console.log("Removing card from hand =" + cardNames[handObject.objectId]);
       handObject.removeAll(true); 
       handObject.destroy();
     }

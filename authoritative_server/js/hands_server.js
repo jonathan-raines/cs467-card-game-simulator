@@ -164,9 +164,9 @@ function moveAroundInHand(self, playerId, objectId, newPos) {
     console.log("Cannot move card around.");
     return;
   }
-  else if(pos == newPos || pos + 1 == newPos) {
-    console.log("Moving card to same position in hand.");
-    return
+  else if(pos == newPos || pos + 1 == newPos) { // Same position dont do anything
+    updateHandSpacing(playerId, -1);
+    return;
   }
   else if(pos < 0)
     pos = 0;
