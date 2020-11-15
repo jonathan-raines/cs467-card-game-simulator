@@ -1,4 +1,3 @@
-
 /*---------- objectInfoToSend Example -------------------
 objectInfoToSend[3] = {
   objectId: 3,
@@ -7,13 +6,14 @@ objectInfoToSend[3] = {
   x: 100,
   y: 200,
   objectDepth: 200, 
+  angle: 180
 };
 ---------------------------------------------------------*/
 function loadCards(self) {
   let frames = self.textures.get('cards').getFrameNames();
 
   const xStart = 100,  yStart = 100, 
-        xSpacing = 35, ySpacing = 200, 
+        xSpacing = CARD_WIDTH/2.0, ySpacing = 200, 
         perRow = 13,   initialIsFaceUp = true;
 
   //add 52 playing cards in order
@@ -29,11 +29,11 @@ function loadCards(self) {
       x: initialX,
       y: initialY,
       objectDepth: overallDepth,
-      rotation: 0
+      angle: 0
     };
     addObject(self, [objectId], initialX, initialY, [initialIsFaceUp], frames);
   }
-  gatherAllCards(self, 400, 400);
+  gatherAllCards(self, TABLE_CENTER_X, TABLE_CENTER_Y);
 }
 
 function getTableObject(self, objectId) {
@@ -75,7 +75,7 @@ function mergeStacks(topStack, bottomStack) {
   }
 }
 
-function flipObject(self, gameObject) {
+function flipTableObject(self, gameObject) {
   if(gameObject) {
     // Only one card (don't need to switch game objects)
     if(gameObject.length == 1) {
@@ -143,6 +143,7 @@ function drawTopSprite(self, bottomStack) {
   topStack.y = bottomStack.y;
   topStack.objectId = topSprite.spriteId;
   topStack.add(topSprite);
+  overallDepth++;
   /*
   console.log('bottom local contains: ');
   debugObjectContents(bottomStack);
@@ -170,7 +171,7 @@ function addObject(self, spriteIds, x, y, spriteOrientations, frames) {
   // Create object that acts like a stack (can have multiple sprites in it) 
   const object = self.add.container(x, y, spritesToAdd);
   object.objectId = spriteIds[0]; // First spriteId is always objectId
-  object.setSize(70, 95);
+  object.setSize(CARD_WIDTH, CARD_HEIGHT);
   object.active = true;
 
   self.tableObjects.add(object);  // Add it to the object group
@@ -183,8 +184,8 @@ function createSprite(self, spriteId, spriteName, isFaceUp, frames) {
   const sprite = self.add.sprite(0, 0, 'cards', frame);
   sprite.spriteId = spriteId;
   sprite.name = spriteName;
-  sprite.displayWidth = 70;
-  sprite.displayHeight = 95;
+  sprite.displayWidth = CARD_WIDTH;
+  sprite.displayHeight = CARD_HEIGHT;
   sprite.isFaceUp = true;
   return sprite;
 }
@@ -210,7 +211,7 @@ function shuffleStack(self, originStack){
   shuffledStack.active = true;
   shuffledStack.x = originStack.x;
   shuffledStack.y = originStack.y;
-  shuffledStack.rotation = originStack.rotation;
+  shuffledStack.angle = originStack.angle;
   shuffledStack.objectId = shuffledBottomSprite.spriteId;
 
   //put all of the old originStack sprites into shuffledStack
@@ -221,7 +222,6 @@ function shuffleStack(self, originStack){
     shuffledStack.add(originSprites[i]);
     tempItems.push(originSprites[i].spriteId);
     tempIsFaceUp.push(originSprites[i].isFaceUp);
-    
   }
   /*
   console.log('originalStack contains: ');
@@ -237,7 +237,7 @@ function shuffleStack(self, originStack){
     y: originStack.y,
     objectDepth: overallDepth,
     isFaceUp: tempIsFaceUp,
-    rotation: shuffledStack.rotation
+    angle: shuffledStack.angle
   }
 
   originStack.active = false;       // Keep for later use

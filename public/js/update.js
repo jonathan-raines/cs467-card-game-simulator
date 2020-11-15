@@ -1,14 +1,15 @@
 import { 
-    addObject, 
+    addTableObject, 
     cardNames,
     createSprite, 
     isDragging, 
     stackVisualEffect, 
-    wasDragging 
+    wasDragging,
+    frames
 } from './cards.js';
 
 // Updates all the objects on the table
-export function updateTableObjects(self, objectsInfo, frames) {
+export function updateTableObjects(self, objectsInfo) {
   Object.keys(objectsInfo).forEach(function (id) {
     if(objectsInfo[id] != null) {
       var updatedAnObject = false;
@@ -25,7 +26,14 @@ export function updateTableObjects(self, objectsInfo, frames) {
 
         // Check if object is same as server's object
         else if(object.objectId == id) {
-          updateObject(self, objectsInfo, id, object, frames);
+          updateObject(self, 
+                       objectsInfo[id].x, 
+                       objectsInfo[id].y, 
+                       objectsInfo[id].objectDepth, 
+                       objectsInfo[id].angle,
+                       objectsInfo[id].items,
+                       objectsInfo[id].isFaceUp,
+                       object);
           updatedAnObject = true;
           count++;
         } 
@@ -35,64 +43,76 @@ export function updateTableObjects(self, objectsInfo, frames) {
         console.log("Error: Found " + count + " of the same object id when updating from server");
 
       // If no object was updated, there is no local object and must be created
-      if(!updatedAnObject) {
-        addObject(self, objectsInfo[id].items, objectsInfo[id].x, objectsInfo[id].y, objectsInfo[id].isFaceUp, frames);
+      if(!updatedAnObject && isDragging != id) {
+        addTableObject(self, objectsInfo[id].items, objectsInfo[id].x, objectsInfo[id].y, objectsInfo[id].isFaceUp);
+      }
+    }
+  });
+
+  // Double check for duplicates
+  self.tableObjects.getChildren().forEach(function (object) {
+    if(objectsInfo[object.objectId] == null) {
+      // Check if it's being or was recently dragged
+      if(isDragging != object.objectId && wasDragging != object.objectId) {
+        object.removeAll(true);
+        object.destroy();
       }
     }
   });
 }
 
 // Updates a single table object
-function updateObject(self, objectsInfo, id, object, frames) {
+export function updateObject(self, xPos, yPos, objectDepth, angle, items, isFaceUp, object) {
   if(!object) { 
     console.log("No local object to update.");
     return;
   }
+  object.active = true;
+  object.setVisible(true);
+  object.objectId = items[0];
+
   // Check if it is not being currently dragged or drawn
   if(isDragging != object.objectId && wasDragging != object.objectId) {
     // Check if it's not in the same position
-    if(object.x != objectsInfo[id].x || object.y != objectsInfo[id].y) {
+    if(object.x != xPos || object.y != yPos) {
       // Update position
-      object.setPosition(objectsInfo[id].x, objectsInfo[id].y);
+      object.setPosition(xPos, yPos);
     }
     // Check if different depth
-    if(object.depth != objectsInfo[id].objectDepth) {
+    if(object.depth != objectDepth) {
       // Update Depth
-      object.depth = objectsInfo[id].objectDepth;
+      object.depth = objectDepth;
     }
 
-    object.angle = objectsInfo[id].angle;
-
+    object.angle = angle;
   }
   // Update all sprites (regardless if its being dragged)
-  var serverSpriteIdArray = objectsInfo[id].items;
-
-  for (var i = 0; i < Math.max(object.length, serverSpriteIdArray.length); i++) {
-
+  for (var i = 0; i < Math.max(object.length, items.length); i++) {
+    var serverSpriteId = items[i];
     if(i >= object.length) {
       // Create a new sprite
-      var newSprite = createSprite(self, serverSpriteId, cardNames[serverSpriteId], objectsInfo[id].isFaceUp[i], frames);
+      var newSprite = createSprite(self, serverSpriteId, cardNames[serverSpriteId], isFaceUp[i]);
       object.add(newSprite); // Add at end of list
     }
-    else if(i >= serverSpriteIdArray.length) {
+    else if(i >= items.length) {
       // Delete Sprite
       object.removeAt(i, true);
     }
     else {
-      var serverSpriteId = serverSpriteIdArray[i];
       var spriteToUpdate = object.getAt(i);
 
       // Update the sprite
-      updateSprite(spriteToUpdate, serverSpriteId, objectsInfo[id].isFaceUp[i], frames);
+      updateSprite(spriteToUpdate, serverSpriteId, isFaceUp[i]);
 
       // Stack's Parallax Visual Effect 
-      stackVisualEffect(spriteToUpdate, i, serverSpriteIdArray.length-1);
+      stackVisualEffect(spriteToUpdate, i, items.length-1);
     }
   }
+  return object;
 }
 
 // Update a sprite
-export function updateSprite(oldSprite, newId, newIsFaceUp, frames) {
+export function updateSprite(oldSprite, newId, newIsFaceUp) {
   if(oldSprite) {
     oldSprite.spriteId = newId;
     oldSprite.name = cardNames[newId];
