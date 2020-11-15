@@ -146,7 +146,6 @@ function setHandObjectPosition(self, socket, playerId, objectId, x, y) {
 
 
 function moveAroundInHand(self, playerId, objectId, newPos) {
-  console.log("Moving card " + objectId + " to pos " + newPos);
   if(!players[playerId])
     return;
   if(newPos == -1) { // Reset spacing
@@ -170,7 +169,6 @@ function moveAroundInHand(self, playerId, objectId, newPos) {
   }
   else if(pos < 0)
     pos = 0;
-  
   
   var x = players[playerId].handX[pos];
   var y = players[playerId].handY[pos];

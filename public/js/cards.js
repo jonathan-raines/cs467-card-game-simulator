@@ -67,8 +67,8 @@ export function loadCards(self) {
     isDragging = gameObject.objectId;
     draggingObj = gameObject;
     //console.log("Dragging " + cardNames[draggingObj.first.spriteId]);
-    
-    draggingObj.depth = MENU_DEPTH-1;
+    if(!options["lockedHands"] || (!draggingObj.playerId || draggingObj.playerId == self.socket.id))
+      draggingObj.depth = MENU_DEPTH-1;
     self.socket.emit('objectDepth', { // Tells the server to increase the object's depth
       objectId: gameObject.objectId
     });
