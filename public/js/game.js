@@ -1,7 +1,17 @@
 import { debugTicker } from './debug.js';
 import { loadGameUI } from './gameUI.js';
-import { isDragging } from './cards.js';
-import { MENU_DEPTH } from './cards.js';
+import { 
+    isDragging,
+    cardNames,
+    MENU_DEPTH,
+    options
+ } from './cards.js';
+
+ import {
+    hands,
+    addHand,
+    updateHand
+ } from './hands.js';
 
 var config = {
   type: Phaser.AUTO,
@@ -48,21 +58,22 @@ function preload() {
 }
 
 function create() {
-
   var self = this;
   this.socket = io(roomName);
 
   this.tableObjects = this.add.group();
+  this.handObjects = this.add.group();
+  this.handSnapZones = this.add.group();
   this.dummyCursors = this.add.group();
 
   cam = this.cameras.main;
   cam.setBackgroundColor('#3CB371');
-  cam.setBounds(0, 0, game.config.width, game.config.height);
+  cam.setBounds(-game.config.width, -game.config.height, game.config.width*2, game.config.height*2);
 
   if(playerNickname)
     self.socket.emit('playerNickname', playerNickname);
   
-  debugTicker(self);
+  //debugTicker(self);
 
   loadGameUI(self);
   getPlayerUpdates(self); 
@@ -73,11 +84,12 @@ function create() {
     if (pointer.leftButtonDown() && !currentlyOver[0] && isDragging == -1) {
       var camAngle = Phaser.Math.DegToRad(players[self.socket.id].playerSpacing); // in radians
       var deltaX = pointer.x - pointer.prevPosition.x;
-      var deltaY = pointer.y-pointer.prevPosition.y;
+      var deltaY = pointer.y - pointer.prevPosition.y;
       cam.scrollX -= (Math.cos(camAngle) * deltaX +
                       Math.sin(camAngle) * deltaY) / cam.zoom;
       cam.scrollY -= (Math.cos(camAngle) * deltaY -
                       Math.sin(camAngle) * deltaX) / cam.zoom;
+      //console.log("x: " + pointer.x + " y: " + pointer.y);
     }
     //update server with pointer location
     if(players[self.socket.id]){
@@ -108,15 +120,65 @@ function getParameterByName(name, url = window.location.href) {
   return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
-function getPlayerUpdates(self) {
-  // Gets the list of current players from the server
-  self.socket.on('currentPlayers', function (playersInfo) {
-    players = playersInfo;
+// Gets the list of current players from the server
+function getPlayerUpdates(self, frames) {
 
-    cam.setAngle(players[self.socket.id].playerSpacing);
+  self.socket.on('currentPlayers', function (playersInfo) {
+    cam.setAngle(playersInfo[self.socket.id].playerSpacing);
+    updatePlayers(self, playersInfo);
+    players = playersInfo;
     updateCursors(self, players);
   });
+
+  moveDummyCursors(self);
 }
+
+function updatePlayers(self, playersInfo) {
+  Object.keys(playersInfo).forEach(function (id) {
+    const hand = hands[id];
+    if(hand == null && playersInfo[id] != null) {
+      addHand(self, 
+              id, 
+              playersInfo[id].x, 
+              playersInfo[id].y, 
+              playersInfo[id].hand, 
+              playersInfo[id].isFaceUp, 
+              -playersInfo[id].playerSpacing);
+    }
+    else {
+      updateHand(self,
+                 id, 
+                 playersInfo[id].x, 
+                 playersInfo[id].y, 
+                 playersInfo[id].hand, 
+                 playersInfo[id].handX,
+                 playersInfo[id].handY,
+                 playersInfo[id].isFaceUp, 
+                 -playersInfo[id].playerSpacing);
+    } 
+  });
+  // Delete old hands
+  Object.keys(hands).forEach(function (id) {
+    if(playersInfo[id] == null) {
+      hands[id].zone.destroy();
+      delete hands[id];
+    }
+  });
+  self.handObjects.getChildren().forEach(function (handObject) {
+    //console.log("Card " + cardNames[handObject.objectId]);
+    if(playersInfo[handObject.playerId] == null) {
+      handObject.removeAll(true); 
+      handObject.destroy();
+    }
+  });
+  self.handSnapZones.getChildren().forEach(function (handSnapZone) {
+    if(playersInfo[handSnapZone.playerId] == null) {
+      handSnapZone.destroy();
+    }
+  });
+
+}
+
 
 function updateCursors(self, players){
   //set the player's cursor 
@@ -124,10 +186,7 @@ function updateCursors(self, players){
   self.input.setDefaultCursor(pointer);
 
   addNewDummyCursors(self, players);
-
   removeOldDummyCursors(self, players);
-
-  moveDummyCursors(self);
 }
 
 function addNewDummyCursors(self, players){
@@ -150,9 +209,11 @@ function addNewDummyCursors(self, players){
         }
         else{//create a new cursor
           //add cursor sprite
-          playerCursor = self.add.sprite(0, 0, players[player].playerCursor);
+          playerCursor = self.add.sprite(-1000, -1000, players[player].playerCursor);
           playerCursor.playerId = players[player].playerId;
-          playerCursor.setDepth(MENU_DEPTH+playerCursor.playerNum)
+          playerCursor.depth = MENU_DEPTH;
+          playerCursor.setOrigin(0,0); // Make the top left of sprite the point of rotation
+          playerCursor.angle = -players[player].playerSpacing;
           //add playerCursor to a group for tracking
           self.dummyCursors.add(playerCursor);
         }

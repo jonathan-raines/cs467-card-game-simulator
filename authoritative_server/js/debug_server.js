@@ -26,15 +26,36 @@ function debugObjectContents(object) {
 }
 
 function debugTicker(self) {
+  var tickRate = 15000;
   let tickInterval = setInterval(() => {
     var cardInfo = 0;
     Object.keys(objectInfoToSend).forEach(key => {
       cardInfo += objectInfoToSend[key].items.length;
+      if(!objectInfoToSend[key].isFaceUp[0])
+          console.log(cardNames[objectInfoToSend[key].objectId] + " is down");
     });
-    console.log("--Number of cards in server   : " + self.tableObjects.getChildren().length);
-    console.log("  Number of objects in server : " + self.tableObjects.countActive());
-    console.log("  Number of cards for client  : " + cardInfo);
-    console.log("  Number of objects for client: " + Object.keys(objectInfoToSend).length);
+    var serverCards = 0;
+    self.tableObjects.getChildren().forEach(function (tableObject) {
+      if(tableObject.active) {
+        serverCards += tableObject.length;
+      }
+    });
+    console.log("--Number of cards on server  : " + serverCards);
+    console.log("  Number of objects on server: " + self.tableObjects.countActive());
+    console.log("  Number of cards to client  : " + cardInfo);
+    console.log("  Number of objects to client: " + Object.keys(objectInfoToSend).length);
+    var string;
 
-  }, 10000); // 10 sec
+    Object.keys(players).forEach(key => {
+      string = "  To client:" + players[key].name + " has ";
+      for(var i = 0; i < players[key].hand.length; i++) {
+        string += cardNames[players[key].hand[i]];
+        if(players[key].isFaceUp[i])
+          string += "▲, ";
+        else
+          string += "▼, ";
+      }
+      console.log(string);
+    });
+  }, tickRate); // 10 sec
 }

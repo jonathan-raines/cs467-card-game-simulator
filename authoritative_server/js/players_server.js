@@ -1,3 +1,4 @@
+  
 const customCursors = [
   {inUse: false, path: 'blue'},
   {inUse: false, path: 'green'},
@@ -9,13 +10,20 @@ const customCursors = [
   {inUse: false, path: 'yellow'}
 ];
 
-function addPlayer(socket) {
+function addPlayer(self, socket) {
   numPlayers++;
-
+  playerCounter++;
   players[socket.id] = {
     playerId: socket.id,
-    name: "player" + numPlayers,
-    playerNum: numPlayers,       // player's number that's not long
+    name: "player" + playerCounter,
+    playerNum: playerCounter,       // player's number that's not long
+    hand: [],                    // All the ids of the cards in the hand
+    handX: [],
+    handY: [],                   // location of the cards in the hand
+    isFaceUp: [],
+    depth: -1,                   // objectId of the ONE object being currently dragged (-1 if not)
+    x: TABLE_CENTER_X,
+    y: TABLE_CENTER_Y,
     playerSpacing: 0,
     playerCursor: selectPlayerCursor()
   }
@@ -26,22 +34,28 @@ function addPlayer(socket) {
               ' (' + players[socket.id].name + ') connected');
 }
 
-function removePlayer(socket) {
+function removePlayer(self, socket) {
   numPlayers--;
+  removeAllFromHand(self, socket.id);
   deselectPlayerCursor(players[socket.id].playerCursor);
   
   console.log('[Room ' +  roomName + '] '+
               'Player ' + players[socket.id].playerNum + 
               ' (' + players[socket.id].name + ') disconnected');
   delete players[socket.id];
+
   updatePlayerSpacing();          // Need to recalculate player spacing when a user leaves
 }
 
 function updatePlayerSpacing() {
+  var count = 0;
   for (x in players) {
-    if (players[x].playerNum !== 1) {
-      players[x].playerSpacing = (players[x].playerNum - 1) * 360/numPlayers;
-    }
+    var angle = (count) * 360/numPlayers;
+    count++;
+    players[x].playerSpacing = angle;
+    players[x].x = TABLE_CENTER_X + DISTANCE_FROM_CENTER * Math.sin(Phaser.Math.DegToRad(angle));
+    players[x].y = TABLE_CENTER_Y + DISTANCE_FROM_CENTER * Math.cos(Phaser.Math.DegToRad(angle));
+    updateHandSpacing(x, -1);
   }
 }
 
