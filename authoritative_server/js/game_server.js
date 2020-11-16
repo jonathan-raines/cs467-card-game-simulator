@@ -28,18 +28,29 @@ const config = {
 
 // Global Constants
 //--------------------------------------------------------------------------------------------
-// Length of time the server will wait to close after all the players have left
-const ROOM_TIMEOUT_LENGTH = 1800000; // 30 min
-// How often the server will check if there are any players
-const CHECK_ROOM_INTERVAL = 300000; // 5 min
-// The game ticks at the rate of 1 tick per 100 milliseconds (10Hz)
-const GAME_TICK_RATE = 100
+
+const ROOM_TIMEOUT_LENGTH = 1800000;//(30min) Length of time the server will wait to close after all the players have left
+const CHECK_ROOM_INTERVAL = 300000; // (5min) How often the server will check if there are any players
+const GAME_TICK_RATE = 50;         // (10hz) The game ticks at the rate of 1 tick per 100 milliseconds (10Hz)
+const SLOW_TO_FAST_TICK = 100;      // (.1hz) How many fast ticks per slow ticks (for slow updates to client)
+const TABLE_CENTER_X = 400;
+const TABLE_CENTER_Y = 400;
+const DISTANCE_FROM_CENTER = 400;
+const HAND_WIDTH = 400;
+const HAND_HEIGHT = 150;
+const HAND_SPACING = 50;
+const CARD_WIDTH = 70;
+const CARD_HEIGHT = 95;
 
 // Global Objects
 //--------------------------------------------------------------------------------------------
-const objectInfoToSend = {};            // Object to send in objectUpdates
-const players = {};                     // Info of all the current players in the game session
-
+const objectInfoToSend = {};        // Object to send in objectUpdates
+const players = {};                 // Info of all the current players in the game session
+const cursorInfo = {};
+const options = {};                 // Options for the game
+options["lockedHands"] = true;     // If true, players can only take cards from their own hand.
+options["flipWhenExitHand"] = false; // If true, when leaving a hand, cards will automatically flip to hide.
+  
 // Global Variables
 //--------------------------------------------------------------------------------------------
 /* Global Variables Set outside game.js (Needed to communicate to / from server.js)
@@ -51,9 +62,11 @@ let numPlayers = 0;        // Current number of players
 */
 const roomName = roomInfo.roomName;
 const maxPlayers = roomInfo.maxPlayers;
-let backgroundColor = getRandomColor(); // Table surface color for the room
+let playerCounter = 0;
 let overallDepth = 0;                   // Depth of the highest card
+let tickCount = 0;                      // When
 
+let frames;
 const cardNames = ['back', 
   'clubsAce', 'clubs2', 'clubs3', 'clubs4', 'clubs5', 'clubs6', 'clubs7', 'clubs8', 'clubs9', 'clubs10', 'clubsJack', 'clubsQueen', 'clubsKing',
   'diamondsAce', 'diamonds2', 'diamonds3', 'diamonds4', 'diamonds5', 'diamonds6', 'diamonds7','diamonds8', 'diamonds9', 'diamonds10', 'diamondsJack', 'diamondsQueen', 'diamondsKing',
@@ -71,17 +84,19 @@ function create() {
   const self = this;
   
   this.tableObjects = this.physics.add.group();             // This is the gameScene's group of objects
+  //this.hands = this.physics.add.group();
 
   loadCards(self);
 
-  let frames = self.textures.get('cards').getFrameNames();
+  frames = self.textures.get('cards').getFrameNames();
   
   startGameDataTicker(self);
   //debugTicker(self)
 
   // When a connection is made
   io.on('connection', function (socket) {
-    addPlayer(socket);
+    addPlayer(self, socket);
+    io.emit('options', options);
     startSocketUpdates(self, socket, frames);
   });
 }
@@ -96,27 +111,25 @@ function startSocketUpdates(self, socket, frames) {
     players[socket.id].name = name;   
   });
 
-  socket.emit('backgroundColor', backgroundColor);
-
-  socket.on('backgroundColor', function(color) {
-    backgroundColor = color;
-    socket.emit('backgroundColor', color);
-  });
-
   socket.on('chat message', (msg) => {
     io.emit('chat message', msg);
   });
 
   // Listens for when a user is disconnected
   socket.on('disconnect', function () {
-    removePlayer(socket);
+    removePlayer(self, socket);
   });
 
   // Listens for object movement by the player
   socket.on('objectInput', function (inputData) {
-    var obj = getTableObject(self, inputData.objectId);
-    if(obj)
-        obj.setPosition(inputData.x, inputData.y);
+    if(!inputData.playerId) { 
+        var obj = getTableObject(self, inputData.objectId);
+        if(obj)
+          obj.setPosition(inputData.x, inputData.y);
+    }
+    else {
+      setHandObjectPosition(self, socket, inputData.playerId, inputData.objectId, inputData.x, inputData.y);
+    }
   });
 
   socket.on('objectRotation', function (inputData) {
@@ -136,7 +149,6 @@ function startSocketUpdates(self, socket, frames) {
     // take all items in top stack and put in bottom stack
     // then delete top stack
     const topStack = getTableObject(self, inputData.topStack);
-    //const topStack = self.tableObjects.getChildren()[inputData.topStack-1];
     const bottomStack = getTableObject(self, inputData.bottomStack);
     mergeStacks(topStack, bottomStack);
   });
@@ -149,13 +161,34 @@ function startSocketUpdates(self, socket, frames) {
 
   // Updates the card face when player picks up a card
   socket.on('objectFlip', function (inputData) {
-    var objToFlip = getTableObject(self, inputData.objectId);
-    flipObject(self, objToFlip);
+    if(inputData.playerId)
+      flipHandObject(self, inputData.objectId, inputData.playerId);
+    else {
+      var objToFlip = getTableObject(self, inputData.objectId);
+      flipTableObject(self, objToFlip);
+    }
+  });
+
+  socket.on('dummyCursorLocation', function(inputData){
+    cursorInfo[inputData.playerId]=inputData;
   });
 
   socket.on('shuffleStack', function(inputData){
     const originStack = self.tableObjects.getChildren()[inputData.objectId-1];
     shuffleStack(self, originStack);
+  });
+
+  socket.on('objectToHand', function(inputData){
+    const object = getTableObject(self, inputData.objectId);
+    moveObjectToHand(self, object, inputData.playerId, inputData.pos);
+  });
+
+  socket.on('handToTable', function(inputData){
+    takeFromHand(self, socket, inputData.playerId, inputData.objectId, inputData.x, inputData.y);
+  });
+
+  socket.on('handToHand', function(inputData){
+    moveAroundInHand(self, inputData.playerId, inputData.objectId, inputData.pos);
   });
 }
 
@@ -163,7 +196,18 @@ function update() {
 
 }
 
-// This is the update() function for the server
+// For information that users don't need immediately
+function slowUpdates(self) {
+  tickCount++;
+  if(tickCount >= SLOW_TO_FAST_TICK) {
+
+    io.emit('options', options);
+
+    tickCount = 0;
+  }
+}
+
+// This is the update() function for the server for quick updates
 function startGameDataTicker(self) {
   let tickInterval = setInterval(() => {
       // Update the object info to send to clients from game objects
@@ -178,17 +222,10 @@ function startGameDataTicker(self) {
       // Sends the card positions to clients
       io.emit('objectUpdates', objectInfoToSend);
       io.emit('currentPlayers', players);
+      io.emit('moveDummyCursors', cursorInfo);
+      slowUpdates(self);
 
   }, GAME_TICK_RATE);
-}
-
-function getRandomColor() {
-  var letters = '0123456789ABCDEF';
-  var color = '#';
-  for (var i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
 }
 
 // ----------------- MAIN ------------------------------------
