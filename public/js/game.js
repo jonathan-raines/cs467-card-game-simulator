@@ -1,5 +1,5 @@
 import { debugTicker } from './debug.js';
-import { loadGameUI, playerRotation } from './gameUI.js';
+import { loadGameUI, playerRotation, seats, seatSelected } from './gameUI.js';
 import { 
     isDragging,
     cardNames,
@@ -123,12 +123,12 @@ function getParameterByName(name, url = window.location.href) {
 
 // Gets the list of current players from the server
 function getPlayerUpdates(self, frames) {
-
   self.socket.on('currentPlayers', function (playersInfo) {
-    cam.setAngle(playersInfo[self.socket.id].playerSpacing);
-    updatePlayers(self, playersInfo);
-    players = playersInfo;
-    updateCursors(self, players);
+    if (seatSelected == true) {   // don't create hand until player seat is known 
+      updatePlayers(self, playersInfo);
+      players = playersInfo;
+      updateCursors(self, players);
+    }
   });
 
   moveDummyCursors(self);
