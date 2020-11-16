@@ -110,7 +110,7 @@ function loadMenu(self) {
 }
 
 function loadSeats(self) {
-  console.log('seatSelected', seatSelected);
+
   self.socket.on('seatAssignments', function(serverSeats) {
     for (var x in seats) {
       seats[x].socket = serverSeats[x].socket;
@@ -120,7 +120,6 @@ function loadSeats(self) {
       seats[x].rotation = serverSeats[x].rotation;
       seats[x].transform = serverSeats[x].transform;
     }
-    console.log('seats', seats);
     if (seatSelected == false) {
       console.log('executing');
       $('div > button').parent().remove(); // prevents duplicate buttons if multiple people are 
