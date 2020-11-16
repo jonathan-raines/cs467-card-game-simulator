@@ -1,5 +1,5 @@
 import { debugTicker } from './debug.js';
-import { loadGameUI } from './gameUI.js';
+import { loadGameUI, playerRotation } from './gameUI.js';
 import { 
     isDragging,
     cardNames,
