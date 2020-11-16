@@ -39,13 +39,14 @@ export var playerNickname = getParameterByName('nickname');
 // Room's infrom from url query
 const roomName = '/' + getParameterByName('roomId');
 // Main camera for this player and Keyboard input catcher
-var cam, cursors;
+export var cam, cursors;
 // Create Phaser3 Game
 var game = new Phaser.Game(config);
 
 function preload() {
   this.load.html('menu', 'assets/menu.html');
   this.load.html('help', 'assets/help.html');
+  this.load.html('avatar', 'assets/playerBanner.html');
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
   this.load.image('blue', 'assets/customCursors/blue.png');
   this.load.image('green', 'assets/customCursors/green.png');
