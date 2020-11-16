@@ -27,7 +27,7 @@ function addPlayer(self, socket) {
     playerSpacing: 0,
     playerCursor: selectPlayerCursor()
   }
-  updatePlayerSpacing();         // Need to recalculate player spacing when a new user joins
+  //updatePlayerSpacing();         // Need to recalculate player spacing when a new user joins
 
   console.log('[Room ' +  roomName + '] ' +
               'Player ' + players[socket.id].playerNum + 
