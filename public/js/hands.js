@@ -83,7 +83,6 @@ export function updateHand(self, playerId, xPos, yPos, spriteIds, objectXs, obje
   hands[playerId].zone.angle = angle;
   hands[playerId].size = spriteIds.length;
 
-  var rotation = Phaser.Math.DegToRad(angle);
   // Loop through server list
   for(var i = 0; i < spriteIds.length; i++) {
     var serverSpriteId = spriteIds[i];

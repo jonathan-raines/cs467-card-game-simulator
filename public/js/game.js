@@ -180,7 +180,6 @@ function updatePlayers(self, playersInfo) {
 
 }
 
-
 function updateCursors(self, players){
   //set the player's cursor 
   let pointer = 'url(assets/customCursors/'+players[self.socket.id].playerCursor+'.png), pointer';
