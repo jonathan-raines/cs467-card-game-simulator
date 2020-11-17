@@ -121,7 +121,6 @@ function loadSeats(self) {
       seats[x].transform = serverSeats[x].transform;
     }
     if (seatSelected == false) {
-      console.log('executing');
       $('div > button').parent().remove(); // prevents duplicate buttons if multiple people are 
       for (var x in seats) {               // selecting seats at the same time 
         addSeat(self, seats[x]);
@@ -146,9 +145,9 @@ function selectSeat(self) {
       // Set camera's angle
       for (var x in seats) {
         if (seats[x].id == $(this).attr('id')) {
+          playerRotation = seats[x].rotation;
           seatX = seats[x].x;
           seatY = seats[x].y;
-          playerRotation = seats[x].rotation;
           cam.setAngle(playerRotation);
         }
       }
@@ -158,6 +157,7 @@ function selectSeat(self) {
         id: $(this).attr('id'),
         name: $(this).text(),
         available: false,
+        playerSpacing: playerRotation,
         x: seatX,
         y: seatY
       });

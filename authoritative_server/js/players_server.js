@@ -27,7 +27,6 @@ function addPlayer(self, socket) {
     playerSpacing: 0,
     playerCursor: selectPlayerCursor()
   }
-  //updatePlayerSpacing();         // Need to recalculate player spacing when a new user joins
 
   console.log('[Room ' +  roomName + '] ' +
               'Player ' + players[socket.id].playerNum + 
@@ -35,6 +34,7 @@ function addPlayer(self, socket) {
 }
 
 function removePlayer(self, socket) {
+  console.log(socket.id);
   numPlayers--;
   removeAllFromHand(self, socket.id);
   deselectPlayerCursor(players[socket.id].playerCursor);
@@ -43,21 +43,18 @@ function removePlayer(self, socket) {
               'Player ' + players[socket.id].playerNum + 
               ' (' + players[socket.id].name + ') disconnected');
   delete players[socket.id];
-
-  updatePlayerSpacing();          // Need to recalculate player spacing when a user leaves
 }
 
-function updatePlayerSpacing() {
+/* function updatePlayerSpacing() {
   var count = 0;
   for (x in players) {
-    var angle = (count) * 360/numPlayers;
+    var angle = players[x].playerSpacing;
     count++;
-    players[x].playerSpacing = angle;
     players[x].x = TABLE_CENTER_X + DISTANCE_FROM_CENTER * Math.sin(Phaser.Math.DegToRad(angle));
     players[x].y = TABLE_CENTER_Y + DISTANCE_FROM_CENTER * Math.cos(Phaser.Math.DegToRad(angle));
     updateHandSpacing(x, -1);
   }
-}
+} */
 
 function selectPlayerCursor(){
   let playerCursor = null;

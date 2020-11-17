@@ -195,7 +195,15 @@ function startSocketUpdates(self, socket, frames) {
 
   // Listens for when a user is disconnected
   socket.on('disconnect', function () {
-    removePlayer(self, socket);
+    for (var x in seats) {
+      if (seats[x].socket == socket.id) {
+        seats[x].name = 'Open';
+        seats[x].available = true;
+        seats[x].socket = 0;
+      }
+    }
+    io.emit('seatAssignments', seats);    
+    removePlayer(socket, seats);
   });
 
   // Listens for object movement by the player
