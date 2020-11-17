@@ -21,8 +21,8 @@ import {
 
 
 // CONSTANTS
-const HAND_WIDTH = 400;
-const HAND_HEIGHT = 150;
+const HAND_WIDTH = 225;
+const HAND_HEIGHT = 75;
 const HAND_SPACING = 50;
 
 // GLOBAL VARIABLES

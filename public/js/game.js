@@ -226,12 +226,19 @@ function removeOldDummyCursors(self, players){
   //remove any cursors from the canvas if their player does not exist
   self.dummyCursors.getChildren().forEach(function(dummyCursor){
     let playerExists = false;
+    let playerDummies = [];
     Object.keys(players).forEach(function(player){
       if(dummyCursor.playerId == players[player].playerId){
+        playerDummies.push(dummyCursor);
         playerExists = true;
       }
     });
-    if(!playerExists){
+    if(playerExists){
+      for (let i = 1; i < playerDummies.length; i++) {
+        self.dummyCursors.remove(playerDummies[i], false, true);
+      }
+    }
+    else{
       self.dummyCursors.remove(dummyCursor, false, true);
     }
   });
