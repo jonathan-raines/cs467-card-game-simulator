@@ -61,50 +61,43 @@ function loadChat(self) {
 }
 
 function loadHelp(self) {
-  var help;
-
   // jQuery to intereact with Help HTML element
   $('#help-button').click(function() {
-    help = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('help');
+    $('#help-area').show();
 
     self.input.keyboard.on('keyup-ESC', function (event) {
-      help.destroy();
+      $('#help-area').hide();
     });
 
     $('#exit-help').click(function() {
-      help.destroy();
+      $('#help-area').hide();
     });
   });
 }
 
 function loadMenu(self) {
-    var menu;
     // jQuery to  interact with Menu HTML element
     $('#menu-button').click(function() {
-      menu = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('menu');
-  
+      // Show menu element
+      $('#menu-area').show();
       $('#user-name').val(playerNickname);
   
       $('#menu-form').submit(function(e) {
         e.preventDefault();
-        var newColor = $('#background').val();
-        if(newColor != self.backgroundColor) {
-          self.backgroundColor = self.cameras.main.setBackgroundColor(newColor);
-          self.socket.emit('backgroundColor', newColor);
+        if($('#background').val() != self.backgroundColor) {
+          self.backgroundColor = self.cameras.main.setBackgroundColor($('#background').val());
         }
-        newNickname = $('#user-name').val();
-        if(playerNickname != newNickname) {
-          playerNickname = newNickname;
-          self.socket.emit('playerNickname', playerNickname);
+        if(playerNickname != $('#user-name').val()) {
+          self.socket.emit('playerNickname', $('#user-name').val());
         }
       });
   
       self.input.keyboard.on('keyup-ESC', function (event) {
-        menu.destroy();
+        $('#menu-area').hide();
       });
   
       $('#exit-menu').click(function() {
-        menu.destroy();
+        $('#menu-area').hide();
       });
     });
 }
@@ -121,13 +114,13 @@ function loadSeats(self) {
       seats[x].transform = serverSeats[x].transform;
     }
     if (seatSelected == false) {
-      $('div > button').parent().remove(); // prevents duplicate buttons if multiple people are 
+      $('div > button[value = true]').parent().remove(); // prevents duplicate buttons if multiple people are 
       for (var x in seats) {               // selecting seats at the same time 
         addSeat(self, seats[x]);
       }
       selectSeat(self);
     } else {
-      $('div > button').parent().remove();
+      $('div > button[value = false').parent().remove();
       for (var x in seats) {
         addSeat(self, seats[x]);
       }

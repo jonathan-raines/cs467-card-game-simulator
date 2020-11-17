@@ -75,7 +75,6 @@ function create() {
     self.socket.emit('playerNickname', playerNickname);
   
   //debugTicker(self);
-
   loadGameUI(self);
   getPlayerUpdates(self); 
 
@@ -123,6 +122,15 @@ function getParameterByName(name, url = window.location.href) {
 
 // Gets the list of current players from the server
 function getPlayerUpdates(self, frames) {
+  self.socket.on('nameChange', function(playersInfo) {
+    for (var x in playersInfo) {
+      console.log('nameChange', playersInfo[x].name);
+      if (playersInfo[x].playerId == self.socket.id) {
+        playerNickname = playersInfo[x].name;
+      }
+    }
+  });
+
   self.socket.on('currentPlayers', function (playersInfo) {
     if (seatSelected == true) {   // don't create hand until player seat is known 
       updatePlayers(self, playersInfo);

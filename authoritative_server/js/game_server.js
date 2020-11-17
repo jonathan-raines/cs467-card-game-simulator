@@ -172,11 +172,18 @@ function create() {
 function startSocketUpdates(self, socket, frames) {
   // Assigns a nickname 
   socket.on('playerNickname', function(name) {
-    
     console.log('[Room ' +  roomName + '] '+
                 players[socket.id].name + 
                 ' changed their name to ' + name);   
-    players[socket.id].name = name;   
+    players[socket.id].name = name; 
+
+    for (var x in seats) {
+      if (seats[x].socket == socket.id) {
+        seats[x].name = name;
+      }
+    }
+    io.emit('nameChange', players);
+    io.emit('seatAssignments', seats);
   });
 
   socket.on('chat message', (msg) => {
