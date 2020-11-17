@@ -34,7 +34,6 @@ function addPlayer(self, socket) {
 }
 
 function removePlayer(self, socket) {
-  console.log(socket.id);
   numPlayers--;
   removeAllFromHand(self, socket.id);
   deselectPlayerCursor(players[socket.id].playerCursor);
