@@ -202,8 +202,8 @@ function startSocketUpdates(self, socket, frames) {
         seats[x].socket = 0;
       }
     }
-    io.emit('seatAssignments', seats);    
-    removePlayer(socket, seats);
+    io.emit('seatAssignments', seats); 
+    removePlayer(self, socket);
   });
 
   // Listens for object movement by the player
