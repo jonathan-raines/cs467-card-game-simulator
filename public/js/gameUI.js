@@ -47,9 +47,14 @@ export function loadGameUI(self) {
 }
 
 function loadChat(self) {
-  // Setup Chat
+  $('input').keypress(function (e) {
+    if (e.keyCode == 32) {
+      console.log(e);
+    }
+  });
+
   $('#chat-form').submit(function(e) {
-    e.preventDefault(); // prevents page reloading
+    e.preventDefault();
     self.socket.emit('chat message', playerNickname + ': ' + $('#chat-msg').val());
     $('#chat-msg').val('');
     return false;

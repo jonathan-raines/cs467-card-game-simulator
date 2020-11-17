@@ -39,7 +39,7 @@ export var playerNickname = getParameterByName('nickname');
 // Room's infrom from url query
 const roomName = '/' + getParameterByName('roomId');
 // Main camera for this player and Keyboard input catcher
-export var cam, cursors;
+export var cam;
 // Create Phaser3 Game
 var game = new Phaser.Game(config);
 
@@ -77,8 +77,6 @@ function create() {
   //debugTicker(self);
   loadGameUI(self);
   getPlayerUpdates(self); 
-
-  cursors = self.input.keyboard.createCursorKeys();
 
   self.input.on('pointermove', function(pointer, currentlyOver) {
     if (pointer.leftButtonDown() && !currentlyOver[0] && isDragging == -1) {
@@ -124,7 +122,6 @@ function getParameterByName(name, url = window.location.href) {
 function getPlayerUpdates(self, frames) {
   self.socket.on('nameChange', function(playersInfo) {
     for (var x in playersInfo) {
-      console.log('nameChange', playersInfo[x].name);
       if (playersInfo[x].playerId == self.socket.id) {
         playerNickname = playersInfo[x].name;
       }
