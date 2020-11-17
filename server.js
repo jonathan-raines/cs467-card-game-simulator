@@ -83,7 +83,8 @@ function lobbyRouter(requestedRoom, req, res) {
         "nickname": nickname
       });
       res.sendFile(__dirname + '/views/index.html', query);
-    } else
+    } 
+    else
       res.sendFile(__dirname + '/views/index.html');
   // The gameroom is not active
   } 
@@ -109,7 +110,7 @@ async function renderHome(res){
     }
     else{
       result.rows.forEach(row => {
-        activeGameRooms[row.roomCode]=row;
+        activeGameRooms[row.roomName]=row;
       });
     }
     res.render(__dirname + '/views/lobby.ejs', {activeGameRooms: activeGameRooms});
@@ -138,27 +139,47 @@ app.get('/host-a-game', function(req, res) {
 });
 
 // You must catch this async function for example: createRoom(**,**)).catch( e => { console.error(e) });
-async function createRoom(roomId, maxPlayers) {
-  activeGameRooms[roomId] = {
-    roomName: roomId,
+async function createRoom(roomName, maxPlayers) {
+  activeGameRooms[roomName] = {
+    roomName: roomName,
     maxPlayers: maxPlayers
   };
-  roomInfo = activeGameRooms[roomId];
+  roomInfo = activeGameRooms[roomName];
   setupAuthoritativePhaser(roomInfo);
   if(!IS_LOCAL) {
-    var query = "INSERT INTO rooms (room_name, num_players, max_players) " + 
-                "VALUES ('" + roomInfo.roomName + "', 0, " + roomInfo.maxPlayers + ");";
+    const query = {
+      text: 'INSERT INTO rooms (room_name, num_players, max_players) VALUES ($1, $2, $3) RETURNING *',
+      values: [roomName, 0, maxPlayers]
+    };
     const client = await pool.connect();
-    await client.query(query);
+    await client
+      .query(query)
+      .then(res =>{
+        const newRow = res.rows[0];
+        activeGameRooms[roomName] = {
+          roomName: newRow.room_name,
+          numPlayers: newRow.num_players,
+          maxPlayers: newRow.max_players
+        };
+        setupAuthoritativePhaser(activeGameRooms[roomName]);
+      })
+      .catch(e => console.error(e.stack));
     client.release();
+  }
+  else{
+    activeGameRooms[roomName] = {
+      roomName: roomName,
+      maxPlayers: maxPlayers
+    };
+    setupAuthoritativePhaser(activeGameRooms[roomName]);
   }
 }
 
 // You must catch this async function for example: deleteRoom(**).catch( e => { console.error(e) });
-async function deleteRoom(roomId) {
-  activeGameRooms[roomId] = null;
+async function deleteRoom(roomName) {
+  activeGameRooms[roomName] = null;
   if(!IS_LOCAL) {
-    var query = "DELETE FROM rooms WHERE room_name = '" + roomId + "'";
+    var query = "DELETE FROM rooms WHERE room_name = '" + roomName + "'";
     const client = await pool.connect();
     await client.query(query);
     client.release();

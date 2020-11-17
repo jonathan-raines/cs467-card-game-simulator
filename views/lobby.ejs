@@ -20,10 +20,10 @@
               name="nickname"
               placeholder="Enter a nickname"
             />
-            <label for="roomCode">Room Code:</label>
+            <label for="roomId">Room Code:</label>
             <input
               type="text"
-              name="roomCode"
+              name="roomId"
               placeholder="Enter room code"
             />
             <input type="submit" value="JOIN">
@@ -58,14 +58,14 @@
               <tr>
                 <td>"<%=activeGameRooms[room].roomName%>"</td>
                 <td><%=activeGameRooms[room].numPlayers%>/<%=activeGameRooms[room].maxPlayers%></td>
-                <td><%=activeGameRooms[room].roomCode%></td>
+                <td><%=activeGameRooms[room].roomName%></td>
                 <td><%=activeGameRooms[room].roomOwner%></td>
                 <td><%=activeGameRooms[room].gameDesc%></td>
                 <td>
                   <form action="/" method="GET" >
                     <input hidden="true"
-                      name="roomCode"
-                      value="<%=activeGameRooms[room].roomCode%>"
+                      name="roomId"
+                      value="<%=activeGameRooms[room].roomName%>"
                     />
                     <input type="submit" value="JOIN">
                   </form>
