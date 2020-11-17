@@ -1,7 +1,17 @@
 import { debugTicker } from './debug.js';
-import { loadGameUI, seatSelected } from './gameUI.js';
-import { isDragging, MENU_DEPTH } from './cards.js';
-import { hands, addHand, updateHand } from './hands.js';
+import { loadGameUI, playerRotation, seats, seatSelected } from './gameUI.js';
+import { 
+    isDragging,
+    cardNames,
+    MENU_DEPTH,
+    options
+ } from './cards.js';
+
+ import {
+    hands,
+    addHand,
+    updateHand
+ } from './hands.js';
 
 var config = {
   type: Phaser.AUTO,
@@ -73,7 +83,7 @@ function create() {
 
   self.input.on('pointermove', function(pointer, currentlyOver) {
     if (pointer.leftButtonDown() && !currentlyOver[0] && isDragging == -1) {
-      var camAngle = Phaser.Math.DegToRad(0);
+      var camAngle = Phaser.Math.DegToRad(0); // in radians
       var deltaX = pointer.x - pointer.prevPosition.x;
       var deltaY = pointer.y - pointer.prevPosition.y;
       cam.scrollX -= (Math.cos(camAngle) * deltaX +
