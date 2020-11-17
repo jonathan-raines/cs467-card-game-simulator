@@ -13,7 +13,8 @@ const { JSDOM } = jsdom;
 
 let port = process.env.PORT || 8082;
 // URL for the database given in .env file from heroku
-const CONNECTION_STRING = process.env.DATABASE_URL || '';
+// const CONNECTION_STRING = process.env.DATABASE_URL || '';
+const CONNECTION_STRING = "postgres://iwyewynhhadyca:bf7a217a034e6e5a917b289fa66c003a36fe15a2fa8c509408d97c08e1a6a0db@ec2-3-214-4-151.compute-1.amazonaws.com:5432/dah3tid4s9bv0i"
 // The server running on a local machine if no .env database url
 const IS_LOCAL = CONNECTION_STRING == '';
 // Length of time the server will wait to close after making the room
@@ -36,6 +37,7 @@ if(!IS_LOCAL) {
 
 initializeDatabase();
 
+app.set('view engine', 'ejs');
 app.use(express.static(__dirname + '/public'));
 
 app.get('/', function (req, res) {  
@@ -43,16 +45,22 @@ app.get('/', function (req, res) {
 
   if(!IS_LOCAL) {
     // Update activeGameRooms from database
-    let query = "SELECT * FROM rooms WHERE room_name = '" + requestedRoom + "'";
-    ;(async function() {
+    (async function() {
+      let query = {
+        text: "SELECT * FROM rooms WHERE room_name = $1",
+        values: [requestedRoom]
+      };
       const client = await pool.connect();
       await client.query(query, (err, result) => {
         if (err) {
             console.error(err);
             return;
         }
-        if(result.rows.length == 0)
-           activeGameRooms[requestedRoom] = null;
+        if(result.rows.length == 0){
+          console.log('requestedRoom does not exist');
+          activeGameRooms[requestedRoom] = null;
+        }
+        console.log('lobbyRouter remote')
         lobbyRouter(requestedRoom, req, res);
         client.release();
       });
@@ -65,9 +73,10 @@ app.get('/', function (req, res) {
 function lobbyRouter(requestedRoom, req, res) {
   // For regular requests to lobby
   if(requestedRoom == '') {
-  res.sendFile(__dirname + '/views/lobby.html');
+    renderHome(res).catch( e => { console.error(e) })
   // For specific rooms
-  } else if (activeGameRooms[requestedRoom]) {
+  } 
+  else if (activeGameRooms[requestedRoom]) {
     var nickname = req.query.nickname || '';
     if(nickname != '') {
       const query = querystring.stringify({
@@ -77,9 +86,35 @@ function lobbyRouter(requestedRoom, req, res) {
     } else
       res.sendFile(__dirname + '/views/index.html');
   // The gameroom is not active
-  } else {
-    res.send('No room found.'); // TEMP (should be a html link)
+  } 
+  else {
+    renderHome(res).catch( e => { console.error(e) })
   }
+}
+
+async function renderHome(res){
+  let query = {
+    text: "SELECT * FROM rooms",
+    values: []
+  };
+  const client = await pool.connect();
+  await client.query(query, (err, result) => {
+    if (err) {
+        console.error(err);
+        return;
+    }
+    if (result.rows.length = 0){
+      activeGameRooms = null;
+      console.log('no results')
+    }
+    else{
+      result.rows.forEach(row => {
+        activeGameRooms[row.roomCode]=row;
+      });
+    }
+    res.render(__dirname + '/views/lobby.ejs', {activeGameRooms: activeGameRooms});
+    client.release();
+  });
 }
 
 app.get('/host-a-game', function(req, res) {

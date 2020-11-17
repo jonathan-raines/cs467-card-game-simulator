@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<title>Card Game Simulator Lobby</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+<link rel="stylesheet" href="/assets/css/lobby.css">
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="../js/lobby.js"></script>
+<body>
+  <!-- <div class="center-div"> -->
+    <div class="row">
+      <div class="column-left">
+        <div class="form-box">
+          <h1>Join a Game</h1>
+          <form action="/" method="GET">
+            <label for="nickname">Nickname:</label>
+            <input
+              type="text"
+              name="nickname"
+              placeholder="Enter a nickname"
+            />
+            <label for="roomCode">Room Code:</label>
+            <input
+              type="text"
+              name="roomCode"
+              placeholder="Enter room code"
+            />
+            <input type="submit" value="JOIN">
+          </form>
+          <hr>
+          <h1>Host a Game</h1>
+          <form action="/host-a-game" method="GET">
+            <label for="nickname">Nickname:</label>
+            <input
+              type="text"
+              name="nickname"
+              placeholder="Enter a nickname"
+            />
+            <input type="submit" value="CREATE">
+          </form>
+        </div>
+      </div>
+      <div class="column-right">
+        <div class="form-box">
+          <h1>Active Game Rooms</h1>
+          <table style = "width:100%">
+            <tr>
+              <th>Room Name</th>
+              <th>Players/Max</th>
+              <th>Room Code</th>
+              <th>Owner</th>
+              <th>Game Type?</th>
+              <th>Join</th>
+            </tr>
+          <% Object.keys(activeGameRooms).forEach(function(room){%>
+            <%if (activeGameRooms[room] != null){%>
+              <tr>
+                <td>"<%=activeGameRooms[room].roomName%>"</td>
+                <td><%=activeGameRooms[room].numPlayers%>/<%=activeGameRooms[room].maxPlayers%></td>
+                <td><%=activeGameRooms[room].roomCode%></td>
+                <td><%=activeGameRooms[room].roomOwner%></td>
+                <td><%=activeGameRooms[room].gameDesc%></td>
+                <td>
+                  <form action="/" method="GET" >
+                    <input hidden="true"
+                      name="roomCode"
+                      value="<%=activeGameRooms[room].roomCode%>"
+                    />
+                    <input type="submit" value="JOIN">
+                  </form>
+                </td>
+              </tr>
+            <%}%>
+          <%}) %>
+          </table>
+        </div>
+      </div>
+    </div>
+  <!-- </div> -->
+  
+</body>
+</html>
