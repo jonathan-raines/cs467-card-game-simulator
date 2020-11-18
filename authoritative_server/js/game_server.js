@@ -60,7 +60,7 @@ const pool = pool;         // Pass the pool for the database
 const roomInfo = roomInfo; // Pass room info to the server instance
 let numPlayers = 0;        // Current number of players
 */
-const roomName = roomInfo.roomName;
+const roomCode = roomInfo.roomCode;
 const maxPlayers = roomInfo.maxPlayers;
 let playerCounter = 0;
 let overallDepth = 0;                   // Depth of the highest card
@@ -180,6 +180,7 @@ function create() {
   io.on('connection', function (socket) {
     addPlayer(self, socket);
     io.emit('defaultName', players[socket.id].name);
+    addPlayerToDB();
     io.emit('seatAssignments', seats);
     io.emit('options', options);
     startSocketUpdates(self, socket, frames);
@@ -189,7 +190,7 @@ function create() {
 function startSocketUpdates(self, socket, frames) {
   // Assigns a nickname 
   socket.on('playerNickname', function(name) {
-    console.log('[Room ' +  roomName + '] '+
+    console.log('[Room ' +  roomCode + '] '+
                 players[socket.id].name + 
                 ' changed their name to ' + name);   
     players[socket.id].name = name; 
@@ -219,6 +220,7 @@ function startSocketUpdates(self, socket, frames) {
 
   // Listens for when a user is disconnected
   socket.on('disconnect', function () {
+    removePlayerFromDB();
     for (var x in seats) {
       if (seats[x].socket == socket.id) {
         seats[x].name = 'Open';
@@ -349,10 +351,13 @@ var timer = setInterval(function() {
       // Check again and see if still no players
       if(numPlayers <= 0) {
         clearInterval(timer);
-        console.log('Server ' + roomName + ' stopped.');
+        console.log('Server ' + roomCode + ' stopped.');
         ;(async function() {
           if(!IS_LOCAL) {
-            var query = "DELETE FROM rooms WHERE room_name = '" + roomName + "'";
+            const query = {
+              text: "DELETE FROM rooms WHERE room_code = $1",
+              values: [roomCode]
+            };
             const client = await pool.connect();
             await client.query(query);
             client.release();
@@ -365,3 +370,55 @@ var timer = setInterval(function() {
     }, ROOM_TIMEOUT_LENGTH);
   }
 }, CHECK_ROOM_INTERVAL);
+
+function addPlayerToDB(){
+  if(!IS_LOCAL) {
+    (async function() {
+      let query = {
+        text: "SELECT * FROM rooms WHERE room_code = $1",
+        values: [roomCode]
+      };
+      const client = await pool.connect();
+      await client.query(query)
+        .then(res =>{
+          let curSize = res.rows[0].num_players;
+          (async function() {
+            let query = {
+              text: "UPDATE rooms SET num_players = $1 WHERE room_code = $2",
+              values: [curSize+1, roomCode]
+            };
+            const client = await pool.connect();
+            await client.query(query).catch(e => console.error(e.stack));
+            client.release();
+          })().catch( e => { console.error(e) });
+        }).catch(e => console.error(e.stack));
+      client.release();
+    })().catch( e => { console.error(e) });
+  } 
+}
+
+function removePlayerFromDB(){
+  if(!IS_LOCAL) {
+    (async function() {
+      let query = {
+        text: "SELECT * FROM rooms WHERE room_code = $1",
+        values: [roomCode]
+      };
+      const client = await pool.connect();
+      await client.query(query)
+        .then(res =>{
+          let curSize = res.rows[0].num_players;
+          (async function() {
+            let query = {
+              text: "UPDATE rooms SET num_players = $1 WHERE room_code = $2",
+              values: [curSize-1, roomCode]
+            };
+            const client = await pool.connect();
+            await client.query(query).catch(e => console.error(e.stack));
+            client.release();
+          })().catch( e => { console.error(e) });
+        }).catch(e => console.error(e.stack));
+      client.release();
+    })().catch( e => { console.error(e) });
+  }
+}
