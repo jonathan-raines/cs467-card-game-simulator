@@ -1,17 +1,27 @@
 import { loadCards } from './cards.js';
-import { playerNickname } from './game.js';
+import { cam, playerNickname } from './game.js';
+
+export var playerRotation = 0, seatSelected = false;
+
+export var seats = {};
 
 export function loadGameUI(self) {
   loadChat(self);
   loadHelp(self);
   loadMenu(self);
+  loadSeats(self);
   loadCards(self);
 }
 
 function loadChat(self) {
-  // Setup Chat
+  $('input').keypress(function (e) {
+    if (e.keyCode == 32) {
+      console.log(e);
+    }
+  });
+
   $('#chat-form').submit(function(e) {
-    e.preventDefault(); // prevents page reloading
+    e.preventDefault();
     self.socket.emit('chat message', playerNickname + ': ' + $('#chat-msg').val());
     $('#chat-msg').val('');
     return false;
@@ -23,51 +33,104 @@ function loadChat(self) {
 }
 
 function loadHelp(self) {
-  var help;
-
   // jQuery to intereact with Help HTML element
   $('#help-button').click(function() {
-    help = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('help');
+    $('#help-area').show();
 
     self.input.keyboard.on('keyup-ESC', function (event) {
-      help.destroy();
+      $('#help-area').hide();
     });
 
     $('#exit-help').click(function() {
-      help.destroy();
+      $('#help-area').hide();
     });
   });
 }
 
 function loadMenu(self) {
-    var menu;
     // jQuery to  interact with Menu HTML element
     $('#menu-button').click(function() {
-      menu = self.add.dom(self.cameras.main.centerX, self.cameras.main.centerY).createFromCache('menu');
-  
+      // Show menu element
+      $('#menu-area').show();
       $('#user-name').val(playerNickname);
   
       $('#menu-form').submit(function(e) {
         e.preventDefault();
-        var newColor = $('#background').val();
-        if(newColor != self.backgroundColor) {
-          self.backgroundColor = self.cameras.main.setBackgroundColor(newColor);
-          self.socket.emit('backgroundColor', newColor);
+        if($('#background').val() != self.backgroundColor) {
+          self.backgroundColor = self.cameras.main.setBackgroundColor($('#background').val());
         }
-        newNickname = $('#user-name').val();
-        if(playerNickname != newNickname) {
-          playerNickname = newNickname;
-          self.socket.emit('playerNickname', playerNickname);
+        if(playerNickname != $('#user-name').val()) {
+          self.socket.emit('playerNickname', $('#user-name').val());
         }
       });
   
       self.input.keyboard.on('keyup-ESC', function (event) {
-        menu.destroy();
+        $('#menu-area').hide();
       });
   
       $('#exit-menu').click(function() {
-        menu.destroy();
+        $('#menu-area').hide();
       });
     });
 }
 
+function loadSeats(self) {
+
+  self.socket.on('seatAssignments', function(serverSeats) {
+    seats = serverSeats;
+    if (seatSelected == false) {
+      $('div > button[value = true]').parent().remove(); // prevents duplicate buttons if multiple people are 
+      for (var x in seats) {               // selecting seats at the same time 
+        addSeat(self, seats[x]);
+      }
+      selectSeat(self);
+    } else {
+      $('div > button[value = false').parent().remove();
+      for (var x in seats) {
+        addSeat(self, seats[x]);
+      }
+      $('button[value=true]').hide();
+    }
+  });
+}
+
+function selectSeat(self) {
+  var seatX, seatY;
+  $('div > button').click(function() {
+    if ($(this).val() == 'true') {
+      $(this).text(playerNickname);
+      $(this).val(false);
+      // Set camera's angle
+      for (var x in seats) {
+        if (seats[x].id == $(this).attr('id')) {
+          playerRotation = seats[x].rotation;
+          seatX = seats[x].x;
+          seatY = seats[x].y;
+          cam.setAngle(playerRotation);
+        }
+      }
+
+      self.socket.emit('seatSelected', {
+        socket: self.socket.id,
+        id: $(this).attr('id'),
+        name: $(this).text(),
+        available: false,
+        playerSpacing: playerRotation,
+        x: seatX,
+        y: seatY
+      });
+      seatSelected = true;
+
+      $('button[value=true]').hide();
+    }
+  });
+}
+
+function addSeat(self, seat) {
+  self.add.dom(seat.x, seat.y).createFromCache('avatar');
+  var openSeat = document.getElementById('player-button');
+  openSeat.id = seat.id;
+  openSeat.innerText = seat.name;
+  openSeat.value = seat.available;
+  openSeat.style.transform = 'rotate(' + (360 - seat.rotation).toString() + 'deg)';
+}

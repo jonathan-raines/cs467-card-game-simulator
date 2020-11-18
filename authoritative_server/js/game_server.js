@@ -1,7 +1,7 @@
 const config = {
   type: Phaser.HEADLESS,
-  width: 800,
-  height: 600,
+  width: 1000,
+  height: 1000,
   scale: {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH
@@ -75,6 +75,89 @@ const cardNames = ['back',
   'joker'
 ];
 
+var seats = {
+  ['1']: {
+    id: '1',
+    name: 'Open',
+    x: (config.width * 0.8) / 2,
+    y: -(config.width / 4),
+    available: true,
+    rotation: 180,
+    transform: 0,
+    socket: 0
+  },
+  ['2']: {
+    id: '2',
+    name: 'Open',
+    x: ((config.width * 0.8) / 2) + (config.width - 50) / 2,
+    y: (-((config.width / 4) + (config.width / 4)) / 2) + 50,
+    available: true,
+    rotation: 135,
+    transform: 45,
+    socket: 0 
+  },
+  ['3']: {
+    id: '3',
+    name: 'Open',
+    x: config.width - 50,
+    y: config.width / 4,
+    available: true,
+    rotation: 90,
+    transform: 270,
+    socket: 0
+  },
+  ['4']: {
+    id: '4',
+    name: 'Open',
+    x: ((config.width * 0.8) / 2) + (config.width - 50) / 2,
+    y: (config.height + (config.height / 2)) / 2,
+    available: true,
+    rotation: 45,
+    transform: 315,
+    socket: 0
+  },
+  ['5']: {
+    id: '5',
+    name: 'Open',
+    x: (config.width * 0.8) / 2,
+    y: config.height - 50,
+    available: true,
+    rotation: 0,
+    transform: 0,
+    socket: 0
+  },
+  ['6']: {
+    id: '6',
+    name: 'Open',
+    x: 0,
+    y: (config.height + (config.height / 2)) / 2,
+    available: true,
+    rotation: -45,
+    transform: 45,
+    socket: 0 
+  },
+  ['7']: {
+    id: '7',
+    name: 'Open',
+    x: -100,
+    y: config.width / 4,
+    available: true,
+    rotation: -90,
+    transform: 90,
+    socket: 0 
+  },
+  ['8']: {
+    id: '8',
+    name: 'Open',
+    x: 0,
+    y: (-((config.width / 4) + (config.width / 4)) / 2) + 50,
+    available: true,
+    rotation: 225,
+    transform: 315,
+    socket: 0 
+  },
+};
+
 function preload() {
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
 }
@@ -96,6 +179,7 @@ function create() {
   // When a connection is made
   io.on('connection', function (socket) {
     addPlayer(self, socket);
+    io.emit('seatAssignments', seats);
     io.emit('options', options);
     startSocketUpdates(self, socket, frames);
   });
@@ -104,19 +188,44 @@ function create() {
 function startSocketUpdates(self, socket, frames) {
   // Assigns a nickname 
   socket.on('playerNickname', function(name) {
-    
     console.log('[Room ' +  roomName + '] '+
                 players[socket.id].name + 
                 ' changed their name to ' + name);   
-    players[socket.id].name = name;   
+    players[socket.id].name = name; 
+
+    for (var x in seats) {
+      if (seats[x].socket == socket.id) {
+        seats[x].name = name;
+      }
+    }
+    io.emit('nameChange', players);
+    io.emit('seatAssignments', seats);
   });
 
   socket.on('chat message', (msg) => {
     io.emit('chat message', msg);
   });
 
+  socket.on('seatSelected', function(seat) {
+    seats[seat.id].socket = seat.socket;
+    seats[seat.id].name = seat.name;
+    seats[seat.id].available = false;
+    players[seat.socket].playerSpacing = seat.playerSpacing;
+    players[seat.socket].x = seat.x;
+    players[seat.socket].y = seat.y;
+    io.emit('seatAssignments', seats);
+  });
+
   // Listens for when a user is disconnected
   socket.on('disconnect', function () {
+    for (var x in seats) {
+      if (seats[x].socket == socket.id) {
+        seats[x].name = 'Open';
+        seats[x].available = true;
+        seats[x].socket = 0;
+      }
+    }
+    io.emit('seatAssignments', seats); 
     removePlayer(self, socket);
   });
 
@@ -192,9 +301,7 @@ function startSocketUpdates(self, socket, frames) {
   });
 }
 
-function update() {
-
-}
+function update() {}
 
 // For information that users don't need immediately
 function slowUpdates(self) {
