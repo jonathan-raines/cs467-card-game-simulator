@@ -110,7 +110,7 @@ function create() {
 function update() {}
 
 // Gets url parameters/queries for a name and returns the value
-function getParameterByName(name, url = window.location.href) {
+export function getParameterByName(name, url = window.location.href) {
   name = name.replace(/[\[\]]/g, '\\$&');
   var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
       results = regex.exec(url);
