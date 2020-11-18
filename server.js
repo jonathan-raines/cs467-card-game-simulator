@@ -140,12 +140,6 @@ app.get('/host-a-game', function(req, res) {
 
 // You must catch this async function for example: createRoom(**,**)).catch( e => { console.error(e) });
 async function createRoom(roomName, maxPlayers) {
-  activeGameRooms[roomName] = {
-    roomName: roomName,
-    maxPlayers: maxPlayers
-  };
-  roomInfo = activeGameRooms[roomName];
-  setupAuthoritativePhaser(roomInfo);
   if(!IS_LOCAL) {
     const query = {
       text: 'INSERT INTO rooms (room_name, num_players, max_players) VALUES ($1, $2, $3) RETURNING *',
@@ -155,33 +149,38 @@ async function createRoom(roomName, maxPlayers) {
     await client
       .query(query)
       .then(res =>{
-        const newRow = res.rows[0];
-        activeGameRooms[roomName] = {
-          roomName: newRow.room_name,
-          numPlayers: newRow.num_players,
-          maxPlayers: newRow.max_players
-        };
+        const r = res.rows[0];
+        addToActiveGameRooms(r.room_name, r.num_players, r.max_players)
         setupAuthoritativePhaser(activeGameRooms[roomName]);
       })
       .catch(e => console.error(e.stack));
     client.release();
   }
   else{
-    activeGameRooms[roomName] = {
-      roomName: roomName,
-      maxPlayers: maxPlayers
-    };
+    addToActiveGameRooms(roomName, 0, maxPlayers);
     setupAuthoritativePhaser(activeGameRooms[roomName]);
   }
+}
+
+function addToActiveGameRooms(roomName, numPlayers, maxPlayers){
+  activeGameRooms[roomName] = {
+    roomName: roomName,
+    numPlayers: numPlayers,
+    maxPlayers: maxPlayers
+  };
 }
 
 // You must catch this async function for example: deleteRoom(**).catch( e => { console.error(e) });
 async function deleteRoom(roomName) {
   activeGameRooms[roomName] = null;
   if(!IS_LOCAL) {
-    var query = "DELETE FROM rooms WHERE room_name = '" + roomName + "'";
+    var query = {
+      text: "DELETE FROM rooms WHERE room_name = $1", 
+      values: [roomName]
+    };
     const client = await pool.connect();
-    await client.query(query);
+    await client.query(query)
+      .catch(e => console.error(e.stack));
     client.release();
   }
 }
@@ -246,7 +245,7 @@ function initializeDatabase() {
     "); ";
     // Not using players table but maybe in the future
     //"CREATE TABLE players (player_id serial PRIMARY KEY, player_name VARCHAR (50) NOT NULL, player_color VARCHAR (20), room INTEGER REFERENCES rooms);"
-  ;(async function() {
+  (async function() {
     if(!IS_LOCAL) {
       const client = await pool.connect()
       await client.query(query)
