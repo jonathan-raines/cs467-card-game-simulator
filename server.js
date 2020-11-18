@@ -41,7 +41,7 @@ app.set('view engine', 'ejs');
 app.use(express.static(__dirname + '/public'));
 
 app.get('/', function (req, res) {  
-  let requestedRoom = req.query.roomId || '';
+  let requestedRoom = req.query.roomCode || '';
 
   if(!IS_LOCAL) {
     // Update activeGameRooms from database
@@ -119,7 +119,7 @@ async function renderHome(res){
 }
 
 app.get('/host-a-game', function(req, res) {
-  // Make a new roomId
+  // Make a new roomCode
   var newRoomId = uniqueId();
   // Checks if we already have that room id
   while(activeGameRooms[newRoomId])
@@ -133,7 +133,7 @@ app.get('/host-a-game', function(req, res) {
 
   // Make query to send gameroom info with URL
   const query = querystring.stringify({
-      "roomId": newRoomId
+      "roomCode": newRoomId
   });
   res.redirect('/?' + query + nickname);
 });
