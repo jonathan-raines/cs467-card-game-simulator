@@ -61,7 +61,7 @@ function loadMenu(self) {
           alert('Invite copied to clipboard!');
         })
       });
-  
+      
       $('#menu-form').submit(function(e) {
         e.preventDefault();
         if($('#background').val() != self.backgroundColor) {
