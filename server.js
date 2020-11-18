@@ -13,8 +13,7 @@ const { JSDOM } = jsdom;
 
 let port = process.env.PORT || 8082;
 // URL for the database given in .env file from heroku
-// const CONNECTION_STRING = process.env.DATABASE_URL || '';
-const CONNECTION_STRING = "postgres://iwyewynhhadyca:bf7a217a034e6e5a917b289fa66c003a36fe15a2fa8c509408d97c08e1a6a0db@ec2-3-214-4-151.compute-1.amazonaws.com:5432/dah3tid4s9bv0i"
+const CONNECTION_STRING = process.env.DATABASE_URL || '';
 // The server running on a local machine if no .env database url
 const IS_LOCAL = CONNECTION_STRING == '';
 // Length of time the server will wait to close after making the room
