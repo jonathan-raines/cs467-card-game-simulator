@@ -3,40 +3,7 @@ import { cam, playerNickname } from './game.js';
 
 export var playerRotation = 0, seatSelected = false;
 
-export var seats = {
-  ['1']: {
-    x: ((window.innerWidth * 0.80) / 2),
-    y: 20,
-  },
-  ['2']: {
-    x: (((window.innerWidth * 0.80) / 2) + window.innerWidth) / 2,
-    y: (window.innerHeight / 4) - 80,
-  },
-  ['3']: {
-    x: (window.innerWidth * 0.80) - 30,
-    y: window.innerHeight / 2,
-  },
-  ['4']: {
-    x: (((window.innerWidth * 0.80) / 2) + window.innerWidth) / 2,
-    y: (((window.innerHeight) + (window.innerHeight / 2)) / 2) + 80,
-  },
-  ['5']: {
-    x: (window.innerWidth * 0.80) / 2,
-    y: window.innerHeight - 40,
-  },
-  ['6']: {
-    x: ((((window.innerWidth * 0.80) / 2)) / 2) - 80,
-    y: (((window.innerHeight) + (window.innerHeight / 2)) / 2) + 80,
-  },
-  ['7']: {
-    x: 40,
-    y: window.innerHeight / 2,
-  },
-  ['8']: {
-    x: 40,
-    y: (window.innerHeight / 4) - 80,
-  },
-};
+export var seats = {};
 
 export function loadGameUI(self) {
   loadChat(self);
@@ -110,14 +77,7 @@ function loadMenu(self) {
 function loadSeats(self) {
 
   self.socket.on('seatAssignments', function(serverSeats) {
-    for (var x in seats) {
-      seats[x].socket = serverSeats[x].socket;
-      seats[x].id = serverSeats[x].id;
-      seats[x].name = serverSeats[x].name;
-      seats[x].available = serverSeats[x].available;
-      seats[x].rotation = serverSeats[x].rotation;
-      seats[x].transform = serverSeats[x].transform;
-    }
+    seats = serverSeats;
     if (seatSelected == false) {
       $('div > button[value = true]').parent().remove(); // prevents duplicate buttons if multiple people are 
       for (var x in seats) {               // selecting seats at the same time 

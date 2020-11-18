@@ -1,7 +1,7 @@
 const config = {
   type: Phaser.HEADLESS,
-  width: 800,
-  height: 600,
+  width: 1000,
+  height: 1000,
   scale: {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH
@@ -79,6 +79,8 @@ var seats = {
   ['1']: {
     id: '1',
     name: 'Open',
+    x: (config.width * 0.8) / 2,
+    y: -(config.width / 4),
     available: true,
     rotation: 180,
     transform: 0,
@@ -87,6 +89,8 @@ var seats = {
   ['2']: {
     id: '2',
     name: 'Open',
+    x: ((config.width * 0.8) / 2) + (config.width - 50) / 2,
+    y: (-((config.width / 4) + (config.width / 4)) / 2) + 50,
     available: true,
     rotation: 135,
     transform: 45,
@@ -95,6 +99,8 @@ var seats = {
   ['3']: {
     id: '3',
     name: 'Open',
+    x: config.width - 50,
+    y: config.width / 4,
     available: true,
     rotation: 90,
     transform: 270,
@@ -103,6 +109,8 @@ var seats = {
   ['4']: {
     id: '4',
     name: 'Open',
+    x: ((config.width * 0.8) / 2) + (config.width - 50) / 2,
+    y: (config.height + (config.height / 2)) / 2,
     available: true,
     rotation: 45,
     transform: 315,
@@ -111,6 +119,8 @@ var seats = {
   ['5']: {
     id: '5',
     name: 'Open',
+    x: (config.width * 0.8) / 2,
+    y: config.height - 50,
     available: true,
     rotation: 0,
     transform: 0,
@@ -119,6 +129,8 @@ var seats = {
   ['6']: {
     id: '6',
     name: 'Open',
+    x: 0,
+    y: (config.height + (config.height / 2)) / 2,
     available: true,
     rotation: -45,
     transform: 45,
@@ -127,6 +139,8 @@ var seats = {
   ['7']: {
     id: '7',
     name: 'Open',
+    x: -100,
+    y: config.width / 4,
     available: true,
     rotation: -90,
     transform: 90,
@@ -135,6 +149,8 @@ var seats = {
   ['8']: {
     id: '8',
     name: 'Open',
+    x: 0,
+    y: (-((config.width / 4) + (config.width / 4)) / 2) + 50,
     available: true,
     rotation: 225,
     transform: 315,

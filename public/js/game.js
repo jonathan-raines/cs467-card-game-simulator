@@ -13,15 +13,15 @@ import {
     updateHand
  } from './hands.js';
 
-var config = {
+export var config = {
   type: Phaser.AUTO,
   parent: 'game-area',
   dom: {
     createContainer: true
   },
   // Initial dimensions based on window size
-  width: window.innerWidth,
-  height: window.innerHeight,
+  width: 1000,
+  height: 1000,
   scale: {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH
@@ -59,6 +59,7 @@ function preload() {
 }
 
 function create() {
+
   var self = this;
   this.socket = io(roomName);
 
