@@ -53,9 +53,9 @@ function loadMenu(self) {
       // Show menu element
       $('#menu-area').show();
       $('#user-name').val(playerNickname);
-      $('#room-id').val(getParameterByName('roomId'));
+      $('#room-id').val(getParameterByName('roomCode'));
 
-      $('#copy-text').onclick(function(e) {  // https://www.w3schools.com/howto/howto_js_copy_clipboard.asp
+      $('#copy-text').click(function(e) {
         let text = document.getElementById('room-id').value;
         navigator.clipboard.writeText(text).then(() => {
           alert('Invite copied to clipboard!');
