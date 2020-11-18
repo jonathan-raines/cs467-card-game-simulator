@@ -37,7 +37,7 @@ export var players = {};           // List of all the current players in the gam
 // This player's info
 export var playerNickname = getParameterByName('nickname');
 // Room's infrom from url query
-const roomName = '/' + getParameterByName('roomId');
+const roomCode = '/' + getParameterByName('roomCode');
 // Main camera for this player and Keyboard input catcher
 export var cam;
 // Create Phaser3 Game
@@ -61,7 +61,7 @@ function preload() {
 function create() {
 
   var self = this;
-  this.socket = io(roomName);
+  this.socket = io(roomCode);
 
   this.tableObjects = this.add.group();
   this.handObjects = this.add.group();
