@@ -246,7 +246,10 @@ var timer = setInterval(function() {
         console.log('Server ' + roomCode + ' stopped.');
         ;(async function() {
           if(!IS_LOCAL) {
-            var query = "DELETE FROM rooms WHERE room_name = '" + roomCode + "'";
+            const query = {
+              text: "DELETE FROM rooms WHERE room_code = $1",
+              values: [roomCode]
+            };
             const client = await pool.connect();
             await client.query(query);
             client.release();
@@ -264,7 +267,7 @@ function addPlayerToDB(){
   if(!IS_LOCAL) {
     (async function() {
       let query = {
-        text: "SELECT * FROM rooms WHERE room_name = $1",
+        text: "SELECT * FROM rooms WHERE room_code = $1",
         values: [roomCode]
       };
       const client = await pool.connect();
@@ -273,7 +276,7 @@ function addPlayerToDB(){
           let curSize = res.rows[0].num_players;
           (async function() {
             let query = {
-              text: "UPDATE rooms SET num_players = $1 WHERE room_name = $2",
+              text: "UPDATE rooms SET num_players = $1 WHERE room_code = $2",
               values: [curSize+1, roomCode]
             };
             const client = await pool.connect();
@@ -290,7 +293,7 @@ function removePlayerFromDB(){
   if(!IS_LOCAL) {
     (async function() {
       let query = {
-        text: "SELECT * FROM rooms WHERE room_name = $1",
+        text: "SELECT * FROM rooms WHERE room_code = $1",
         values: [roomCode]
       };
       const client = await pool.connect();
@@ -299,7 +302,7 @@ function removePlayerFromDB(){
           let curSize = res.rows[0].num_players;
           (async function() {
             let query = {
-              text: "UPDATE rooms SET num_players = $1 WHERE room_name = $2",
+              text: "UPDATE rooms SET num_players = $1 WHERE room_code = $2",
               values: [curSize-1, roomCode]
             };
             const client = await pool.connect();

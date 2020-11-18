@@ -126,10 +126,11 @@ app.get('/host-a-game', function(req, res) {
     newRoomId = uniqueId();
 
   let nickname = req.query.nickname || '';
-  if(nickname != '')
-    nickname = '&nickname=' + nickname;
 
-  createRoom(newRoomId, 8).catch( e => { console.error(e) });
+  createRoom(newRoomId, 8, nickname + "'s room", nickname, "Freestyle").catch( e => { console.error(e) });
+
+  if(nickname != '')
+  nickname = '&nickname=' + nickname;
 
   // Make query to send gameroom info with URL
   const query = querystring.stringify({
@@ -139,34 +140,38 @@ app.get('/host-a-game', function(req, res) {
 });
 
 // You must catch this async function for example: createRoom(**,**)).catch( e => { console.error(e) });
-async function createRoom(roomCode, maxPlayers) {
+async function createRoom(roomCode, maxPlayers, roomName, roomOwner, gameDesc) {
   if(!IS_LOCAL) {
     const query = {
-      text: 'INSERT INTO rooms (room_code, num_players, max_players) VALUES ($1, $2, $3) RETURNING *',
-      values: [roomCode, 0, maxPlayers]
+      text: 'INSERT INTO rooms (room_code, num_players, max_players, room_name, room_owner, game_desc) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      values: [roomCode, 0, maxPlayers, roomName, roomOwner, gameDesc]
     };
     const client = await pool.connect();
     await client
       .query(query)
       .then(res =>{
         const r = res.rows[0];
-        addToActiveGameRooms(r.room_code, r.num_players, r.max_players)
+        addToActiveGameRooms(r.room_code, r.num_players, r.max_players, 
+          r.room_name, r.room_owner, r.game_desc)
         setupAuthoritativePhaser(activeGameRooms[roomCode]);
       })
       .catch(e => console.error(e.stack));
     client.release();
   }
   else{
-    addToActiveGameRooms(roomCode, 0, maxPlayers);
+    addToActiveGameRooms(roomCode, 0, maxPlayers, roomName, roomOwner, gameDesc);
     setupAuthoritativePhaser(activeGameRooms[roomCode]);
   }
 }
 
-function addToActiveGameRooms(roomCode, numPlayers, maxPlayers){
+function addToActiveGameRooms(roomCode, numPlayers, maxPlayers, roomName, roomOwner, gameDesc){
   activeGameRooms[roomCode] = {
     roomCode: roomCode,
     numPlayers: numPlayers,
-    maxPlayers: maxPlayers
+    maxPlayers: maxPlayers,
+    roomName: roomName,
+    roomOwner: roomOwner,
+    gameDesc: gameDesc
   };
 }
 
@@ -241,7 +246,10 @@ function initializeDatabase() {
       "room_id serial PRIMARY KEY, "+
       "room_code VARCHAR (20) NOT NULL, "+
       "num_players INTEGER NOT NULL, "+
-      "max_players INTEGER NOT NULL "+
+      "max_players INTEGER NOT NULL, "+
+      "room_name VARCHAR (20), "+ 
+      "room_owner VARCHAR (20), "+ //user who initiated room
+      "game_desc TEXT"+ //string description of game in room
     "); ";
     // Not using players table but maybe in the future
     //"CREATE TABLE players (player_id serial PRIMARY KEY, player_name VARCHAR (50) NOT NULL, player_color VARCHAR (20), room INTEGER REFERENCES rooms);"
@@ -253,7 +261,7 @@ function initializeDatabase() {
     }
   })().catch( e => { console.error(e) }).then(() => {
     // -----------  For testing  ------------------
-    createRoom('testing', 8).catch( e => { console.error(e) });
+    createRoom('testing', 8, "Test Room", "Admin", "Freestyle ".repeat(5)).catch( e => { console.error(e) });
     //createRoom('testing2', 8).catch( e => { console.error(e) });
     //----------------------------------------------
   });
