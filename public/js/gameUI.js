@@ -53,7 +53,7 @@ function loadMenu(self) {
       // Show menu element
       $('#menu-area').show();
       $('#user-name').val(playerNickname);
-  
+
       $('#menu-form').submit(function(e) {
         e.preventDefault();
         if($('#background').val() != self.backgroundColor) {

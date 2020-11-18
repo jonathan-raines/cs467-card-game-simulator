@@ -59,7 +59,6 @@ function preload() {
 }
 
 function create() {
-
   var self = this;
   this.socket = io(roomCode);
 
@@ -71,13 +70,14 @@ function create() {
   cam = this.cameras.main;
   cam.setBackgroundColor('#3CB371');
   cam.setBounds(-game.config.width, -game.config.height, game.config.width*2, game.config.height*2);
-
-  if(playerNickname)
-    self.socket.emit('playerNickname', playerNickname);
   
+  self.socket.on('defaultName', function(name) {
+    playerNickname = (!playerNickname) ? name : playerNickname;
+  });
+
   //debugTicker(self);
   loadGameUI(self);
-  getPlayerUpdates(self); 
+  getPlayerUpdates(self);
 
   self.input.on('pointermove', function(pointer, currentlyOver) {
     if (pointer.leftButtonDown() && !currentlyOver[0] && isDragging == -1) {
@@ -110,7 +110,7 @@ function create() {
 function update() {}
 
 // Gets url parameters/queries for a name and returns the value
-function getParameterByName(name, url = window.location.href) {
+export function getParameterByName(name, url = window.location.href) {
   name = name.replace(/[\[\]]/g, '\\$&');
   var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
       results = regex.exec(url);
