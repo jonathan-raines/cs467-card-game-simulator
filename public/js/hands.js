@@ -21,8 +21,8 @@ import {
 
 
 // CONSTANTS
-const HAND_WIDTH = 400;
-const HAND_HEIGHT = 150;
+const HAND_WIDTH = 225;
+const HAND_HEIGHT = 75;
 const HAND_SPACING = 50;
 
 // GLOBAL VARIABLES
@@ -83,7 +83,6 @@ export function updateHand(self, playerId, xPos, yPos, spriteIds, objectXs, obje
   hands[playerId].zone.angle = angle;
   hands[playerId].size = spriteIds.length;
 
-  var rotation = Phaser.Math.DegToRad(angle);
   // Loop through server list
   for(var i = 0; i < spriteIds.length; i++) {
     var serverSpriteId = spriteIds[i];

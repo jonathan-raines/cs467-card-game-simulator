@@ -1,5 +1,5 @@
 import { debugTicker } from './debug.js';
-import { loadGameUI } from './gameUI.js';
+import { loadGameUI, playerRotation, seats, seatSelected } from './gameUI.js';
 import { 
     isDragging,
     cardNames,
@@ -13,15 +13,15 @@ import {
     updateHand
  } from './hands.js';
 
-var config = {
+export var config = {
   type: Phaser.AUTO,
   parent: 'game-area',
   dom: {
     createContainer: true
   },
   // Initial dimensions based on window size
-  width: window.innerWidth,
-  height: window.innerHeight,
+  width: 1000,
+  height: 1000,
   scale: {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH
@@ -39,13 +39,14 @@ export var playerNickname = getParameterByName('nickname');
 // Room's infrom from url query
 const roomCode = '/' + getParameterByName('roomCode');
 // Main camera for this player and Keyboard input catcher
-var cam, cursors;
+export var cam;
 // Create Phaser3 Game
 var game = new Phaser.Game(config);
 
 function preload() {
   this.load.html('menu', 'assets/menu.html');
   this.load.html('help', 'assets/help.html');
+  this.load.html('avatar', 'assets/playerBanner.html');
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
   this.load.image('blue', 'assets/customCursors/blue.png');
   this.load.image('green', 'assets/customCursors/green.png');
@@ -58,6 +59,7 @@ function preload() {
 }
 
 function create() {
+
   var self = this;
   this.socket = io(roomCode);
 
@@ -74,11 +76,8 @@ function create() {
     self.socket.emit('playerNickname', playerNickname);
   
   //debugTicker(self);
-
   loadGameUI(self);
   getPlayerUpdates(self); 
-
-  cursors = self.input.keyboard.createCursorKeys();
 
   self.input.on('pointermove', function(pointer, currentlyOver) {
     if (pointer.leftButtonDown() && !currentlyOver[0] && isDragging == -1) {
@@ -122,12 +121,20 @@ function getParameterByName(name, url = window.location.href) {
 
 // Gets the list of current players from the server
 function getPlayerUpdates(self, frames) {
+  self.socket.on('nameChange', function(playersInfo) {
+    for (var x in playersInfo) {
+      if (playersInfo[x].playerId == self.socket.id) {
+        playerNickname = playersInfo[x].name;
+      }
+    }
+  });
 
   self.socket.on('currentPlayers', function (playersInfo) {
-    cam.setAngle(playersInfo[self.socket.id].playerSpacing);
-    updatePlayers(self, playersInfo);
-    players = playersInfo;
-    updateCursors(self, players);
+    if (seatSelected == true) {   // don't create hand until player seat is known 
+      updatePlayers(self, playersInfo);
+      players = playersInfo;
+      updateCursors(self, players);
+    }
   });
 
   moveDummyCursors(self);
@@ -179,7 +186,6 @@ function updatePlayers(self, playersInfo) {
 
 }
 
-
 function updateCursors(self, players){
   //set the player's cursor 
   let pointer = 'url(assets/customCursors/'+players[self.socket.id].playerCursor+'.png), pointer';
@@ -226,12 +232,19 @@ function removeOldDummyCursors(self, players){
   //remove any cursors from the canvas if their player does not exist
   self.dummyCursors.getChildren().forEach(function(dummyCursor){
     let playerExists = false;
+    let playerDummies = [];
     Object.keys(players).forEach(function(player){
       if(dummyCursor.playerId == players[player].playerId){
+        playerDummies.push(dummyCursor);
         playerExists = true;
       }
     });
-    if(!playerExists){
+    if(playerExists){
+      for (let i = 1; i < playerDummies.length; i++) {
+        self.dummyCursors.remove(playerDummies[i], false, true);
+      }
+    }
+    else{
       self.dummyCursors.remove(dummyCursor, false, true);
     }
   });
