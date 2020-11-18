@@ -97,24 +97,29 @@ async function renderHome(res){
     text: "SELECT * FROM rooms",
     values: []
   };
-  const client = await pool.connect();
-  await client.query(query, (err, result) => {
-    if (err) {
-        console.error(err);
-        return;
-    }
-    if (result.rows.length = 0){
-      activeGameRooms = null;
-      console.log('no results')
-    }
-    else{
-      result.rows.forEach(row => {
-        activeGameRooms[row.roomCode]=row;
-      });
-    }
+  if(!IS_LOCAL) {
+    const client = await pool.connect();
+    await client.query(query, (err, result) => {
+      if (err) {
+          console.error(err);
+          return;
+      }
+      if (result.rows.length = 0){
+        activeGameRooms = null;
+        console.log('no results')
+      }
+      else{
+        result.rows.forEach(row => {
+          activeGameRooms[row.roomCode]=row;
+        });
+      }
+      res.render(__dirname + '/views/lobby.ejs', {activeGameRooms: activeGameRooms});
+      client.release();
+    });
+  }
+  else{
     res.render(__dirname + '/views/lobby.ejs', {activeGameRooms: activeGameRooms});
-    client.release();
-  });
+  }
 }
 
 app.get('/host-a-game', function(req, res) {
