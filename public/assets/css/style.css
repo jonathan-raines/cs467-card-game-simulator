@@ -1,4 +1,8 @@
 .menu-area {
+    position: absolute;
+    display: none;
+    margin-top: 40%;
+    margin-left: 40%;
     background-color: white; 
     height: 400px; 
     width: 400px; 
@@ -17,6 +21,7 @@ div.menu-area {
 }
 
 .button-div {
+    display: inline-block;
     position: absolute; 
     right: 20px; 
     bottom: 10px;
