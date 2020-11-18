@@ -47,7 +47,7 @@ app.get('/', function (req, res) {
     // Update activeGameRooms from database
     (async function() {
       let query = {
-        text: "SELECT * FROM rooms WHERE room_name = $1",
+        text: "SELECT * FROM rooms WHERE room_code = $1",
         values: [requestedRoom]
       };
       const client = await pool.connect();
@@ -110,7 +110,7 @@ async function renderHome(res){
     }
     else{
       result.rows.forEach(row => {
-        activeGameRooms[row.roomName]=row;
+        activeGameRooms[row.roomCode]=row;
       });
     }
     res.render(__dirname + '/views/lobby.ejs', {activeGameRooms: activeGameRooms});
@@ -139,44 +139,44 @@ app.get('/host-a-game', function(req, res) {
 });
 
 // You must catch this async function for example: createRoom(**,**)).catch( e => { console.error(e) });
-async function createRoom(roomName, maxPlayers) {
+async function createRoom(roomCode, maxPlayers) {
   if(!IS_LOCAL) {
     const query = {
-      text: 'INSERT INTO rooms (room_name, num_players, max_players) VALUES ($1, $2, $3) RETURNING *',
-      values: [roomName, 0, maxPlayers]
+      text: 'INSERT INTO rooms (room_code, num_players, max_players) VALUES ($1, $2, $3) RETURNING *',
+      values: [roomCode, 0, maxPlayers]
     };
     const client = await pool.connect();
     await client
       .query(query)
       .then(res =>{
         const r = res.rows[0];
-        addToActiveGameRooms(r.room_name, r.num_players, r.max_players)
-        setupAuthoritativePhaser(activeGameRooms[roomName]);
+        addToActiveGameRooms(r.room_code, r.num_players, r.max_players)
+        setupAuthoritativePhaser(activeGameRooms[roomCode]);
       })
       .catch(e => console.error(e.stack));
     client.release();
   }
   else{
-    addToActiveGameRooms(roomName, 0, maxPlayers);
-    setupAuthoritativePhaser(activeGameRooms[roomName]);
+    addToActiveGameRooms(roomCode, 0, maxPlayers);
+    setupAuthoritativePhaser(activeGameRooms[roomCode]);
   }
 }
 
-function addToActiveGameRooms(roomName, numPlayers, maxPlayers){
-  activeGameRooms[roomName] = {
-    roomName: roomName,
+function addToActiveGameRooms(roomCode, numPlayers, maxPlayers){
+  activeGameRooms[roomCode] = {
+    roomCode: roomCode,
     numPlayers: numPlayers,
     maxPlayers: maxPlayers
   };
 }
 
 // You must catch this async function for example: deleteRoom(**).catch( e => { console.error(e) });
-async function deleteRoom(roomName) {
-  activeGameRooms[roomName] = null;
+async function deleteRoom(roomCode) {
+  activeGameRooms[roomCode] = null;
   if(!IS_LOCAL) {
     var query = {
-      text: "DELETE FROM rooms WHERE room_name = $1", 
-      values: [roomName]
+      text: "DELETE FROM rooms WHERE room_code = $1", 
+      values: [roomCode]
     };
     const client = await pool.connect();
     await client.query(query)
@@ -187,9 +187,9 @@ async function deleteRoom(roomName) {
 
 // Starts a new gameServer
 function setupAuthoritativePhaser(roomInfo) {
-  if(roomInfo && roomInfo.roomName) {
+  if(roomInfo && roomInfo.roomCode) {
     // Add to the room's socket io namespace
-    let room_io = io.of('/' + roomInfo.roomName);
+    let room_io = io.of('/' + roomInfo.roomCode);
     // Run a JSDOM script for the server game engine
     JSDOM.fromFile(path.join(__dirname, 'authoritative_server/room_host.html'), {
       // To run the scripts in the html file
@@ -213,12 +213,12 @@ function setupAuthoritativePhaser(roomInfo) {
       dom.window.pool = pool;         // Pass the pool for the database
       dom.window.roomInfo = roomInfo; // Pass room info to the server instance
       dom.window.numPlayers = 0;
-      console.log('Server ' + roomInfo.roomName + ' started.');
+      console.log('Server ' + roomInfo.roomName + ' started with code ' + roomInfo.roomCode +'.');
 
       // Simple shutdown timer so the server doesn't stay on forever
       var timer = setTimeout(function() {
         console.log('Server ' + roomInfo.roomName + ' stopped.');
-        deleteRoom(roomInfo.roomName).catch( e => { console.error(e) });
+        deleteRoom(roomInfo.roomCode).catch( e => { console.error(e) });
         dom.window.close();
       }, SERVER_TIMEOUT); 
     }).catch((error) => { console.log(error.message); });
@@ -239,7 +239,7 @@ function initializeDatabase() {
     "DROP TABLE IF EXISTS rooms; "+
     "CREATE TABLE rooms (" +
       "room_id serial PRIMARY KEY, "+
-      "room_name VARCHAR (20) NOT NULL, "+
+      "room_code VARCHAR (20) NOT NULL, "+
       "num_players INTEGER NOT NULL, "+
       "max_players INTEGER NOT NULL "+
     "); ";

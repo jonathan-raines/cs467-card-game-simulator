@@ -58,14 +58,14 @@
               <tr>
                 <td>"<%=activeGameRooms[room].roomName%>"</td>
                 <td><%=activeGameRooms[room].numPlayers%>/<%=activeGameRooms[room].maxPlayers%></td>
-                <td><%=activeGameRooms[room].roomName%></td>
+                <td><%=activeGameRooms[room].roomCode%></td>
                 <td><%=activeGameRooms[room].roomOwner%></td>
                 <td><%=activeGameRooms[room].gameDesc%></td>
                 <td>
                   <form action="/" method="GET" >
                     <input hidden="true"
                       name="roomId"
-                      value="<%=activeGameRooms[room].roomName%>"
+                      value="<%=activeGameRooms[room].roomCode%>"
                     />
                     <input type="submit" value="JOIN">
                   </form>

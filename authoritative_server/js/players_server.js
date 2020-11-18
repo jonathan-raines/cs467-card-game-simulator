@@ -29,7 +29,7 @@ function addPlayer(self, socket) {
   }
   updatePlayerSpacing();         // Need to recalculate player spacing when a new user joins
 
-  console.log('[Room ' +  roomName + '] ' +
+  console.log('[Room ' +  roomCode + '] ' +
               'Player ' + players[socket.id].playerNum + 
               ' (' + players[socket.id].name + ') connected');
 }
@@ -39,7 +39,7 @@ function removePlayer(self, socket) {
   removeAllFromHand(self, socket.id);
   deselectPlayerCursor(players[socket.id].playerCursor);
   
-  console.log('[Room ' +  roomName + '] '+
+  console.log('[Room ' +  roomCode + '] '+
               'Player ' + players[socket.id].playerNum + 
               ' (' + players[socket.id].name + ') disconnected');
   delete players[socket.id];
