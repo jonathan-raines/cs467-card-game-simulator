@@ -179,6 +179,7 @@ function create() {
   // When a connection is made
   io.on('connection', function (socket) {
     addPlayer(self, socket);
+    io.emit('defaultName', players[socket.id].name);
     io.emit('seatAssignments', seats);
     io.emit('options', options);
     startSocketUpdates(self, socket, frames);

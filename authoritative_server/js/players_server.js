@@ -44,17 +44,6 @@ function removePlayer(self, socket) {
   delete players[socket.id];
 }
 
-/* function updatePlayerSpacing() {
-  var count = 0;
-  for (x in players) {
-    var angle = players[x].playerSpacing;
-    count++;
-    players[x].x = TABLE_CENTER_X + DISTANCE_FROM_CENTER * Math.sin(Phaser.Math.DegToRad(angle));
-    players[x].y = TABLE_CENTER_Y + DISTANCE_FROM_CENTER * Math.cos(Phaser.Math.DegToRad(angle));
-    updateHandSpacing(x, -1);
-  }
-} */
-
 function selectPlayerCursor(){
   let playerCursor = null;
   for (let i = 0; i < customCursors.length; i++) {
