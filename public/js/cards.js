@@ -220,6 +220,7 @@ function onObjectDrop(self, gameObject) {
     // Move top card to bottom card's position
     gameObject.x = closest.x;
     gameObject.y = closest.y;
+    gameObject.angle = closest.angle;
 
     // Tell server to merge the two stacks
     self.socket.emit('mergeStacks', { 
@@ -244,6 +245,7 @@ function onObjectDrop(self, gameObject) {
     updateStackVisualEffect(self, closest);
 
     // Delete top stack
+    gameObject.setVisible(false);
     gameObject.removeAll(true);
     gameObject.destroy();  
     return true;
