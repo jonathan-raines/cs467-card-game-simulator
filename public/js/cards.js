@@ -275,6 +275,7 @@ function drawTopSprite(self){
   });
 
   let drawnSpriteId = draggingObj.last.spriteId;
+  draggingObj.last.setVisible(false);
   draggingObj.remove(draggingObj.last, true);
 
   draggingObj = addTableObject(self, [drawnSpriteId], draggingObj.x, draggingObj.y, [draggingObj.last.isFaceUp]);
