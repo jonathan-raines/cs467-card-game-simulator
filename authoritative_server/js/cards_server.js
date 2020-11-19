@@ -259,6 +259,7 @@ async function delayReshuffle(tableObject){
 function setTableObjectPosition(self, objectId, xPos, yPos) {
   var obj = getTableObject(self, objectId);
   if(obj) {
+    
     if(xPos < TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER)
       xPos = TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER;
     if(xPos > TABLE_CENTER_X + TABLE_EDGE_FROM_CENTER)
@@ -267,6 +268,27 @@ function setTableObjectPosition(self, objectId, xPos, yPos) {
       yPos = TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER;
     if(yPos > TABLE_CENTER_Y + TABLE_EDGE_FROM_CENTER)
       yPos = TABLE_CENTER_Y + TABLE_EDGE_FROM_CENTER
+    if(xPos + yPos > TABLE_EDGE_CONSTANT) {
+      var newConstant = TABLE_EDGE_CONSTANT/(xPos + yPos);
+      xPos *= newConstant;
+      yPos *= newConstant;
+    }
+    if(yPos - xPos > TABLE_EDGE_CONSTANT) {
+      var newConstant = TABLE_EDGE_CONSTANT/(yPos - xPos);
+      xPos *= newConstant;
+      yPos *= newConstant;
+    }
+    if(xPos + yPos < -TABLE_EDGE_CONSTANT) {
+      var newConstant = -TABLE_EDGE_CONSTANT/(xPos + yPos);
+      xPos *= newConstant;
+      yPos *= newConstant;
+    }
+    if(yPos - xPos < -TABLE_EDGE_CONSTANT) {
+      var newConstant = -TABLE_EDGE_CONSTANT/(yPos - xPos);
+      xPos *= newConstant;
+      yPos *= newConstant;
+    }
+    
     obj.setPosition(xPos, yPos);
   }
 }

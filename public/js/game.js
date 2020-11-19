@@ -33,9 +33,11 @@ export var config = {
   }
 };
 
-const TABLE_CENTER_X = 0;
-const TABLE_CENTER_Y = 0;
-const TABLE_EDGE_FROM_CENTER = 500; // Distance of the table edge from the center of the table
+export const TABLE_CENTER_X = 0;
+export const TABLE_CENTER_Y = 0;
+export const TABLE_EDGE_FROM_CENTER = 500; // Distance of the table edge from the center of the table
+export const TABLE_EDGE_CONSTANT = ((2+Math.pow(2,.5))/(1+Math.pow(2,.5))) * TABLE_EDGE_FROM_CENTER;
+
 
 export var players = {};           // List of all the current players in the game 
 // This player's info
@@ -76,10 +78,25 @@ function create() {
   cam.setBackgroundColor('#3CB371');
   setCameraBounds();
 
-  this.tableSurface = this.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, 
+  var table1 = this.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, 
                                       TABLE_EDGE_FROM_CENTER*2, 
-                                      TABLE_EDGE_FROM_CENTER*2, 
+                                      TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 
                                       0x025839);
+  var table2 = this.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, 
+                                      TABLE_EDGE_FROM_CENTER*2, 
+                                      TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 
+                                      0x025839);
+  table2.angle = 45;
+  var table3 = this.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, 
+                                      TABLE_EDGE_FROM_CENTER*2, 
+                                      TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 
+                                      0x025839);
+  table3.angle = 90;
+  var table4 = this.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, 
+                                      TABLE_EDGE_FROM_CENTER*2, 
+                                      TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 
+                                      0x025839);
+  table4.angle = 135;
   
   self.socket.on('defaultName', function(name) {
     playerNickname = (!playerNickname) ? name : playerNickname;

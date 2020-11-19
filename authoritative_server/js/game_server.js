@@ -36,6 +36,7 @@ const SLOW_TO_FAST_TICK = 100;      // (.1hz) How many fast ticks per slow ticks
 const TABLE_CENTER_X = 0;
 const TABLE_CENTER_Y = 0;
 const TABLE_EDGE_FROM_CENTER = 500; // Distance of the table edge from the center of the table (this makes a rectangle)
+const TABLE_EDGE_CONSTANT = ((2+Math.pow(2,.5))/(1+Math.pow(2,.5))) * TABLE_EDGE_FROM_CENTER;
 const DISTANCE_FROM_CENTER = 400;   // Distance hands are from the center
 const HAND_WIDTH = 280;
 const HAND_HEIGHT = 75;
