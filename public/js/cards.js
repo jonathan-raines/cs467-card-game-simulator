@@ -313,8 +313,7 @@ export function rotateObject(self, gameObject) {
 }
 
 function shuffleStack(self, object){
-  if(object && object.length > 1){
-    //console.log('shuffling stack');
+  if(object && object.length > 1  && object.objectId!=isDragging){
     self.socket.emit('shuffleStack', {
       objectId: object.objectId
     });

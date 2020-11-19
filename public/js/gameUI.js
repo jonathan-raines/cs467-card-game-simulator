@@ -1,5 +1,5 @@
 import { loadCards } from './cards.js';
-import { cam, playerNickname } from './game.js';
+import { cam, getParameterByName, playerNickname } from './game.js';
 
 export var playerRotation = 0, seatSelected = false;
 
@@ -53,7 +53,15 @@ function loadMenu(self) {
       // Show menu element
       $('#menu-area').show();
       $('#user-name').val(playerNickname);
-  
+      $('#room-id').val(getParameterByName('roomCode'));
+
+      $('#copy-text').click(function(e) {
+        let text = document.getElementById('room-id').value;
+        navigator.clipboard.writeText(text).then(() => {
+          alert('Invite copied to clipboard!');
+        })
+      });
+      
       $('#menu-form').submit(function(e) {
         e.preventDefault();
         if($('#background').val() != self.backgroundColor) {
