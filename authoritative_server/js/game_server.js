@@ -48,6 +48,7 @@ const objectInfoToSend = {};        // Object to send in objectUpdates
 const players = {};                 // Info of all the current players in the game session
 const cursorInfo = {};
 const options = {};                 // Options for the game
+const recentlyShuffled = [];        // Recently shuffled stacks
 options["lockedHands"] = true;     // If true, players can only take cards from their own hand.
 options["flipWhenExitHand"] = false; // If true, when leaving a hand, cards will automatically flip to hide.
   
