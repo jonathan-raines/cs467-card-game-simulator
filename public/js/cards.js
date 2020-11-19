@@ -359,7 +359,11 @@ export function setDrewAnObject(setting) {
 }
 
 export function setDraggingObj(object) {
+  draggingObj.setVisible(false);
+  draggingObj.setActive(false);
+  
   draggingObj = object;
   isDragging = object.objectId;
+  draggingObj.depth = MENU_DEPTH-1; // Bring to front
   return draggingObj;
 }

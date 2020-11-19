@@ -21,9 +21,10 @@ import {
 
 
 // CONSTANTS
-const HAND_WIDTH = 225;
+const HAND_WIDTH = 280;
 const HAND_HEIGHT = 75;
 const HAND_SPACING = 50;
+const HAND_SNAP_DIST = 100;
 
 // GLOBAL VARIABLES
 export const hands = {};      // Object with information about players hands
@@ -42,14 +43,10 @@ function addHandObject(self, playerId, pos, angle, spriteId, x, y, isFaceUp) {
   return object;
 }
 
-export function addHand(self, playerId, xPos, yPos, hand, isFaceUp, angle) {
-  // Temp box to show the size of the hands (Visual only)
-  var handZone = self.add.rectangle(xPos, yPos, HAND_WIDTH, HAND_HEIGHT, 0x6666ff);
-  handZone.playerId = playerId;             // The player associated with the hand
-  handZone.angle = angle;
-  handZone.depth = 0;
+export function addHand(self, playerId, xPos, yPos, angle) {
   // Inner zone which detects when a card is over it
-  var snapZone = self.add.rectangle(xPos, yPos, HAND_WIDTH - CARD_WIDTH, HAND_HEIGHT - CARD_HEIGHT, 0xff4c4c);
+  var snapZone = self.add.rectangle(xPos, yPos, 50, 50, 0xff4c4c);
+  //snapZone.setVisible(false); // Visible for debugging
   snapZone.playerId = playerId;
   snapZone.angle = angle;
   snapZone.depth = 0;
@@ -57,7 +54,7 @@ export function addHand(self, playerId, xPos, yPos, hand, isFaceUp, angle) {
 
   hands[playerId] = {
     playerId: playerId,
-    zone: handZone,   // Rectangle Game object for hand zone
+    angle: angle,
     size: 0             // How many cards in hand
   }
 }
@@ -68,19 +65,14 @@ export function updateHand(self, playerId, xPos, yPos, spriteIds, objectXs, obje
     return;
   }
   // Update hand snap zone
-  if(hands[playerId].zone.x != xPos || hands[playerId].zone.y != yPos || hands[playerId].zone.angle != angle) {
-    self.handSnapZones.getChildren().forEach(function (zone) {
-      if(zone.playerId == playerId) {
-        zone.x = xPos;
-        zone.y = yPos;
-        zone.angle = angle;
-      }
-    }); 
-  }
-  // Update hand zone rectangle
-  hands[playerId].zone.x = xPos;
-  hands[playerId].zone.y = yPos;
-  hands[playerId].zone.angle = angle;
+  self.handSnapZones.getChildren().forEach(function (zone) {
+    if(zone.playerId == playerId) {
+      zone.x = xPos;
+      zone.y = yPos;
+    }
+  }); 
+
+  hands[playerId].angle = angle;
   hands[playerId].size = spriteIds.length;
 
   // Loop through server list
@@ -100,7 +92,7 @@ export function updateHand(self, playerId, xPos, yPos, spriteIds, objectXs, obje
       }
     });
 
-    if(!hasUpdated) {
+    if(!hasUpdated && isDragging != serverSpriteId) {
       // Create Object
       addHandObject(self, playerId, i, angle, serverSpriteId, serverX, serverY, serverIsFaceUp);
     }
@@ -121,13 +113,15 @@ export function checkSnapToHand(self, object) {
   var hand = findClosestHandZone(self, object);
   // Add to empty hand
   if(hand && hand.size == 0) {
-    moveObjectToHand(self, object, hand, 0);
+    moveObjectToHand(self, object, hand.playerId, 0);
     return true;
   }
-  if(hand) {
-    var pos = findPosToInsertInHand(self, object);
+  else {
+    var data = findPosToInsertInHand(self, object);
+    var playerId = data[0];
+    var pos = data[1];
     if(pos != -1) {
-      moveObjectToHand(self, object, hand, pos);
+      moveObjectToHand(self, object, playerId, pos);
       return true;
     }
   }
@@ -147,20 +141,20 @@ function findClosestHandZone(self, object) {
 }
 
 // Move a whole stack to the hand
-function moveObjectToHand(self, object, hand, pos) {
+function moveObjectToHand(self, object, playerId, pos) {
   self.socket.emit('objectToHand', { 
     objectId: object.objectId,
-    playerId: hand.playerId,
+    playerId: playerId,
     pos: pos
   });
 
   // ** UPDATE LOCALLY
 }
 
-function takeFromHand(self) {
-  const playerId = draggingObj.playerId; 
+function takeFromHand(self, object) {
+  const playerId = object.playerId; 
   if(!playerId) {
-    console.log("Cannot take card from hand draggingObj=" + cardNames[draggingObj.objectId]);
+    console.log("Cannot take card from hand object=" + cardNames[object.objectId]);
     return;
   }
   // Locked hands (other players cant take cards from your hand)
@@ -168,25 +162,20 @@ function takeFromHand(self) {
     return;
   }
   setDrewAnObject(true);
-  //drewAnObject = true;   
-  const spriteId = draggingObj.first.spriteId;
-  var isFaceUp = draggingObj.first.isFaceUp;
+  const spriteId = object.first.spriteId;
+  var isFaceUp = object.first.isFaceUp;
   if(options["flipWhenExitHand"]) 
     isFaceUp = false;  // Always flip the card over when taking
-  const x = draggingObj.x;
-  const y = draggingObj.y;
+  const x = object.x;
+  const y = object.y;
   
   self.socket.emit('handToTable', { 
-    objectId: draggingObj.objectId,
+    objectId: object.objectId,
     playerId: playerId,
     x: x,
     y: y
   });
-  
-  draggingObj.active = false;       // Hide object to be deleted in updateHand
-  draggingObj.setVisible(false);
-  var newObj = setDraggingObj(addTableObject(self, [spriteId], x, y, [isFaceUp]));
-  newObj.depth = MENU_DEPTH-1;
+  setDraggingObj(addTableObject(self, [spriteId], x, y, [isFaceUp]));
 
   //console.log("Taking " + cardNames[draggingObj.objectId] + " from hand");
 }
@@ -218,22 +207,24 @@ export function flipHandObject(self, object) {
 }
 
 export function checkForHandZone(self, gameObject, dragX, dragY) {
-  var objBounds = gameObject.getBounds();
-  var foundHandZone = false;
-  self.handSnapZones.getChildren().forEach(function (zone) {
-    var zoneBounds = zone.getBounds();
-    if(zone.playerId == gameObject.playerId && Phaser.Geom.Intersects.RectangleToRectangle(objBounds, zoneBounds)) {
-      foundHandZone = true;
-      dragHandObject(self, gameObject, dragX, dragY);
+  var foundHand = false;
+  var dist = HAND_SNAP_DIST;
+
+  self.handObjects.getChildren().forEach(function (handObject) {
+    if(handObject.objectId != gameObject.objectId) {
+      var tempDistance = Phaser.Math.Distance.BetweenPoints(gameObject, handObject);
+      if(tempDistance < dist) {
+        dragHandObject(self, gameObject, dragX, dragY);
+        foundHand = true;
+      } 
     }
-  }); 
-  
+  });
   if(
-    !foundHandZone &&                   // Not in a handZone
+    !foundHand &&                   // Not in a handZone
     gameObject === draggingObj && 
     !drewAnObject 
   ) {
-    takeFromHand(self);
+    takeFromHand(self, gameObject);
   }
 }
 
@@ -258,14 +249,16 @@ function dragHandObject(self, gameObject, dragX, dragY){
 
 // Change the position of cards in the hand
 export function moveAroundInHand(self, object) {
-  var pos = findPosToInsertInHand(self, object);
-
-  self.socket.emit('handToHand', { 
-    objectId: object.objectId,
-    playerId: object.playerId,
-    pos: pos  // Position to move to
-  });
-
+  var data = findPosToInsertInHand(self, object);
+  var playerId = data[0];
+  var pos = data[1];
+  if(pos != -1) {
+    self.socket.emit('handToHand', { 
+      objectId: object.objectId,
+      playerId: playerId,
+      pos: pos  // Position to move to
+    });
+  }
     //**UPDATE LOCALLY
     
   //console.log("Moving card to pos " + pos + " in hand.");
@@ -273,9 +266,9 @@ export function moveAroundInHand(self, object) {
 
 function findPosToInsertInHand(self, object) {
   var closest = null;
-  var dist = 500;
+  var dist = HAND_SNAP_DIST;
   var secondClosest = null;
-  var dist2 = 500;
+  var dist2 = HAND_SNAP_DIST;
 
   self.handObjects.getChildren().forEach(function (handObject) {
     if(handObject.objectId != object.objectId) {
@@ -296,7 +289,7 @@ function findPosToInsertInHand(self, object) {
   if(closest) {
     //console.log("closest="+closest.first.name + " secondClosest=" + secondClosest.first.name);
     var hand = hands[closest.playerId];
-    var angle = Phaser.Math.DegToRad(hand.zone.angle);
+    var angle = Phaser.Math.DegToRad(hand.angle);
     var isLeftOfClosest = Math.cos(angle) * (object.x-closest.x) + Math.sin(angle) * (object.y-closest.y) < 0;
   
     // Two handObjects are near
@@ -306,17 +299,17 @@ function findPosToInsertInHand(self, object) {
       var isLeftOfSecondClosest = Math.cos(angle) * (object.x-secondClosest.x) + Math.sin(angle) * (object.y-secondClosest.y) < 0;
       
       if(isLeftOfClosest && isLeftOfSecondClosest) 
-        return leftPos;        // Left of both cards
+        return [closest.playerId, leftPos];        // Left of both cards
       else if(!isLeftOfClosest && !isLeftOfSecondClosest)
-        return rightPos+1;     // Right of both cards
+        return [closest.playerId, rightPos+1];     // Right of both cards
       else 
-        return rightPos;       // Between the cards
+        return [closest.playerId, rightPos];       // Between the cards
     }
     else {  // Only one card thats near
       if(isLeftOfClosest)
-        return closest.pos;    // Left of card
+        return [closest.playerId, closest.pos];    // Left of card
       else
-        return closest.pos+1;  // Right of card
+        return [closest.playerId, closest.pos+1];  // Right of card
     }
   }
   return -1; // No objects close enough
