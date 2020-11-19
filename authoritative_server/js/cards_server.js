@@ -191,46 +191,48 @@ function createSprite(self, spriteId, spriteName, isFaceUp, frames) {
 }
 
 function shuffleStack(self, originStack){
-  // Can't shuffle a deck of 1
-  if(originStack.length == 1)
-    return;
-  //shuffle the container
-  originStack.shuffle();
+  // prevent fast repetitive shuffling
+  if(!recentlyShuffled.includes(originStack.first.objectId)){
+    // Can't shuffle a deck of 1
+    if(originStack.length == 1)
+      return;
+    //shuffle the container
+    originStack.shuffle();
 
-  //find the new bottom sprite of the container
-  const shuffledBottomSprite = originStack.first;
+    //set delay for re-shuffling
+    delayReshuffle(originStack.first.objectId).catch( e => { console.error(e) });
 
-  if(!shuffledBottomSprite) {
+    //find the new bottom sprite of the container
+    const shuffledBottomSprite = originStack.first;
+
+    // error if the new bottom sprite is somehow lost
+    if(!shuffledBottomSprite) {
     console.log("Cannot shuffle stack #" + originStack.objectId);
     return;
-  }
-  //find the original stack for the new bottom sprite
-  const shuffledStack = getTableObject(self, shuffledBottomSprite.spriteId);
+    }
 
-  //re-define the shuffledStack 
-  shuffledStack.active = true;
-  shuffledStack.x = originStack.x;
-  shuffledStack.y = originStack.y;
-  shuffledStack.angle = originStack.angle;
-  shuffledStack.objectId = shuffledBottomSprite.spriteId;
+    //find the original stack for the new bottom sprite
+    const shuffledStack = getTableObject(self, shuffledBottomSprite.spriteId);
 
-  //put all of the old originStack sprites into shuffledStack
-  const originSprites = originStack.getAll();
-  let tempItems = [];
-  let tempIsFaceUp = [];
-  for(var i = 0; i < originSprites.length; i++) {
+    //re-define the shuffledStack 
+    shuffledStack.active = true;
+    shuffledStack.x = originStack.x;
+    shuffledStack.y = originStack.y;
+    shuffledStack.angle = originStack.angle;
+    shuffledStack.objectId = shuffledBottomSprite.spriteId;
+
+    //put all of the old originStack sprites into shuffledStack
+    const originSprites = originStack.getAll();
+    let tempItems = [];
+    let tempIsFaceUp = [];
+    for(var i = 0; i < originSprites.length; i++) {
     shuffledStack.add(originSprites[i]);
     tempItems.push(originSprites[i].spriteId);
     tempIsFaceUp.push(originSprites[i].isFaceUp);
-  }
-  /*
-  console.log('originalStack contains: ');
-  debugObjectContents(originStack);
-  console.log('shuffledStack contains: ');
-  debugObjectContents(shuffledStack);
-  */
-  //update clients telling them about the new stack
-  objectInfoToSend[shuffledStack.objectId] = {
+    }
+
+    //update clients telling them about the new stack
+    objectInfoToSend[shuffledStack.objectId] = {
     objectId: shuffledStack.objectId,
     items: tempItems,
     x: originStack.x,
@@ -238,8 +240,18 @@ function shuffleStack(self, originStack){
     objectDepth: overallDepth,
     isFaceUp: tempIsFaceUp,
     angle: shuffledStack.angle
-  }
+    }
 
-  originStack.active = false;       // Keep for later use
-  objectInfoToSend[originStack.objectId] = null; // Don't send to client
+    originStack.active = false;       // Keep for later use
+    objectInfoToSend[originStack.objectId] = null; // Don't send to client
+
+  }
+}
+
+async function delayReshuffle(tableObject){
+  //set a timer to re-allow shuffling of the deck
+  recentlyShuffled.push(tableObject);
+  setTimeout(function() { 
+    recentlyShuffled.pop(tableObject);
+  }, 300);
 }
