@@ -69,7 +69,10 @@ function create() {
 
   cam = this.cameras.main;
   cam.setBackgroundColor('#3CB371');
-  cam.setBounds(-game.config.width, -game.config.height, game.config.width*2, game.config.height*2);
+  cam.centerOn(0,0);
+  var zoom = Math.min(window.innerHeight / 900, window.innerWidth / 1100);
+  cam.setZoom(zoom);
+  //cam.setBounds(-game.config.width, -game.config.height, game.config.width*2, game.config.height*2);
   
   self.socket.on('defaultName', function(name) {
     playerNickname = (!playerNickname) ? name : playerNickname;
@@ -81,7 +84,7 @@ function create() {
 
   self.input.on('pointermove', function(pointer, currentlyOver) {
     if (pointer.leftButtonDown() && !currentlyOver[0] && isDragging == -1) {
-      var camAngle = Phaser.Math.DegToRad(players[self.socket.id].playerSpacing); // in radians
+      var camAngle = Phaser.Math.DegToRad(playerRotation); // in radians
       var deltaX = pointer.x - pointer.prevPosition.x;
       var deltaY = pointer.y - pointer.prevPosition.y;
       cam.scrollX -= (Math.cos(camAngle) * deltaX +
@@ -148,8 +151,6 @@ function updatePlayers(self, playersInfo) {
               id, 
               playersInfo[id].x, 
               playersInfo[id].y, 
-              playersInfo[id].hand, 
-              playersInfo[id].isFaceUp, 
               -playersInfo[id].playerSpacing);
     }
     else {
@@ -167,12 +168,10 @@ function updatePlayers(self, playersInfo) {
   // Delete old hands
   Object.keys(hands).forEach(function (id) {
     if(playersInfo[id] == null) {
-      hands[id].zone.destroy();
       delete hands[id];
     }
   });
   self.handObjects.getChildren().forEach(function (handObject) {
-    //console.log("Card " + cardNames[handObject.objectId]);
     if(playersInfo[handObject.playerId] == null) {
       handObject.removeAll(true); 
       handObject.destroy();
@@ -255,7 +254,7 @@ function moveDummyCursors(self){
   self.socket.on('moveDummyCursors', function(cursorUpdateInfo){
     Object.keys(cursorUpdateInfo).forEach(function(curCursor){
       //console.log(cursorUpdateInfo)
-      if(curCursor.playerId != players[self.socket.id].playerId){
+      if(players[self.socket.id] && curCursor.playerId != players[self.socket.id].playerId){
         self.dummyCursors.getChildren().forEach(function(dummyCursor){
           if(dummyCursor.playerId == cursorUpdateInfo[curCursor].playerId){
             dummyCursor.x = cursorUpdateInfo[curCursor].actualXY.x 
