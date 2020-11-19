@@ -35,7 +35,8 @@ const GAME_TICK_RATE = 50;         // (10hz) The game ticks at the rate of 1 tic
 const SLOW_TO_FAST_TICK = 100;      // (.1hz) How many fast ticks per slow ticks (for slow updates to client)
 const TABLE_CENTER_X = 0;
 const TABLE_CENTER_Y = 0;
-const DISTANCE_FROM_CENTER = 400;
+const TABLE_EDGE_FROM_CENTER = 500; // Distance of the table edge from the center of the table (this makes a rectangle)
+const DISTANCE_FROM_CENTER = 400;   // Distance hands are from the center
 const HAND_WIDTH = 280;
 const HAND_HEIGHT = 75;
 const HAND_SPACING = 50;
@@ -170,9 +171,7 @@ function startSocketUpdates(self, socket, frames) {
   // Listens for object movement by the player
   socket.on('objectInput', function (inputData) {
     if(!inputData.playerId) { 
-        var obj = getTableObject(self, inputData.objectId);
-        if(obj)
-          obj.setPosition(inputData.x, inputData.y);
+      setTableObjectPosition(self, inputData.objectId, inputData.x, inputData.y);
     }
     else {
       setHandObjectPosition(self, socket, inputData.playerId, inputData.objectId, inputData.x, inputData.y);

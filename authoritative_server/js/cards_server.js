@@ -255,3 +255,18 @@ async function delayReshuffle(tableObject){
     recentlyShuffled.pop(tableObject);
   }, 300);
 }
+
+function setTableObjectPosition(self, objectId, xPos, yPos) {
+  var obj = getTableObject(self, objectId);
+  if(obj) {
+    if(xPos < TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER)
+      xPos = TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER;
+    if(xPos > TABLE_CENTER_X + TABLE_EDGE_FROM_CENTER)
+      xPos = TABLE_CENTER_X + TABLE_EDGE_FROM_CENTER
+    if(yPos < TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER)
+      yPos = TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER;
+    if(yPos > TABLE_CENTER_Y + TABLE_EDGE_FROM_CENTER)
+      yPos = TABLE_CENTER_Y + TABLE_EDGE_FROM_CENTER
+    obj.setPosition(xPos, yPos);
+  }
+}
