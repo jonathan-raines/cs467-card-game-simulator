@@ -33,14 +33,18 @@ const ROOM_TIMEOUT_LENGTH = 1800000;//(30min) Length of time the server will wai
 const CHECK_ROOM_INTERVAL = 300000; // (5min) How often the server will check if there are any players
 const GAME_TICK_RATE = 50;         // (10hz) The game ticks at the rate of 1 tick per 100 milliseconds (10Hz)
 const SLOW_TO_FAST_TICK = 100;      // (.1hz) How many fast ticks per slow ticks (for slow updates to client)
-const TABLE_CENTER_X = 400;
-const TABLE_CENTER_Y = 400;
-const DISTANCE_FROM_CENTER = 400;
-const HAND_WIDTH = 400;
-const HAND_HEIGHT = 150;
+const TABLE_CENTER_X = 0;
+const TABLE_CENTER_Y = 0;
+const TABLE_EDGE_FROM_CENTER = 500; // Distance of the table edge from the center of the table (this makes a rectangle)
+const TABLE_EDGE_CONSTANT = ((2+Math.pow(2,.5))/(1+Math.pow(2,.5))) * TABLE_EDGE_FROM_CENTER;
+const DISTANCE_FROM_CENTER = 400;   // Distance hands are from the center
+const HAND_WIDTH = 280;
+const HAND_HEIGHT = 75;
 const HAND_SPACING = 50;
 const CARD_WIDTH = 70;
 const CARD_HEIGHT = 95;
+const MIN_DEPTH = 10;
+const MAX_DEPTH = 850;
 
 // Global Objects
 //--------------------------------------------------------------------------------------------
@@ -51,7 +55,7 @@ const options = {};                 // Options for the game
 const recentlyShuffled = [];        // Recently shuffled stacks
 options["lockedHands"] = true;     // If true, players can only take cards from their own hand.
 options["flipWhenExitHand"] = false; // If true, when leaving a hand, cards will automatically flip to hide.
-  
+options["flipWhenEnterHand"] = true;  // If true, cards will flip up when inserted into a hand
 // Global Variables
 //--------------------------------------------------------------------------------------------
 /* Global Variables Set outside game.js (Needed to communicate to / from server.js)
@@ -64,7 +68,7 @@ let numPlayers = 0;        // Current number of players
 const roomCode = roomInfo.roomCode;
 const maxPlayers = roomInfo.maxPlayers;
 let playerCounter = 0;
-let overallDepth = 0;                   // Depth of the highest card
+let overallDepth = MIN_DEPTH;           // Depth of the highest card
 let tickCount = 0;                      // When
 
 let frames;
@@ -76,88 +80,22 @@ const cardNames = ['back',
   'joker'
 ];
 
-var seats = {
-  ['1']: {
-    id: '1',
+var seats = {};
+for(var i = 1; i <= 8; i++) {
+  var angle = (i-1) * 45;
+  var numAsString = i.toString(10);
+
+  seats[numAsString] = {
+    id: numAsString,
     name: 'Open',
-    x: (config.width * 0.8) / 2,
-    y: -(config.width / 4),
+    x: TABLE_CENTER_X + DISTANCE_FROM_CENTER * Math.sin(Phaser.Math.DegToRad(angle)),
+    y: TABLE_CENTER_Y + DISTANCE_FROM_CENTER * Math.cos(Phaser.Math.DegToRad(angle)),
     available: true,
-    rotation: 180,
+    rotation: angle,
     transform: 0,
     socket: 0
-  },
-  ['2']: {
-    id: '2',
-    name: 'Open',
-    x: ((config.width * 0.8) / 2) + (config.width - 50) / 2,
-    y: (-((config.width / 4) + (config.width / 4)) / 2) + 50,
-    available: true,
-    rotation: 135,
-    transform: 45,
-    socket: 0 
-  },
-  ['3']: {
-    id: '3',
-    name: 'Open',
-    x: config.width - 50,
-    y: config.width / 4,
-    available: true,
-    rotation: 90,
-    transform: 270,
-    socket: 0
-  },
-  ['4']: {
-    id: '4',
-    name: 'Open',
-    x: ((config.width * 0.8) / 2) + (config.width - 50) / 2,
-    y: (config.height + (config.height / 2)) / 2,
-    available: true,
-    rotation: 45,
-    transform: 315,
-    socket: 0
-  },
-  ['5']: {
-    id: '5',
-    name: 'Open',
-    x: (config.width * 0.8) / 2,
-    y: config.height - 50,
-    available: true,
-    rotation: 0,
-    transform: 0,
-    socket: 0
-  },
-  ['6']: {
-    id: '6',
-    name: 'Open',
-    x: 0,
-    y: (config.height + (config.height / 2)) / 2,
-    available: true,
-    rotation: -45,
-    transform: 45,
-    socket: 0 
-  },
-  ['7']: {
-    id: '7',
-    name: 'Open',
-    x: -100,
-    y: config.width / 4,
-    available: true,
-    rotation: -90,
-    transform: 90,
-    socket: 0 
-  },
-  ['8']: {
-    id: '8',
-    name: 'Open',
-    x: 0,
-    y: (-((config.width / 4) + (config.width / 4)) / 2) + 50,
-    available: true,
-    rotation: 225,
-    transform: 315,
-    socket: 0 
-  },
-};
+  };
+}
 
 function preload() {
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
@@ -236,9 +174,7 @@ function startSocketUpdates(self, socket, frames) {
   // Listens for object movement by the player
   socket.on('objectInput', function (inputData) {
     if(!inputData.playerId) { 
-        var obj = getTableObject(self, inputData.objectId);
-        if(obj)
-          obj.setPosition(inputData.x, inputData.y);
+      setTableObjectPosition(self, inputData.objectId, inputData.x, inputData.y);
     }
     else {
       setHandObjectPosition(self, socket, inputData.playerId, inputData.objectId, inputData.x, inputData.y);
@@ -253,9 +189,8 @@ function startSocketUpdates(self, socket, frames) {
 
   // Updates the depth when player picks up a card
   socket.on('objectDepth', function (inputData) {
-    overallDepth++; // increases the depth everytime the player picks it up
     if(objectInfoToSend[inputData.objectId] != null)
-      objectInfoToSend[inputData.objectId].objectDepth = overallDepth;
+      objectInfoToSend[inputData.objectId].objectDepth = incOverallDepth();
   });
 
   socket.on('mergeStacks', function (inputData) {

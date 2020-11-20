@@ -33,6 +33,12 @@ export var config = {
   }
 };
 
+export const TABLE_CENTER_X = 0;
+export const TABLE_CENTER_Y = 0;
+export const TABLE_EDGE_FROM_CENTER = 500; // Distance of the table edge from the center of the table
+export const TABLE_EDGE_CONSTANT = ((2+Math.pow(2,.5))/(1+Math.pow(2,.5))) * TABLE_EDGE_FROM_CENTER;
+
+
 export var players = {};           // List of all the current players in the game 
 // This player's info
 export var playerNickname = getParameterByName('nickname');
@@ -40,6 +46,7 @@ export var playerNickname = getParameterByName('nickname');
 const roomCode = '/' + getParameterByName('roomCode');
 // Main camera for this player and Keyboard input catcher
 export var cam;
+var maxZoom = Math.min(window.innerHeight / 900, window.innerWidth / 1100);
 // Create Phaser3 Game
 var game = new Phaser.Game(config);
 
@@ -66,10 +73,12 @@ function create() {
   this.handObjects = this.add.group();
   this.handSnapZones = this.add.group();
   this.dummyCursors = this.add.group();
+  this.tableParts = this.add.group();
 
   cam = this.cameras.main;
-  cam.setBackgroundColor('#3CB371');
-  cam.setBounds(-game.config.width, -game.config.height, game.config.width*2, game.config.height*2);
+  cam.setBackgroundColor('#654321');
+  setCameraBounds();
+  setupTable(self);
   
   self.socket.on('defaultName', function(name) {
     playerNickname = (!playerNickname) ? name : playerNickname;
@@ -81,7 +90,7 @@ function create() {
 
   self.input.on('pointermove', function(pointer, currentlyOver) {
     if (pointer.leftButtonDown() && !currentlyOver[0] && isDragging == -1) {
-      var camAngle = Phaser.Math.DegToRad(players[self.socket.id].playerSpacing); // in radians
+      var camAngle = Phaser.Math.DegToRad(playerRotation); // in radians
       var deltaX = pointer.x - pointer.prevPosition.x;
       var deltaY = pointer.y - pointer.prevPosition.y;
       cam.scrollX -= (Math.cos(camAngle) * deltaX +
@@ -102,12 +111,26 @@ function create() {
   });
 
   self.input.on('wheel', function(pointer, currentlyOver, deltaX, deltaY, deltaZ, event) { 
-    if(cam.zoom + deltaY * -.0005 > 0)
-      cam.zoom += deltaY * -.0005;
+    var newZoom = cam.zoom + deltaY * -.0005;
+    if(newZoom > maxZoom && newZoom < 2)
+      cam.zoom = newZoom;
   });
+
+  // Whenever the window is resized
+  self.scale.on('resize', setCameraBounds);
 }
 
 function update() {}
+
+function setCameraBounds() {
+  maxZoom = Math.min(window.innerHeight / 900, window.innerWidth / 1100);
+  cam.setZoom(maxZoom);
+  cam.setBounds((TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER - game.config.width*.8), 
+              (TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER - game.config.height*.8), 
+              2*(TABLE_CENTER_X + TABLE_EDGE_FROM_CENTER + game.config.width*.8), 
+              2*(TABLE_CENTER_Y + TABLE_EDGE_FROM_CENTER + game.config.height*.8),
+              true);
+}
 
 // Gets url parameters/queries for a name and returns the value
 export function getParameterByName(name, url = window.location.href) {
@@ -136,7 +159,6 @@ function getPlayerUpdates(self, frames) {
       updateCursors(self, players);
     }
   });
-
   moveDummyCursors(self);
 }
 
@@ -148,8 +170,6 @@ function updatePlayers(self, playersInfo) {
               id, 
               playersInfo[id].x, 
               playersInfo[id].y, 
-              playersInfo[id].hand, 
-              playersInfo[id].isFaceUp, 
               -playersInfo[id].playerSpacing);
     }
     else {
@@ -167,12 +187,10 @@ function updatePlayers(self, playersInfo) {
   // Delete old hands
   Object.keys(hands).forEach(function (id) {
     if(playersInfo[id] == null) {
-      hands[id].zone.destroy();
       delete hands[id];
     }
   });
   self.handObjects.getChildren().forEach(function (handObject) {
-    //console.log("Card " + cardNames[handObject.objectId]);
     if(playersInfo[handObject.playerId] == null) {
       handObject.removeAll(true); 
       handObject.destroy();
@@ -205,15 +223,15 @@ function addNewDummyCursors(self, players){
       if(players[player].playerId != self.socket.id){
         //see if cursor is already present
         self.dummyCursors.getChildren().forEach(function(dummyCursor){
-          if(playerCursor.playerId == players[player].playerId){
+          if(dummyCursor.playerId == players[player].playerId){
             playerCursor = dummyCursor;
+            //update existing cursors in case they have changed
+            if(dummyCursor.texture.key != players[player].playerCursor){
+              dummyCursor.setTexture(players[player].playerCursor);
+            }
           }
         });
-        //update existing cursors in case they have changed
-        if(playerCursor){
-          playerCursor.setTexture(player.playerCursor);
-        }
-        else{//create a new cursor
+        if(!playerCursor){//create a new cursor
           //add cursor sprite
           playerCursor = self.add.sprite(-1000, -1000, players[player].playerCursor);
           playerCursor.playerId = players[player].playerId;
@@ -232,20 +250,26 @@ function removeOldDummyCursors(self, players){
   //remove any cursors from the canvas if their player does not exist
   self.dummyCursors.getChildren().forEach(function(dummyCursor){
     let playerExists = false;
-    let playerDummies = [];
     Object.keys(players).forEach(function(player){
       if(dummyCursor.playerId == players[player].playerId){
-        playerDummies.push(dummyCursor);
-        playerExists = true;
+        playerExists= true;
+        dummyCursor.angle = -players[player].playerSpacing;
       }
     });
-    if(playerExists){
-      for (let i = 1; i < playerDummies.length; i++) {
-        self.dummyCursors.remove(playerDummies[i], false, true);
-      }
-    }
-    else{
+    if (!playerExists){
       self.dummyCursors.remove(dummyCursor, false, true);
+    }
+  });
+  //remove any duplicate cursors for each player
+  Object.keys(players).forEach(function(player){
+    let playerDummies = [];
+    self.dummyCursors.getChildren().forEach(function(dummyCursor){
+      if(players[player].playerId == dummyCursor.playerId){
+        playerDummies.push(dummyCursor);
+      }
+    });
+    for (let i = 1; i < playerDummies.length; i++) {
+      self.dummyCursors.remove(playerDummies[i], false, true);
     }
   });
 }
@@ -254,8 +278,7 @@ function moveDummyCursors(self){
   //somehow update all of the cursors on each client
   self.socket.on('moveDummyCursors', function(cursorUpdateInfo){
     Object.keys(cursorUpdateInfo).forEach(function(curCursor){
-      //console.log(cursorUpdateInfo)
-      if(curCursor.playerId != players[self.socket.id].playerId){
+      if(players[self.socket.id] && curCursor.playerId != players[self.socket.id].playerId){
         self.dummyCursors.getChildren().forEach(function(dummyCursor){
           if(dummyCursor.playerId == cursorUpdateInfo[curCursor].playerId){
             dummyCursor.x = cursorUpdateInfo[curCursor].actualXY.x 
@@ -265,4 +288,18 @@ function moveDummyCursors(self){
       }
     });
   });
+}
+
+function setupTable(self) {
+  var table1 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 0x477148);
+  var table2 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 0x477148);
+  var table3 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 0x477148);
+  var table4 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 0x477148);
+  table2.angle = 45;
+  table3.angle = 90;
+  table4.angle = 135;
+  self.tableParts.add(table1);
+  self.tableParts.add(table2);
+  self.tableParts.add(table3);
+  self.tableParts.add(table4);
 }

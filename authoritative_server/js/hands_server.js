@@ -1,6 +1,5 @@
 function moveObjectToHand(self, object, playerId, pos) {
   if(!object || !players[playerId]) {
-    console.log("Cannot move object to hand");
     return;
   }
   //console.log("Moved " + cardNames[object.objectId] + " to " + players[playerId].name + "'s hand.");
@@ -9,9 +8,10 @@ function moveObjectToHand(self, object, playerId, pos) {
   
   for(var i = 0; i < numSprites; i++) {
     var sprite = object.first;      // Get sprite object
+    var isFaceUp = options["flipWhenEnterHand"] ? true : sprite.isFaceUp;
     // Update hand info for client
     players[playerId].hand.splice(pos, 0, sprite.spriteId);  
-    players[playerId].isFaceUp.splice(pos, 0, sprite.isFaceUp);     
+    players[playerId].isFaceUp.splice(pos, 0, isFaceUp);     
     //players[hand.playerId].isFaceUp.splice(pos, 0, true); // Always flip the card
 
     object.remove(sprite, true);    // Remove sprite from container
@@ -91,7 +91,6 @@ function takeFromHand(self, socket, playerId, objectId, x, y) {
   }
   else if(options["flipWhenExitHand"]) 
      isFaceUp = false;
-  overallDepth++;
   updateHandSpacing(playerId, -1);      // Adjust spacing in hand
 
   //re-define the stack and put its sprite back into it
@@ -111,7 +110,7 @@ function takeFromHand(self, socket, playerId, objectId, x, y) {
     isFaceUp: [ isFaceUp ],
     x: x,
     y: y,
-    objectDepth: overallDepth,
+    objectDepth: incOverallDepth(),
     angle: -players[playerId].playerSpacing
   }
   //console.log('Card ' + cardNames[objectId] + ' taken from ' + players[playerId].name + 'hand');
@@ -213,7 +212,6 @@ function removeAllFromHand(self, playerId) {
     object.objectId = objectId;
     object.add(sprite);
 
-    overallDepth++;
     //update clients telling them to create the new stack
     objectInfoToSend[object.objectId]={
       objectId: object.objectId,
@@ -221,7 +219,7 @@ function removeAllFromHand(self, playerId) {
       isFaceUp: [ isFaceUp ],
       x: x,
       y: y,
-      objectDepth: overallDepth,
+      objectDepth: incOverallDepth(),
       angle: -players[playerId].playerSpacing
     }
     x += 20;

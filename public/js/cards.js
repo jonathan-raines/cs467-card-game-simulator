@@ -1,4 +1,9 @@
-import { players } from './game.js';
+import { players,
+    TABLE_CENTER_X,
+    TABLE_CENTER_Y,
+    TABLE_EDGE_FROM_CENTER,
+    TABLE_EDGE_CONSTANT
+} from './game.js';
 import { 
     updateTableObjects,
     updateSprite,
@@ -12,13 +17,16 @@ import {
     flipHandObject
 } from './hands.js';
 
+import { playerRotation } from './gameUI.js';
+
 // CONSTANTS
 export const MENU_DEPTH = 1000;
 export const CURSOR_DEPTH = 950;
-const STACK_SNAP_DISTANCE = 40;
+const STACK_SNAP_DISTANCE = 10;
 const LONG_PRESS_TIME = 300;
 export const CARD_WIDTH = 70;
 export const CARD_HEIGHT = 95;
+
 
 // GLOBAL VARIABLES
 export const cardNames = ['back', 
@@ -158,7 +166,7 @@ export function addObject(self, spriteIds, x, y, spriteOrientations) {
       spritesToAdd[i] = createSprite(self, spriteId, cardNames[spriteId], spriteOrientations[i]);
 
       // Stack's Parallax Visual Effect 
-      stackVisualEffect(spritesToAdd[i], i, spriteIds.length-1);
+      stackVisualEffect(self, spritesToAdd[i], 0, i, spriteIds.length-1);
   }
   // Create a stack-like object (can have multiple sprites in it)/(No physics for client side)
   const object = self.add.container(x, y, spritesToAdd); // Server will move it with 'ObjectUpdates'
@@ -193,16 +201,20 @@ function updateStackVisualEffect(self, object) {
   var pos = 0;
   var size = object.length-1;
   object.getAll().forEach(function (sprite) {
-    stackVisualEffect(sprite, pos, size);
+    stackVisualEffect(self, sprite, object.angle, pos, size);
     pos++;
   });
 }
 
 // Makes a stack of cards look 3D
-export function stackVisualEffect(sprite, pos, size) {
-  if(sprite) {
-    sprite.x = -Math.floor((size-pos)/12);
-    sprite.y = Math.floor((size-pos)/5);
+export function stackVisualEffect(self, sprite, parentAngle, pos, size) {
+  if(sprite && players[self.socket.id]) {
+    var preX = -Math.floor((size-pos)/10);
+    var preY = Math.floor((size-pos)/4);
+    //console.log("parentAngle=" + object.angle);
+    var angle = Phaser.Math.DegToRad(parentAngle + playerRotation);
+    sprite.x = Math.cos(angle) * preX + Math.sin(angle) * preY;
+    sprite.y = Math.cos(angle) * preY - Math.sin(angle) * preX;
   }
 }
 
@@ -214,6 +226,7 @@ function onObjectDrop(self, gameObject) {
     // Move top card to bottom card's position
     gameObject.x = closest.x;
     gameObject.y = closest.y;
+    gameObject.angle = closest.angle;
 
     // Tell server to merge the two stacks
     self.socket.emit('mergeStacks', { 
@@ -238,6 +251,7 @@ function onObjectDrop(self, gameObject) {
     updateStackVisualEffect(self, closest);
 
     // Delete top stack
+    gameObject.setVisible(false);
     gameObject.removeAll(true);
     gameObject.destroy();  
     return true;
@@ -269,6 +283,7 @@ function drawTopSprite(self){
   });
 
   let drawnSpriteId = draggingObj.last.spriteId;
+  draggingObj.last.setVisible(false);
   draggingObj.remove(draggingObj.last, true);
 
   draggingObj = addTableObject(self, [drawnSpriteId], draggingObj.x, draggingObj.y, [draggingObj.last.isFaceUp]);
@@ -283,7 +298,37 @@ function drawTopSprite(self){
 
 
 function dragTableObject(self, gameObject, dragX, dragY){
-  if(gameObject) {
+  if(gameObject) {    
+    // Check Boundaries
+    if(dragX < TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER)
+      dragX = TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER;
+    if(dragX > TABLE_CENTER_X + TABLE_EDGE_FROM_CENTER)
+      dragX = TABLE_CENTER_X + TABLE_EDGE_FROM_CENTER
+    if(dragY < TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER)
+      dragY = TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER;
+    if(dragY > TABLE_CENTER_Y + TABLE_EDGE_FROM_CENTER)
+      dragY = TABLE_CENTER_Y + TABLE_EDGE_FROM_CENTER
+    if(dragX + dragY > TABLE_EDGE_CONSTANT) {
+      var newConstant = TABLE_EDGE_CONSTANT/(dragX + dragY);
+      dragX *= newConstant;
+      dragY *= newConstant;
+    }
+    if(dragY - dragX > TABLE_EDGE_CONSTANT) {
+      var newConstant = TABLE_EDGE_CONSTANT/(dragY - dragX);
+      dragX *= newConstant;
+      dragY *= newConstant;
+    }
+    if(dragX + dragY < -TABLE_EDGE_CONSTANT) {
+      var newConstant = -TABLE_EDGE_CONSTANT/(dragX + dragY);
+      dragX *= newConstant;
+      dragY *= newConstant;
+    }
+    if(dragY - dragX < -TABLE_EDGE_CONSTANT) {
+      var newConstant = -TABLE_EDGE_CONSTANT/(dragY - dragX);
+      dragX *= newConstant;
+      dragY *= newConstant;
+    }
+
     // Locally changes the object's position
     gameObject.x = dragX;
     gameObject.y = dragY;
@@ -302,7 +347,7 @@ function dragTableObject(self, gameObject, dragX, dragY){
 
 export function rotateObject(self, gameObject) {
   var player = players[self.socket.id];
-  if(gameObject.angle != -player.playerSpacing) {
+  if(gameObject.angle != -playerRotation) {
     gameObject.angle = -player.playerSpacing;
 
     self.socket.emit('objectRotation', { 
@@ -359,7 +404,13 @@ export function setDrewAnObject(setting) {
 }
 
 export function setDraggingObj(object) {
+  draggingObj.x = -2000;
+  draggingObj.y = -2000;
+  draggingObj.setVisible(false);
+  draggingObj.setActive(false);
+  
   draggingObj = object;
   isDragging = object.objectId;
+  draggingObj.depth = MENU_DEPTH-1; // Bring to front
   return draggingObj;
 }
