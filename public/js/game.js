@@ -20,8 +20,8 @@ export var config = {
     createContainer: true
   },
   // Initial dimensions based on window size
-  width: 1000,
-  height: 1000,
+  width: 1200,
+  height: 1200,
   scale: {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH
@@ -35,7 +35,7 @@ export var config = {
 
 export const TABLE_CENTER_X = 0;
 export const TABLE_CENTER_Y = 0;
-export const TABLE_EDGE_FROM_CENTER = 500; // Distance of the table edge from the center of the table
+export const TABLE_EDGE_FROM_CENTER = 600; // Distance of the table edge from the center of the table
 export const TABLE_EDGE_CONSTANT = ((2+Math.pow(2,.5))/(1+Math.pow(2,.5))) * TABLE_EDGE_FROM_CENTER;
 
 
@@ -46,7 +46,7 @@ export var playerNickname = getParameterByName('nickname');
 const roomCode = '/' + getParameterByName('roomCode');
 // Main camera for this player and Keyboard input catcher
 export var cam;
-var maxZoom = Math.min(window.innerHeight / 900, window.innerWidth / 1100);
+var maxZoom;
 // Create Phaser3 Game
 var game = new Phaser.Game(config);
 
@@ -112,7 +112,7 @@ function create() {
 
   self.input.on('wheel', function(pointer, currentlyOver, deltaX, deltaY, deltaZ, event) { 
     var newZoom = cam.zoom + deltaY * -.0005;
-    if(newZoom > maxZoom && newZoom < 2)
+    if(newZoom > maxZoom && newZoom < 2) 
       cam.zoom = newZoom;
   });
 
@@ -123,7 +123,8 @@ function create() {
 function update() {}
 
 function setCameraBounds() {
-  maxZoom = Math.min(window.innerHeight / 900, window.innerWidth / 1100);
+  maxZoom = Math.min( window.innerHeight / (TABLE_EDGE_FROM_CENTER * 2 + 200), 
+                      window.innerWidth / (TABLE_EDGE_FROM_CENTER * 2 / 0.8 + 200));
   cam.setZoom(maxZoom);
   cam.setBounds((TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER - game.config.width*.8), 
               (TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER - game.config.height*.8), 
