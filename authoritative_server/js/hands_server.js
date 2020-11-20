@@ -91,7 +91,6 @@ function takeFromHand(self, socket, playerId, objectId, x, y) {
   }
   else if(options["flipWhenExitHand"]) 
      isFaceUp = false;
-  overallDepth++;
   updateHandSpacing(playerId, -1);      // Adjust spacing in hand
 
   //re-define the stack and put its sprite back into it
@@ -111,7 +110,7 @@ function takeFromHand(self, socket, playerId, objectId, x, y) {
     isFaceUp: [ isFaceUp ],
     x: x,
     y: y,
-    objectDepth: overallDepth,
+    objectDepth: incOverallDepth(),
     angle: -players[playerId].playerSpacing
   }
   //console.log('Card ' + cardNames[objectId] + ' taken from ' + players[playerId].name + 'hand');
@@ -213,7 +212,6 @@ function removeAllFromHand(self, playerId) {
     object.objectId = objectId;
     object.add(sprite);
 
-    overallDepth++;
     //update clients telling them to create the new stack
     objectInfoToSend[object.objectId]={
       objectId: object.objectId,
@@ -221,7 +219,7 @@ function removeAllFromHand(self, playerId) {
       isFaceUp: [ isFaceUp ],
       x: x,
       y: y,
-      objectDepth: overallDepth,
+      objectDepth: incOverallDepth(),
       angle: -players[playerId].playerSpacing
     }
     x += 20;

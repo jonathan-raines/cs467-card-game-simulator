@@ -44,6 +44,7 @@ const HAND_SPACING = 50;
 const CARD_WIDTH = 70;
 const CARD_HEIGHT = 95;
 const MIN_DEPTH = 10;
+const MAX_DEPTH = 850;
 
 // Global Objects
 //--------------------------------------------------------------------------------------------
@@ -188,9 +189,8 @@ function startSocketUpdates(self, socket, frames) {
 
   // Updates the depth when player picks up a card
   socket.on('objectDepth', function (inputData) {
-    overallDepth++; // increases the depth everytime the player picks it up
     if(objectInfoToSend[inputData.objectId] != null)
-      objectInfoToSend[inputData.objectId].objectDepth = overallDepth;
+      objectInfoToSend[inputData.objectId].objectDepth = incOverallDepth();
   });
 
   socket.on('mergeStacks', function (inputData) {
