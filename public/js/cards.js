@@ -404,6 +404,8 @@ export function setDrewAnObject(setting) {
 }
 
 export function setDraggingObj(object) {
+  draggingObj.x = -2000;
+  draggingObj.y = -2000;
   draggingObj.setVisible(false);
   draggingObj.setActive(false);
   

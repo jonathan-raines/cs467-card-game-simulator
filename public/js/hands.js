@@ -52,7 +52,7 @@ export function addHand(self, playerId, xPos, yPos, angle) {
   //snapZone.setVisible(false); // Visible for debugging
   snapZone.playerId = playerId;
   snapZone.angle = angle;
-  snapZone.depth = 9;
+  snapZone.depth = HAND_DEPTH-1;
   self.handSnapZones.add(snapZone);
 
   hands[playerId] = {
@@ -87,14 +87,15 @@ export function updateHand(self, playerId, xPos, yPos, spriteIds, objectXs, obje
     var hasUpdated = false;
 
     // Loop through local game objects
+    var count = 0;
     self.handObjects.getChildren().forEach(function (handObject) {
       if(handObject.objectId == serverSpriteId) {
         // Update object in the hand
         updateHandObject(self, handObject, playerId, i, angle, serverSpriteId, serverX, serverY, serverIsFaceUp);
         hasUpdated = true;
+        count++;
       }
     });
-
     if(!hasUpdated && isDragging != serverSpriteId) {
       // Create Object
       addHandObject(self, playerId, i, angle, serverSpriteId, serverX, serverY, serverIsFaceUp);
@@ -185,14 +186,13 @@ function takeFromHand(self, object) {
 
 
 function updateHandObject(self, object, playerId, pos, angle, spriteId, x, y, isFaceUp) {
-  var updated = updateObject(self, x, y, pos+5, angle, [spriteId], [isFaceUp], object);
+  var updated = updateObject(self, x, y, pos+HAND_DEPTH, angle, [spriteId], [isFaceUp], object);
   const isMe = self.socket.id == playerId;
   if(!isMe && isFaceUp) {
     updated.first.setFrame(frames[frames.indexOf('joker')]);
   }
   updated.playerId = playerId;
   updated.pos = pos;
-  updated.depth = HAND_DEPTH;
   return updated;
 }
 
