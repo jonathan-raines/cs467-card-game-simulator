@@ -203,18 +203,16 @@ function addNewDummyCursors(self, players){
       if(players[player].playerId != self.socket.id){
         //see if cursor is already present
         self.dummyCursors.getChildren().forEach(function(dummyCursor){
-          if(playerCursor.playerId == players[player].playerId){
-            console.log('cursor exists')
+          if(dummyCursor.playerId == players[player].playerId){
             playerCursor = dummyCursor;
+            //update existing cursors in case they have changed
+            if(dummyCursor.texture.key = players[player].playerCursor){
+              dummyCursor.setTexture(players[player].playerCursor);
+              console.log('resetting player texture')
+            }
           }
         });
-        //update existing cursors in case they have changed
-        if(playerCursor){
-          console.log('setting texture')
-          playerCursor.setTexture(player.playerCursor);
-        }
-        else{//create a new cursor
-          console.log('making new sprite')
+        if(!playerCursor){//create a new cursor
           //add cursor sprite
           playerCursor = self.add.sprite(-1000, -1000, players[player].playerCursor);
           playerCursor.playerId = players[player].playerId;
