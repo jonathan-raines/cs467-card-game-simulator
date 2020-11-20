@@ -259,7 +259,7 @@ async function delayReshuffle(tableObject){
 function setTableObjectPosition(self, objectId, xPos, yPos) {
   var obj = getTableObject(self, objectId);
   if(obj) {
-    
+    // Check Boundaries
     if(xPos < TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER)
       xPos = TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER;
     if(xPos > TABLE_CENTER_X + TABLE_EDGE_FROM_CENTER)

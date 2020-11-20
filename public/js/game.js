@@ -73,30 +73,35 @@ function create() {
   this.handObjects = this.add.group();
   this.handSnapZones = this.add.group();
   this.dummyCursors = this.add.group();
+  this.tableParts = this.add.group();
 
   cam = this.cameras.main;
-  cam.setBackgroundColor('#3CB371');
+  cam.setBackgroundColor('#654321');
   setCameraBounds();
 
   var table1 = this.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, 
                                       TABLE_EDGE_FROM_CENTER*2, 
                                       TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 
-                                      0x025839);
+                                      0x477148);
   var table2 = this.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, 
                                       TABLE_EDGE_FROM_CENTER*2, 
                                       TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 
-                                      0x025839);
+                                      0x477148);
   table2.angle = 45;
   var table3 = this.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, 
                                       TABLE_EDGE_FROM_CENTER*2, 
                                       TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 
-                                      0x025839);
+                                      0x477148);
   table3.angle = 90;
   var table4 = this.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, 
                                       TABLE_EDGE_FROM_CENTER*2, 
                                       TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 
-                                      0x025839);
+                                      0x477148);
   table4.angle = 135;
+  this.tableParts.add(table1);
+  this.tableParts.add(table2);
+  this.tableParts.add(table3);
+  this.tableParts.add(table4);
   
   self.socket.on('defaultName', function(name) {
     playerNickname = (!playerNickname) ? name : playerNickname;

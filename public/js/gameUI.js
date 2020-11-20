@@ -2,6 +2,7 @@ import { loadCards } from './cards.js';
 import { cam, getParameterByName, playerNickname } from './game.js';
 
 export var playerRotation = 0, seatSelected = false;
+var tableColor;
 
 export var seats = {};
 
@@ -64,9 +65,7 @@ function loadMenu(self) {
       
       $('#menu-form').submit(function(e) {
         e.preventDefault();
-        if($('#background').val() != self.backgroundColor) {
-          self.backgroundColor = self.cameras.main.setBackgroundColor($('#background').val());
-        }
+        changeTableColor(self, parseInt($('#background').val().replace(/^#/, ''), 16));
         if(playerNickname != $('#user-name').val()) {
           self.socket.emit('playerNickname', $('#user-name').val());
         }
@@ -141,4 +140,12 @@ function addSeat(self, seat) {
   openSeat.innerText = seat.name;
   openSeat.value = seat.available;
   openSeat.style.transform = 'rotate(' + (360 - seat.rotation).toString() + 'deg)';
+}
+
+export function changeTableColor(self, color) {
+  if(color != tableColor) {
+    self.tableParts.getChildren().forEach(function (part) {
+      part.setFillStyle(color);
+    });
+  }
 }

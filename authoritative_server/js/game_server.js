@@ -43,6 +43,7 @@ const HAND_HEIGHT = 75;
 const HAND_SPACING = 50;
 const CARD_WIDTH = 70;
 const CARD_HEIGHT = 95;
+const MIN_DEPTH = 10;
 
 // Global Objects
 //--------------------------------------------------------------------------------------------
@@ -53,7 +54,7 @@ const options = {};                 // Options for the game
 const recentlyShuffled = [];        // Recently shuffled stacks
 options["lockedHands"] = true;     // If true, players can only take cards from their own hand.
 options["flipWhenExitHand"] = false; // If true, when leaving a hand, cards will automatically flip to hide.
-  
+options["flipWhenEnterHand"] = true;  // If true, cards will flip up when inserted into a hand
 // Global Variables
 //--------------------------------------------------------------------------------------------
 /* Global Variables Set outside game.js (Needed to communicate to / from server.js)
@@ -66,7 +67,7 @@ let numPlayers = 0;        // Current number of players
 const roomCode = roomInfo.roomCode;
 const maxPlayers = roomInfo.maxPlayers;
 let playerCounter = 0;
-let overallDepth = 0;                   // Depth of the highest card
+let overallDepth = MIN_DEPTH;           // Depth of the highest card
 let tickCount = 0;                      // When
 
 let frames;

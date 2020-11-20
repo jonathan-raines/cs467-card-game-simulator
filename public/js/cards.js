@@ -299,6 +299,7 @@ function drawTopSprite(self){
 
 function dragTableObject(self, gameObject, dragX, dragY){
   if(gameObject) {    
+    // Check Boundaries
     if(dragX < TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER)
       dragX = TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER;
     if(dragX > TABLE_CENTER_X + TABLE_EDGE_FROM_CENTER)
@@ -307,7 +308,6 @@ function dragTableObject(self, gameObject, dragX, dragY){
       dragY = TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER;
     if(dragY > TABLE_CENTER_Y + TABLE_EDGE_FROM_CENTER)
       dragY = TABLE_CENTER_Y + TABLE_EDGE_FROM_CENTER
-    
     if(dragX + dragY > TABLE_EDGE_CONSTANT) {
       var newConstant = TABLE_EDGE_CONSTANT/(dragX + dragY);
       dragX *= newConstant;
@@ -329,7 +329,6 @@ function dragTableObject(self, gameObject, dragX, dragY){
       dragY *= newConstant;
     }
 
-
     // Locally changes the object's position
     gameObject.x = dragX;
     gameObject.y = dragY;
@@ -348,7 +347,7 @@ function dragTableObject(self, gameObject, dragX, dragY){
 
 export function rotateObject(self, gameObject) {
   var player = players[self.socket.id];
-  if(gameObject.angle != -player.playerSpacing) {
+  if(gameObject.angle != -playerRotation) {
     gameObject.angle = -player.playerSpacing;
 
     self.socket.emit('objectRotation', { 
