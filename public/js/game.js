@@ -206,9 +206,8 @@ function addNewDummyCursors(self, players){
           if(dummyCursor.playerId == players[player].playerId){
             playerCursor = dummyCursor;
             //update existing cursors in case they have changed
-            if(dummyCursor.texture.key = players[player].playerCursor){
+            if(dummyCursor.texture.key != players[player].playerCursor){
               dummyCursor.setTexture(players[player].playerCursor);
-              console.log('resetting player texture')
             }
           }
         });
