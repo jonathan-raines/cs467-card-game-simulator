@@ -139,7 +139,6 @@ function getPlayerUpdates(self, frames) {
       updateCursors(self, players);
     }
   });
-
   moveDummyCursors(self);
 }
 
@@ -205,14 +204,17 @@ function addNewDummyCursors(self, players){
         //see if cursor is already present
         self.dummyCursors.getChildren().forEach(function(dummyCursor){
           if(playerCursor.playerId == players[player].playerId){
+            console.log('cursor exists')
             playerCursor = dummyCursor;
           }
         });
         //update existing cursors in case they have changed
         if(playerCursor){
+          console.log('setting texture')
           playerCursor.setTexture(player.playerCursor);
         }
         else{//create a new cursor
+          console.log('making new sprite')
           //add cursor sprite
           playerCursor = self.add.sprite(-1000, -1000, players[player].playerCursor);
           playerCursor.playerId = players[player].playerId;
@@ -231,20 +233,26 @@ function removeOldDummyCursors(self, players){
   //remove any cursors from the canvas if their player does not exist
   self.dummyCursors.getChildren().forEach(function(dummyCursor){
     let playerExists = false;
-    let playerDummies = [];
     Object.keys(players).forEach(function(player){
       if(dummyCursor.playerId == players[player].playerId){
-        playerDummies.push(dummyCursor);
-        playerExists = true;
+        playerExists= true;
+        dummyCursor.angle = -players[player].playerSpacing;
       }
     });
-    if(playerExists){
-      for (let i = 1; i < playerDummies.length; i++) {
-        self.dummyCursors.remove(playerDummies[i], false, true);
-      }
-    }
-    else{
+    if (!playerExists){
       self.dummyCursors.remove(dummyCursor, false, true);
+    }
+  });
+  //remove any duplicate cursors for each player
+  Object.keys(players).forEach(function(player){
+    let playerDummies = [];
+    self.dummyCursors.getChildren().forEach(function(dummyCursor){
+      if(players[player].playerId == dummyCursor.playerId){
+        playerDummies.push(dummyCursor);
+      }
+    });
+    for (let i = 1; i < playerDummies.length; i++) {
+      self.dummyCursors.remove(playerDummies[i], false, true);
     }
   });
 }
@@ -253,7 +261,6 @@ function moveDummyCursors(self){
   //somehow update all of the cursors on each client
   self.socket.on('moveDummyCursors', function(cursorUpdateInfo){
     Object.keys(cursorUpdateInfo).forEach(function(curCursor){
-      //console.log(cursorUpdateInfo)
       if(players[self.socket.id] && curCursor.playerId != players[self.socket.id].playerId){
         self.dummyCursors.getChildren().forEach(function(dummyCursor){
           if(dummyCursor.playerId == cursorUpdateInfo[curCursor].playerId){

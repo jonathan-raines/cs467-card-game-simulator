@@ -144,12 +144,7 @@ function drawTopSprite(self, bottomStack) {
   topStack.objectId = topSprite.spriteId;
   topStack.add(topSprite);
   overallDepth++;
-  /*
-  console.log('bottom local contains: ');
-  debugObjectContents(bottomStack);
-  console.log('top local contains: ');
-  debugObjectContents(topStack);
-  */
+
   //update clients telling them to create the new stack
   objectInfoToSend[topStack.objectId]={
     objectId: topStack.objectId,
