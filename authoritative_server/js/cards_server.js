@@ -18,7 +18,6 @@ function loadCards(self) {
 
   //add 52 playing cards in order
   for (let objectId = 1; objectId <= 52; objectId++) {
-    overallDepth++;
     var initialX = ((objectId-1)%perRow) * xSpacing + xStart;
     var initialY = Math.floor((objectId-1)/perRow) * ySpacing + yStart;
     // Assigns the info to send to clients
@@ -28,7 +27,7 @@ function loadCards(self) {
       isFaceUp: [initialIsFaceUp],
       x: initialX,
       y: initialY,
-      objectDepth: overallDepth,
+      objectDepth: incOverallDepth(),
       angle: 0
     };
     addObject(self, [objectId], initialX, initialY, [initialIsFaceUp], frames);
@@ -110,7 +109,6 @@ function flipTableObject(self, gameObject) {
         newIsFaceUp.push(sprite.isFaceUp);        
       }
       //debugObjectContents(newStack);
-      overallDepth++;
 
       //update clients telling them to create the new stack
       objectInfoToSend[newStack.objectId] = {
@@ -118,7 +116,7 @@ function flipTableObject(self, gameObject) {
         items: newSprites,
         x: gameObject.x,
         y: gameObject.y,
-        objectDepth: overallDepth,
+        objectDepth: incOverallDepth(),
         isFaceUp: newIsFaceUp
       }
       //console.log("----Flipped obj len: " + gameObject.length);
@@ -143,7 +141,6 @@ function drawTopSprite(self, bottomStack) {
   topStack.y = bottomStack.y;
   topStack.objectId = topSprite.spriteId;
   topStack.add(topSprite);
-  overallDepth++;
 
   //update clients telling them to create the new stack
   objectInfoToSend[topStack.objectId]={
@@ -151,7 +148,7 @@ function drawTopSprite(self, bottomStack) {
     items: [ objectInfoToSend[bottomStack.objectId].items.pop() ],
     x: bottomStack.x,
     y: bottomStack.y,
-    objectDepth: overallDepth,
+    objectDepth: incOverallDepth(),
     isFaceUp: [ objectInfoToSend[bottomStack.objectId].isFaceUp.pop() ]
   }
 }
@@ -232,7 +229,7 @@ function shuffleStack(self, originStack){
     items: tempItems,
     x: originStack.x,
     y: originStack.y,
-    objectDepth: overallDepth,
+    objectDepth: objectInfoToSend[originStack.objectId].objectDepth,
     isFaceUp: tempIsFaceUp,
     angle: shuffledStack.angle
     }
@@ -249,4 +246,55 @@ async function delayReshuffle(tableObject){
   setTimeout(function() { 
     recentlyShuffled.pop(tableObject);
   }, 300);
+}
+
+function setTableObjectPosition(self, objectId, xPos, yPos) {
+  var obj = getTableObject(self, objectId);
+  if(obj) {
+    // Check Boundaries
+    if(xPos < TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER)
+      xPos = TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER;
+    if(xPos > TABLE_CENTER_X + TABLE_EDGE_FROM_CENTER)
+      xPos = TABLE_CENTER_X + TABLE_EDGE_FROM_CENTER
+    if(yPos < TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER)
+      yPos = TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER;
+    if(yPos > TABLE_CENTER_Y + TABLE_EDGE_FROM_CENTER)
+      yPos = TABLE_CENTER_Y + TABLE_EDGE_FROM_CENTER
+    if(xPos + yPos > TABLE_EDGE_CONSTANT) {
+      var newConstant = TABLE_EDGE_CONSTANT/(xPos + yPos);
+      xPos *= newConstant;
+      yPos *= newConstant;
+    }
+    if(yPos - xPos > TABLE_EDGE_CONSTANT) {
+      var newConstant = TABLE_EDGE_CONSTANT/(yPos - xPos);
+      xPos *= newConstant;
+      yPos *= newConstant;
+    }
+    if(xPos + yPos < -TABLE_EDGE_CONSTANT) {
+      var newConstant = -TABLE_EDGE_CONSTANT/(xPos + yPos);
+      xPos *= newConstant;
+      yPos *= newConstant;
+    }
+    if(yPos - xPos < -TABLE_EDGE_CONSTANT) {
+      var newConstant = -TABLE_EDGE_CONSTANT/(yPos - xPos);
+      xPos *= newConstant;
+      yPos *= newConstant;
+    }
+    
+    obj.setPosition(xPos, yPos);
+  }
+}
+
+
+// Increments the overall depth by one and checks to see if it needs to be lowered
+function incOverallDepth() {
+  overallDepth++;
+  console.log("depth= " + overallDepth);
+  if(overallDepth > MAX_DEPTH) {
+    overallDepth = Math.floor(overallDepth / 2) + 1;
+    Object.keys(objectInfoToSend).forEach(key => {
+      objectInfoToSend[key].objectDepth /= 2;
+    });
+  }
+  return overallDepth;
 }

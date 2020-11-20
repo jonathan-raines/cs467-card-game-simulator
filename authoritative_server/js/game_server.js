@@ -35,12 +35,16 @@ const GAME_TICK_RATE = 50;         // (10hz) The game ticks at the rate of 1 tic
 const SLOW_TO_FAST_TICK = 100;      // (.1hz) How many fast ticks per slow ticks (for slow updates to client)
 const TABLE_CENTER_X = 0;
 const TABLE_CENTER_Y = 0;
-const DISTANCE_FROM_CENTER = 400;
+const TABLE_EDGE_FROM_CENTER = 500; // Distance of the table edge from the center of the table (this makes a rectangle)
+const TABLE_EDGE_CONSTANT = ((2+Math.pow(2,.5))/(1+Math.pow(2,.5))) * TABLE_EDGE_FROM_CENTER;
+const DISTANCE_FROM_CENTER = 400;   // Distance hands are from the center
 const HAND_WIDTH = 280;
 const HAND_HEIGHT = 75;
 const HAND_SPACING = 50;
 const CARD_WIDTH = 70;
 const CARD_HEIGHT = 95;
+const MIN_DEPTH = 10;
+const MAX_DEPTH = 850;
 
 // Global Objects
 //--------------------------------------------------------------------------------------------
@@ -51,7 +55,7 @@ const options = {};                 // Options for the game
 const recentlyShuffled = [];        // Recently shuffled stacks
 options["lockedHands"] = true;     // If true, players can only take cards from their own hand.
 options["flipWhenExitHand"] = false; // If true, when leaving a hand, cards will automatically flip to hide.
-  
+options["flipWhenEnterHand"] = true;  // If true, cards will flip up when inserted into a hand
 // Global Variables
 //--------------------------------------------------------------------------------------------
 /* Global Variables Set outside game.js (Needed to communicate to / from server.js)
@@ -64,7 +68,7 @@ let numPlayers = 0;        // Current number of players
 const roomCode = roomInfo.roomCode;
 const maxPlayers = roomInfo.maxPlayers;
 let playerCounter = 0;
-let overallDepth = 0;                   // Depth of the highest card
+let overallDepth = MIN_DEPTH;           // Depth of the highest card
 let tickCount = 0;                      // When
 
 let frames;
@@ -170,9 +174,7 @@ function startSocketUpdates(self, socket, frames) {
   // Listens for object movement by the player
   socket.on('objectInput', function (inputData) {
     if(!inputData.playerId) { 
-        var obj = getTableObject(self, inputData.objectId);
-        if(obj)
-          obj.setPosition(inputData.x, inputData.y);
+      setTableObjectPosition(self, inputData.objectId, inputData.x, inputData.y);
     }
     else {
       setHandObjectPosition(self, socket, inputData.playerId, inputData.objectId, inputData.x, inputData.y);
@@ -187,9 +189,8 @@ function startSocketUpdates(self, socket, frames) {
 
   // Updates the depth when player picks up a card
   socket.on('objectDepth', function (inputData) {
-    overallDepth++; // increases the depth everytime the player picks it up
     if(objectInfoToSend[inputData.objectId] != null)
-      objectInfoToSend[inputData.objectId].objectDepth = overallDepth;
+      objectInfoToSend[inputData.objectId].objectDepth = incOverallDepth();
   });
 
   socket.on('mergeStacks', function (inputData) {

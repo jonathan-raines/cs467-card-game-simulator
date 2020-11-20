@@ -33,6 +33,12 @@ export var config = {
   }
 };
 
+export const TABLE_CENTER_X = 0;
+export const TABLE_CENTER_Y = 0;
+export const TABLE_EDGE_FROM_CENTER = 500; // Distance of the table edge from the center of the table
+export const TABLE_EDGE_CONSTANT = ((2+Math.pow(2,.5))/(1+Math.pow(2,.5))) * TABLE_EDGE_FROM_CENTER;
+
+
 export var players = {};           // List of all the current players in the game 
 // This player's info
 export var playerNickname = getParameterByName('nickname');
@@ -40,6 +46,7 @@ export var playerNickname = getParameterByName('nickname');
 const roomCode = '/' + getParameterByName('roomCode');
 // Main camera for this player and Keyboard input catcher
 export var cam;
+var maxZoom = Math.min(window.innerHeight / 900, window.innerWidth / 1100);
 // Create Phaser3 Game
 var game = new Phaser.Game(config);
 
@@ -66,13 +73,12 @@ function create() {
   this.handObjects = this.add.group();
   this.handSnapZones = this.add.group();
   this.dummyCursors = this.add.group();
+  this.tableParts = this.add.group();
 
   cam = this.cameras.main;
-  cam.setBackgroundColor('#3CB371');
-  cam.centerOn(0,0);
-  var zoom = Math.min(window.innerHeight / 900, window.innerWidth / 1100);
-  cam.setZoom(zoom);
-  //cam.setBounds(-game.config.width, -game.config.height, game.config.width*2, game.config.height*2);
+  cam.setBackgroundColor('#654321');
+  setCameraBounds();
+  setupTable(self);
   
   self.socket.on('defaultName', function(name) {
     playerNickname = (!playerNickname) ? name : playerNickname;
@@ -105,12 +111,26 @@ function create() {
   });
 
   self.input.on('wheel', function(pointer, currentlyOver, deltaX, deltaY, deltaZ, event) { 
-    if(cam.zoom + deltaY * -.0005 > 0)
-      cam.zoom += deltaY * -.0005;
+    var newZoom = cam.zoom + deltaY * -.0005;
+    if(newZoom > maxZoom && newZoom < 2)
+      cam.zoom = newZoom;
   });
+
+  // Whenever the window is resized
+  self.scale.on('resize', setCameraBounds);
 }
 
 function update() {}
+
+function setCameraBounds() {
+  maxZoom = Math.min(window.innerHeight / 900, window.innerWidth / 1100);
+  cam.setZoom(maxZoom);
+  cam.setBounds((TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER - game.config.width*.8), 
+              (TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER - game.config.height*.8), 
+              2*(TABLE_CENTER_X + TABLE_EDGE_FROM_CENTER + game.config.width*.8), 
+              2*(TABLE_CENTER_Y + TABLE_EDGE_FROM_CENTER + game.config.height*.8),
+              true);
+}
 
 // Gets url parameters/queries for a name and returns the value
 export function getParameterByName(name, url = window.location.href) {
@@ -268,4 +288,18 @@ function moveDummyCursors(self){
       }
     });
   });
+}
+
+function setupTable(self) {
+  var table1 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 0x477148);
+  var table2 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 0x477148);
+  var table3 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 0x477148);
+  var table4 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 0x477148);
+  table2.angle = 45;
+  table3.angle = 90;
+  table4.angle = 135;
+  self.tableParts.add(table1);
+  self.tableParts.add(table2);
+  self.tableParts.add(table3);
+  self.tableParts.add(table4);
 }
