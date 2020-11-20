@@ -1,4 +1,9 @@
-import { players } from './game.js';
+import { players,
+    TABLE_CENTER_X,
+    TABLE_CENTER_Y,
+    TABLE_EDGE_FROM_CENTER,
+    TABLE_EDGE_CONSTANT
+} from './game.js';
 import { 
     updateTableObjects,
     updateSprite,
@@ -17,10 +22,11 @@ import { playerRotation } from './gameUI.js';
 // CONSTANTS
 export const MENU_DEPTH = 1000;
 export const CURSOR_DEPTH = 950;
-const STACK_SNAP_DISTANCE = 40;
+const STACK_SNAP_DISTANCE = 10;
 const LONG_PRESS_TIME = 300;
 export const CARD_WIDTH = 70;
 export const CARD_HEIGHT = 95;
+
 
 // GLOBAL VARIABLES
 export const cardNames = ['back', 
@@ -292,7 +298,37 @@ function drawTopSprite(self){
 
 
 function dragTableObject(self, gameObject, dragX, dragY){
-  if(gameObject) {
+  if(gameObject) {    
+    // Check Boundaries
+    if(dragX < TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER)
+      dragX = TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER;
+    if(dragX > TABLE_CENTER_X + TABLE_EDGE_FROM_CENTER)
+      dragX = TABLE_CENTER_X + TABLE_EDGE_FROM_CENTER
+    if(dragY < TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER)
+      dragY = TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER;
+    if(dragY > TABLE_CENTER_Y + TABLE_EDGE_FROM_CENTER)
+      dragY = TABLE_CENTER_Y + TABLE_EDGE_FROM_CENTER
+    if(dragX + dragY > TABLE_EDGE_CONSTANT) {
+      var newConstant = TABLE_EDGE_CONSTANT/(dragX + dragY);
+      dragX *= newConstant;
+      dragY *= newConstant;
+    }
+    if(dragY - dragX > TABLE_EDGE_CONSTANT) {
+      var newConstant = TABLE_EDGE_CONSTANT/(dragY - dragX);
+      dragX *= newConstant;
+      dragY *= newConstant;
+    }
+    if(dragX + dragY < -TABLE_EDGE_CONSTANT) {
+      var newConstant = -TABLE_EDGE_CONSTANT/(dragX + dragY);
+      dragX *= newConstant;
+      dragY *= newConstant;
+    }
+    if(dragY - dragX < -TABLE_EDGE_CONSTANT) {
+      var newConstant = -TABLE_EDGE_CONSTANT/(dragY - dragX);
+      dragX *= newConstant;
+      dragY *= newConstant;
+    }
+
     // Locally changes the object's position
     gameObject.x = dragX;
     gameObject.y = dragY;
@@ -311,7 +347,7 @@ function dragTableObject(self, gameObject, dragX, dragY){
 
 export function rotateObject(self, gameObject) {
   var player = players[self.socket.id];
-  if(gameObject.angle != -player.playerSpacing) {
+  if(gameObject.angle != -playerRotation) {
     gameObject.angle = -player.playerSpacing;
 
     self.socket.emit('objectRotation', { 
@@ -368,6 +404,8 @@ export function setDrewAnObject(setting) {
 }
 
 export function setDraggingObj(object) {
+  draggingObj.x = -2000;
+  draggingObj.y = -2000;
   draggingObj.setVisible(false);
   draggingObj.setActive(false);
   

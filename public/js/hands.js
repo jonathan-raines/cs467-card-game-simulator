@@ -26,6 +26,8 @@ const HAND_HEIGHT = 75;
 const HAND_SPACING = 50;
 const HAND_SNAP_DIST = 100;
 
+const HAND_DEPTH = 10;
+
 // GLOBAL VARIABLES
 export const hands = {};      // Object with information about players hands
 
@@ -38,6 +40,7 @@ function addHandObject(self, playerId, pos, angle, spriteId, x, y, isFaceUp) {
   object.playerId = playerId;   // Player the card belongs to
   object.pos = pos;             // Position in the hand
   object.angle = angle;
+  object.depth = HAND_DEPTH;
 
   self.handObjects.add(object); // Add to hands group       
   return object;
@@ -49,7 +52,7 @@ export function addHand(self, playerId, xPos, yPos, angle) {
   //snapZone.setVisible(false); // Visible for debugging
   snapZone.playerId = playerId;
   snapZone.angle = angle;
-  snapZone.depth = 0;
+  snapZone.depth = HAND_DEPTH-1;
   self.handSnapZones.add(snapZone);
 
   hands[playerId] = {
@@ -84,14 +87,15 @@ export function updateHand(self, playerId, xPos, yPos, spriteIds, objectXs, obje
     var hasUpdated = false;
 
     // Loop through local game objects
+    var count = 0;
     self.handObjects.getChildren().forEach(function (handObject) {
       if(handObject.objectId == serverSpriteId) {
         // Update object in the hand
         updateHandObject(self, handObject, playerId, i, angle, serverSpriteId, serverX, serverY, serverIsFaceUp);
         hasUpdated = true;
+        count++;
       }
     });
-
     if(!hasUpdated && isDragging != serverSpriteId) {
       // Create Object
       addHandObject(self, playerId, i, angle, serverSpriteId, serverX, serverY, serverIsFaceUp);
@@ -182,7 +186,7 @@ function takeFromHand(self, object) {
 
 
 function updateHandObject(self, object, playerId, pos, angle, spriteId, x, y, isFaceUp) {
-  var updated = updateObject(self, x, y, pos+5, angle, [spriteId], [isFaceUp], object);
+  var updated = updateObject(self, x, y, pos+HAND_DEPTH, angle, [spriteId], [isFaceUp], object);
   const isMe = self.socket.id == playerId;
   if(!isMe && isFaceUp) {
     updated.first.setFrame(frames[frames.indexOf('joker')]);
