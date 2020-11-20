@@ -78,30 +78,7 @@ function create() {
   cam = this.cameras.main;
   cam.setBackgroundColor('#654321');
   setCameraBounds();
-
-  var table1 = this.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, 
-                                      TABLE_EDGE_FROM_CENTER*2, 
-                                      TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 
-                                      0x477148);
-  var table2 = this.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, 
-                                      TABLE_EDGE_FROM_CENTER*2, 
-                                      TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 
-                                      0x477148);
-  table2.angle = 45;
-  var table3 = this.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, 
-                                      TABLE_EDGE_FROM_CENTER*2, 
-                                      TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 
-                                      0x477148);
-  table3.angle = 90;
-  var table4 = this.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, 
-                                      TABLE_EDGE_FROM_CENTER*2, 
-                                      TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 
-                                      0x477148);
-  table4.angle = 135;
-  this.tableParts.add(table1);
-  this.tableParts.add(table2);
-  this.tableParts.add(table3);
-  this.tableParts.add(table4);
+  setupTable(self);
   
   self.socket.on('defaultName', function(name) {
     playerNickname = (!playerNickname) ? name : playerNickname;
@@ -307,4 +284,18 @@ function moveDummyCursors(self){
       }
     });
   });
+}
+
+function setupTable(self) {
+  var table1 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 0x477148);
+  var table2 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 0x477148);
+  var table3 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 0x477148);
+  var table4 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), 0x477148);
+  table2.angle = 45;
+  table3.angle = 90;
+  table4.angle = 135;
+  self.tableParts.add(table1);
+  self.tableParts.add(table2);
+  self.tableParts.add(table3);
+  self.tableParts.add(table4);
 }
