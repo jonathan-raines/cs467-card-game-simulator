@@ -289,7 +289,6 @@ function setTableObjectPosition(self, objectId, xPos, yPos) {
 // Increments the overall depth by one and checks to see if it needs to be lowered
 function incOverallDepth() {
   overallDepth++;
-  console.log("depth= " + overallDepth);
   if(overallDepth > MAX_DEPTH) {
     overallDepth = Math.floor(overallDepth / 2) + 1;
     Object.keys(objectInfoToSend).forEach(key => {
