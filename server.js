@@ -107,14 +107,7 @@ async function renderHome(res){
       }
       else{
         result.rows.forEach(row => {
-          activeGameRooms[row.room_code] ={
-            roomCode: row.room_code,
-            numPlayers: row.num_players,
-            maxPlayers: row.max_players,
-            roomName: row.room_name,
-            roomOwner: row.room_owner,
-            gameDesc: row.game_desc
-          }
+          addToActiveGameRooms(row.room_code, row.num_players, row.max_players, row.room_name, row.room_owner, row.game_desc);
         });
       }
       res.render(__dirname + '/views/lobby.ejs', {activeGameRooms: activeGameRooms});
