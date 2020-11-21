@@ -10,7 +10,9 @@ objectInfoToSend[3] = {
 };
 ---------------------------------------------------------*/
 function loadCards(self) {
-  let frames = self.textures.get('cards').getFrameNames();
+  self.tableObjects = self.add.group();
+
+  frames = self.textures.get('cards').getFrameNames();
 
   const xStart = 100,  yStart = 100, 
         xSpacing = CARD_WIDTH/2.0, ySpacing = 200, 
@@ -50,6 +52,7 @@ function gatherAllCards(self, xPos, yPos) {
   }
   bottomStack.x = xPos;
   bottomStack.y = yPos;
+  flipTableObject(self, bottomStack);
 }
 
 function mergeStacks(topStack, bottomStack) {
@@ -296,4 +299,23 @@ function incOverallDepth() {
     });
   }
   return overallDepth;
+}
+
+function resetTable(self) {
+  console.log("[Room " + roomCode + "] Resetting Table");
+  
+  self.tableObjects.destroy(true);
+  
+  Object.keys(objectInfoToSend).forEach(key => {
+    delete objectInfoToSend[key];
+  });
+  
+  Object.keys(players).forEach(key => {
+    players[key].hand = [];
+    players[key].handX = [];
+    players[key].handY = [];
+    players[key].isFaceUp = [];
+  });
+  overallDepth = MIN_DEPTH;
+  loadCards(self);
 }

@@ -106,14 +106,8 @@ function preload() {
 function create() {
   // For passing this pointer to other functions
   const self = this;
-  
-  this.tableObjects = this.physics.add.group();             // This is the gameScene's group of objects
-  //this.hands = this.physics.add.group();
-
   loadCards(self);
 
-  frames = self.textures.get('cards').getFrameNames();
-  
   startGameDataTicker(self);
   //debugTicker(self)
 
@@ -240,6 +234,12 @@ function startSocketUpdates(self, socket, frames) {
 
   socket.on('handToHand', function(inputData){
     moveAroundInHand(self, inputData.playerId, inputData.objectId, inputData.pos);
+  });
+
+  // For simple 1 time request to server
+  socket.on('request', function(request) {
+    if(request == 'resetTable')
+      resetTable(self);
   });
 }
 
