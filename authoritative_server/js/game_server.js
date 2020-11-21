@@ -29,33 +29,34 @@ const config = {
 // Global Constants
 //--------------------------------------------------------------------------------------------
 
-const ROOM_TIMEOUT_LENGTH = 1800000;//(30min) Length of time the server will wait to close after all the players have left
-const CHECK_ROOM_INTERVAL = 300000; // (5min) How often the server will check if there are any players
-const GAME_TICK_RATE = 50;         // (10hz) The game ticks at the rate of 1 tick per 100 milliseconds (10Hz)
-const SLOW_TO_FAST_TICK = 100;      // (.1hz) How many fast ticks per slow ticks (for slow updates to client)
+const ROOM_TIMEOUT_LENGTH = 1800000;    //(30min) Length of time the server will wait to close after all the players have left
+const CHECK_ROOM_INTERVAL = 300000;     // (5min) How often the server will check if there are any players
+const GAME_TICK_RATE = 50;              // (10hz) The game ticks at the rate of 1 tick per 100 milliseconds (10Hz)
+const SLOW_TO_FAST_TICK = 100;          // (.1hz) How many fast ticks per slow ticks (for slow updates to client)
 const TABLE_CENTER_X = 0;
 const TABLE_CENTER_Y = 0;
-const TABLE_EDGE_FROM_CENTER = 500; // Distance of the table edge from the center of the table (this makes a rectangle)
+const TABLE_EDGE_FROM_CENTER = 600;     // Distance of the table edge from the center of the table (this makes a rectangle)
 const TABLE_EDGE_CONSTANT = ((2+Math.pow(2,.5))/(1+Math.pow(2,.5))) * TABLE_EDGE_FROM_CENTER;
-const DISTANCE_FROM_CENTER = 400;   // Distance hands are from the center
-const HAND_WIDTH = 280;
+const DISTANCE_FROM_CENTER = 550;       // Distance hands are from the center
+const DITANCE_FROM_HAND = 100;          // Distance the player indicator is from the hand
+const HAND_WIDTH = 400;
 const HAND_HEIGHT = 75;
 const HAND_SPACING = 50;
 const CARD_WIDTH = 70;
 const CARD_HEIGHT = 95;
-const MIN_DEPTH = 10;
-const MAX_DEPTH = 850;
+const MIN_DEPTH = 10;                   // Minimum depth for table objects
+const MAX_DEPTH = 850;                  // Maximum depth for table objects
 
 // Global Objects
 //--------------------------------------------------------------------------------------------
-const objectInfoToSend = {};        // Object to send in objectUpdates
-const players = {};                 // Info of all the current players in the game session
+const objectInfoToSend = {};            // Object to send in objectUpdates
+const players = {};                     // Info of all the current players in the game session
 const cursorInfo = {};
-const options = {};                 // Options for the game
-const recentlyShuffled = [];        // Recently shuffled stacks
-options["lockedHands"] = true;     // If true, players can only take cards from their own hand.
-options["flipWhenExitHand"] = false; // If true, when leaving a hand, cards will automatically flip to hide.
-options["flipWhenEnterHand"] = true;  // If true, cards will flip up when inserted into a hand
+const options = {};                     // Options for the game
+const recentlyShuffled = [];            // Recently shuffled stacks
+options["lockedHands"] = true;          // If true, players can only take cards from their own hand.
+options["flipWhenExitHand"] = false;    // If true, when leaving a hand, cards will automatically flip to hide.
+options["flipWhenEnterHand"] = true;    // If true, cards will flip up when inserted into a hand
 // Global Variables
 //--------------------------------------------------------------------------------------------
 /* Global Variables Set outside game.js (Needed to communicate to / from server.js)
@@ -69,7 +70,7 @@ const roomCode = roomInfo.roomCode;
 const maxPlayers = roomInfo.maxPlayers;
 let playerCounter = 0;
 let overallDepth = MIN_DEPTH;           // Depth of the highest card
-let tickCount = 0;                      // When
+let tickCount = 0;                      
 
 let frames;
 const cardNames = ['back', 
@@ -81,6 +82,7 @@ const cardNames = ['back',
 ];
 
 var seats = {};
+
 for(var i = 1; i <= 8; i++) {
   var angle = (i-1) * 45;
   var numAsString = i.toString(10);
@@ -88,8 +90,8 @@ for(var i = 1; i <= 8; i++) {
   seats[numAsString] = {
     id: numAsString,
     name: 'Open',
-    x: TABLE_CENTER_X + DISTANCE_FROM_CENTER * Math.sin(Phaser.Math.DegToRad(angle)),
-    y: TABLE_CENTER_Y + DISTANCE_FROM_CENTER * Math.cos(Phaser.Math.DegToRad(angle)),
+    x: TABLE_CENTER_X + (DISTANCE_FROM_CENTER+DITANCE_FROM_HAND) * Math.sin(Phaser.Math.DegToRad(angle)),
+    y: TABLE_CENTER_Y + (DISTANCE_FROM_CENTER+DITANCE_FROM_HAND) * Math.cos(Phaser.Math.DegToRad(angle)),
     available: true,
     rotation: angle,
     transform: 0,
@@ -151,9 +153,10 @@ function startSocketUpdates(self, socket, frames) {
     seats[seat.id].socket = seat.socket;
     seats[seat.id].name = seat.name;
     seats[seat.id].available = false;
-    players[seat.socket].playerSpacing = seat.playerSpacing;
-    players[seat.socket].x = seat.x;
-    players[seat.socket].y = seat.y;
+    var angle = seat.playerSpacing;
+    players[seat.socket].playerSpacing = angle;
+    players[seat.socket].x = TABLE_CENTER_X + DISTANCE_FROM_CENTER * Math.sin(Phaser.Math.DegToRad(angle));
+    players[seat.socket].y = TABLE_CENTER_X + DISTANCE_FROM_CENTER * Math.cos(Phaser.Math.DegToRad(angle));
     io.emit('seatAssignments', seats);
   });
 
