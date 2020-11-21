@@ -165,25 +165,27 @@ function getPlayerUpdates(self, frames) {
 
 function updatePlayers(self, playersInfo) {
   Object.keys(playersInfo).forEach(function (id) {
-    const hand = hands[id];
-    if(hand == null && playersInfo[id] != null) {
-      addHand(self, 
-              id, 
-              playersInfo[id].x, 
-              playersInfo[id].y, 
-              -playersInfo[id].playerSpacing);
-    }
-    else {
-      updateHand(self,
-                 id, 
-                 playersInfo[id].x, 
-                 playersInfo[id].y, 
-                 playersInfo[id].hand, 
-                 playersInfo[id].handX,
-                 playersInfo[id].handY,
-                 playersInfo[id].isFaceUp, 
-                 -playersInfo[id].playerSpacing);
-    } 
+      if(!(playersInfo[id].x == 0 && playersInfo[id].y == 0)) {
+        const hand = hands[id];
+        if(hand == null && playersInfo[id] != null) {
+          addHand(self, 
+                  id, 
+                  playersInfo[id].x, 
+                  playersInfo[id].y, 
+                  -playersInfo[id].playerSpacing);
+        }
+        else {
+          updateHand(self,
+                     id, 
+                     playersInfo[id].x, 
+                     playersInfo[id].y, 
+                     playersInfo[id].hand, 
+                     playersInfo[id].handX,
+                     playersInfo[id].handY,
+                     playersInfo[id].isFaceUp, 
+                     -playersInfo[id].playerSpacing);
+        } 
+      }
   });
   // Delete old hands
   Object.keys(hands).forEach(function (id) {
