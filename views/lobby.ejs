@@ -10,7 +10,7 @@
 <body>
   <!-- <div class="center-div"> -->
     <div class="row">
-      <div class="column-left">
+      <!-- <div class="column-left">
         <div class="form-box">
           <h1>Join a Game</h1>
           <form action="/" method="GET">
@@ -40,14 +40,15 @@
             <input type="submit" value="CREATE">
           </form>
         </div>
-      </div>
+      </div> -->
       <div class="column-right">
         <div class="form-box">
           <h1>Active Game Rooms</h1>
           <table style = "width:100%">
             <tr>
+              <th>Your Nickname</th>
               <th>Room Name</th>
-              <th>Players/Max</th>
+              <th>Players</th>
               <th>Room Code</th>
               <th>Owner</th>
               <th>Game Type?</th>
@@ -55,24 +56,62 @@
             </tr>
           <% Object.keys(activeGameRooms).forEach(function(room){%>
             <%if (activeGameRooms[room] != null){%>
-              <tr>
+              <tr><form action="/" method="GET" ></form>
+                <td><input required
+                  type="text"
+                  name="nickname"
+                  placeholder="Enter a nickname"
+                  maxlength="20"
+                /></td>
                 <td>"<%=activeGameRooms[room].roomName%>"</td>
                 <td><%=activeGameRooms[room].numPlayers%>/<%=activeGameRooms[room].maxPlayers%></td>
                 <td><%=activeGameRooms[room].roomCode%></td>
                 <td><%=activeGameRooms[room].roomOwner%></td>
                 <td><%=activeGameRooms[room].gameDesc%></td>
                 <td>
-                  <form action="/" method="GET" >
-                    <input hidden="true"
+                    <input required hidden="true"
                       name="roomCode"
                       value="<%=activeGameRooms[room].roomCode%>"
                     />
                     <input type="submit" value="JOIN">
-                  </form>
                 </td>
-              </tr>
+              </form></tr>
             <%}%>
-          <%}) %>
+          <%});%>
+          <tr>
+            <form action="/host-a-game" method="GET" >
+              <td><input required
+                type="text"
+                name="nickname"
+                placeholder="Enter a nickname"
+                maxlength="20"
+              /></td>   
+              <td><input required
+                type="text"
+                name="roomName"
+                placeholder="Enter a room name"
+                maxlength="20"
+              /></td>
+              <td><input
+                type="number"
+                name="maxPlayers"
+                placeholder="2-8"
+                min="2"
+                max="8"
+              /></td>
+              <td>(Automatic)</td>
+              <td>(You!)</td>
+              <td><input
+                type="text"
+                name="gameDesc"
+                placeholder="Describe your game room"
+                maxlength="100"
+              /></td>
+              <td>
+                  <input type="submit" value="CREATE">
+              </td>
+            </form>
+          </tr>
           </table>
         </div>
       </div>

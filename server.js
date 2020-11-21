@@ -99,22 +99,30 @@ async function renderHome(res){
   };
   if(!IS_LOCAL) {
     const client = await pool.connect();
-    await client.query(query, (err, result) => {
-      if (err) {
-          console.error(err);
-          return;
-      }
-      if (result.rows.length = 0){
+    await client.query(query)
+    .then((result) => {
+      if (result.rows.length == 0){
         activeGameRooms = null;
         console.log('no results')
       }
       else{
         result.rows.forEach(row => {
-          activeGameRooms[row.roomCode]=row;
+          activeGameRooms[row.room_code] ={
+            roomCode: row.room_code,
+            numPlayers: row.num_players,
+            maxPlayers: row.max_players,
+            roomName: row.room_name,
+            roomOwner: row.room_owner,
+            gameDesc: row.game_desc
+          }
         });
       }
       res.render(__dirname + '/views/lobby.ejs', {activeGameRooms: activeGameRooms});
       client.release();
+    })
+    .catch(e => {
+      console.error(e.stack);
+      return;
     });
   }
   else{

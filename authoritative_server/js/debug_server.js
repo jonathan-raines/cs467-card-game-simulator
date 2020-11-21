@@ -30,9 +30,11 @@ function debugTicker(self) {
   let tickInterval = setInterval(() => {
     var cardInfo = 0;
     Object.keys(objectInfoToSend).forEach(key => {
-      cardInfo += objectInfoToSend[key].items.length;
-      if(!objectInfoToSend[key].isFaceUp[0])
-          console.log(cardNames[objectInfoToSend[key].objectId] + " is down");
+      if(objectInfoToSend[key]) {
+        cardInfo += objectInfoToSend[key].items.length;
+        //if(!objectInfoToSend[key].isFaceUp[0])
+        //    console.log(cardNames[objectInfoToSend[key].objectId] + " is down");
+      }
     });
     var serverCards = 0;
     self.tableObjects.getChildren().forEach(function (tableObject) {
