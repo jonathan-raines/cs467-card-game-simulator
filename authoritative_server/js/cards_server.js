@@ -183,7 +183,6 @@ function createSprite(self, spriteId, spriteName, isFaceUp, frames) {
 }
 
 function shuffleStack(self, originStack){
-  console.log(originStack.objectId);
   // prevent fast repetitive shuffling
   if(!recentlyShuffled.includes(originStack.objectId)){
     // Can't shuffle a deck of 1
@@ -244,10 +243,8 @@ function shuffleStack(self, originStack){
 async function delayReshuffle(tableObjectId){
   //set a timer to re-allow shuffling of the deck
   recentlyShuffled.push(tableObjectId);
-  console.log(recentlyShuffled);
   setTimeout(function() { 
     recentlyShuffled.pop(tableObjectId);
-    console.log('shuffle ready');
   }, 1000);
 }
 
