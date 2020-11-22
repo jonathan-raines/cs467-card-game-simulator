@@ -36,7 +36,7 @@ export var config = {
 const TABLE_DEFAULT_COLOR = 0x477148;
 export const TABLE_CENTER_X = 0;
 export const TABLE_CENTER_Y = 0;
-export const TABLE_EDGE_FROM_CENTER = 600; // Distance of the table edge from the center of the table
+export const TABLE_EDGE_FROM_CENTER = 650; // Distance of the table edge from the center of the table
 export const TABLE_EDGE_CONSTANT = ((2+Math.pow(2,.5))/(1+Math.pow(2,.5))) * TABLE_EDGE_FROM_CENTER;
 
 
@@ -298,17 +298,6 @@ function moveDummyCursors(self){
 }
 
 function setupTable(self) {
-  var tableTop = self.add.image(TABLE_CENTER_X, TABLE_CENTER_Y, 'tableTop');
-  tableTop.setScale(2.25);
-  //var table1 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), TABLE_DEFAULT_COLOR);
-  //var table2 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), TABLE_DEFAULT_COLOR);
-  //var table3 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), TABLE_DEFAULT_COLOR);
-  //var table4 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), TABLE_DEFAULT_COLOR);
-  //table2.angle = 45;
-  //table3.angle = 90;
-  //table4.angle = 135;
-  //self.tableParts.add(table1);
-  //self.tableParts.add(table2);
-  //self.tableParts.add(table3);
-  //self.tableParts.add(table4);
+  var tableTop = self.add.image(TABLE_CENTER_X + 32, TABLE_CENTER_Y, 'tableTop');
+  tableTop.setScale(2);
 }
