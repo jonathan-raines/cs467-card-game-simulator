@@ -79,7 +79,7 @@ function create() {
   this.tableParts = this.add.group();
 
   cam = this.cameras.main;
-  self.add.image(0, 0, 'floor').setScale(1.75);
+  self.add.image(0, 0, 'floor').setScale(3);
   //cam.setBackgroundColor('#654321');
   setCameraBounds();
   setupTable(self);
