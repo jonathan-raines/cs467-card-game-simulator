@@ -183,8 +183,9 @@ function createSprite(self, spriteId, spriteName, isFaceUp, frames) {
 }
 
 function shuffleStack(self, originStack){
+  console.log(originStack.objectId);
   // prevent fast repetitive shuffling
-  if(!recentlyShuffled.includes(originStack.first.objectId)){
+  if(!recentlyShuffled.includes(originStack.objectId)){
     // Can't shuffle a deck of 1
     if(originStack.length == 1)
       return;
@@ -192,7 +193,7 @@ function shuffleStack(self, originStack){
     originStack.shuffle();
 
     //set delay for re-shuffling
-    delayReshuffle(originStack.first.objectId).catch( e => { console.error(e) });
+    delayReshuffle(originStack.objectId).catch( e => { console.error(e) });
 
     //find the new bottom sprite of the container
     const shuffledBottomSprite = originStack.first;
@@ -240,11 +241,13 @@ function shuffleStack(self, originStack){
   }
 }
 
-async function delayReshuffle(tableObject){
+async function delayReshuffle(tableObjectId){
   //set a timer to re-allow shuffling of the deck
-  recentlyShuffled.push(tableObject);
+  recentlyShuffled.push(tableObjectId);
+  console.log(recentlyShuffled);
   setTimeout(function() { 
-    recentlyShuffled.pop(tableObject);
+    recentlyShuffled.pop(tableObjectId);
+    console.log('shuffle ready');
   }, 1000);
 }
 

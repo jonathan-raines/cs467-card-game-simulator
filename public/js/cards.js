@@ -43,6 +43,7 @@ export var draggingObj = null;    // The pointer to the object being currently d
 export var drewAnObject = false;  // Keep track if you drew an item so you don't draw multiple
 var hoveringObj = null;       // Pointer to the object being hovered over (null if not)
 export var options = {};      // Options for the game
+const recentlyShuffled = [];  // Recently shuffled stacks
 
 export function loadCards(self) {
   frames = self.textures.get('cards').getFrameNames();
@@ -358,12 +359,46 @@ export function rotateObject(self, gameObject) {
 }
 
 function shuffleStack(self, object){
-  if(object && object.length > 1  && object.objectId!=isDragging){
-    self.socket.emit('shuffleStack', {
-      objectId: object.objectId
-    });
+  if(!recentlyShuffled.includes(object.objectId)){
+    if(object && object.length > 1  && object.objectId!=isDragging){
+      self.socket.emit('shuffleStack', {
+        objectId: object.objectId
+      });
+
+      shuffleTween(self, object);
+
+      //set delay for re-shuffling
+      delayReshuffle(object.objectId).catch( e => { console.error(e) });
+    }
   }
 } 
+
+async function delayReshuffle(tableObject){
+  //set a timer to re-allow shuffling of the deck
+  recentlyShuffled.push(tableObject.objectId);
+  setTimeout(function() { 
+    recentlyShuffled.pop(tableObject.objectId);
+  }, 1000);
+}
+
+function shuffleTween(self, object){
+  let sprite = self.add.sprite(object.x, object.y, 'cards', frames.indexOf('back'));
+  sprite.displayWidth = CARD_WIDTH;
+  sprite.displayHeight = CARD_HEIGHT;
+  sprite.setDepth(object.depth + 1);
+  let tween = self.tweens.add({
+    targets: sprite,
+    scale: 1,
+    duration: 800,
+    ease: 'Sine.easeInOut',
+    yoyo: true,
+    repeat: 0,
+    delay: 0,
+    onComplete: ()=>{
+      sprite.destroy();
+    }
+  });
+}
 
 function flipTableObject(self, gameObject) {
   if(gameObject) {
