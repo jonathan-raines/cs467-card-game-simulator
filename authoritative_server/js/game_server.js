@@ -109,7 +109,8 @@ function create() {
   loadCards(self);
 
   startGameDataTicker(self);
-  debugTicker(self)
+  if(options["debugMode"]) 
+    debugTicker(self);
 
   // When a connection is made
   io.on('connection', function (socket) {
