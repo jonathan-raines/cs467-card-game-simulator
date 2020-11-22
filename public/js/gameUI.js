@@ -25,6 +25,7 @@ function loadChat(self) {
     e.preventDefault();
     self.socket.emit('chat message', playerNickname + ': ' + $('#chat-msg').val());
     $('#chat-msg').val('');
+    $('#chat-msg').blur();
     return false;
   });
 

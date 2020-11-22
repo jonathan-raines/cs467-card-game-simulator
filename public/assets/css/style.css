@@ -28,7 +28,7 @@ div.menu-area {
 }
 
 .menu-button {
-    background-color: #3CB371; 
+    background-color: #1c5418; 
     color: white; 
     border-radius: 10px; 
     font-weight: bold;
@@ -54,7 +54,6 @@ div.menu-area {
     position: relative;
     width: 100%;
     height: 100%;
-    background-color: royalblue;
 }
 
 #game-area {
@@ -64,7 +63,6 @@ div.menu-area {
 }
 
 #chat-area {
-    background-color: violet;
     position: relative;
     width: 15%;
     height: 100%;
@@ -78,7 +76,7 @@ div.menu-area {
 }
 
 #chat-send {
-    background-color: #3CB371;
+    background-color: #1c5418;
     color: white;
     border-radius: 10px;
     font-weight: bold;
@@ -104,7 +102,7 @@ div.menu-area {
 }
 
 #player-button {
-    background-color: blue; 
+    background-color: #1c5418; 
     color: white; 
     border-radius: 15px;
 }
