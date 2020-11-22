@@ -56,7 +56,7 @@ function preload() {
   this.load.html('help', 'assets/help.html');
   this.load.html('avatar', 'assets/playerBanner.html');
   this.load.image('floor', 'assets/tiledWood1.png');
-  this.load.image('tableTop', 'assets/tableFelt4.png');
+  this.load.image('tableTop', 'assets/tableFelt.png');
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
   this.load.image('blue', 'assets/customCursors/blue.png');
   this.load.image('green', 'assets/customCursors/green.png');
