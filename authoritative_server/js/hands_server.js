@@ -221,6 +221,14 @@ function removeAllFromHand(self, playerId) {
       objectDepth: incOverallDepth(),
       angle: -players[playerId].playerSpacing
     }
+
+    if(i == 0) 
+      var discardStack = object;
+    else if(discardStack) {
+      let topStack = object;
+      mergeStacks(topStack, discardStack);
+    }
+    
     x += 20;
   }
 }
