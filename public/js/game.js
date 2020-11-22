@@ -2,9 +2,7 @@ import { debugTicker } from './debug.js';
 import { loadGameUI, playerRotation, seats, seatSelected } from './gameUI.js';
 import { 
     isDragging,
-    cardNames,
     MENU_DEPTH,
-    options
  } from './cards.js';
 
  import {
@@ -33,7 +31,6 @@ export var config = {
   }
 };
 
-const TABLE_DEFAULT_COLOR = 0x477148;
 export const TABLE_CENTER_X = 0;
 export const TABLE_CENTER_Y = 0;
 export const TABLE_EDGE_FROM_CENTER = 650; // Distance of the table edge from the center of the table
@@ -206,7 +203,6 @@ function updatePlayers(self, playersInfo) {
       handSnapZone.destroy();
     }
   });
-
 }
 
 function updateCursors(self, players){
