@@ -80,7 +80,6 @@ function create() {
 
   cam = this.cameras.main;
   self.add.image(0, 0, 'floor').setScale(3);
-  //cam.setBackgroundColor('#654321');
   setCameraBounds();
   setupTable(self);
   
@@ -101,7 +100,6 @@ function create() {
                       Math.sin(camAngle) * deltaY) / cam.zoom;
       cam.scrollY -= (Math.cos(camAngle) * deltaY -
                       Math.sin(camAngle) * deltaX) / cam.zoom;
-      //console.log("x: " + pointer.x + " y: " + pointer.y);
     }
     //update server with pointer location
     if(players[self.socket.id]){
