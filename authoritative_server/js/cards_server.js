@@ -245,7 +245,7 @@ async function delayReshuffle(tableObjectId){
   recentlyShuffled.push(tableObjectId);
   setTimeout(function() { 
     recentlyShuffled.pop(tableObjectId);
-  }, 1000);
+  }, 800);
 }
 
 function setTableObjectPosition(self, objectId, xPos, yPos) {

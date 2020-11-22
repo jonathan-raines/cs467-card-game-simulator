@@ -43,7 +43,7 @@ export var draggingObj = null;    // The pointer to the object being currently d
 export var drewAnObject = false;  // Keep track if you drew an item so you don't draw multiple
 var hoveringObj = null;       // Pointer to the object being hovered over (null if not)
 export var options = {};      // Options for the game
-const recentlyShuffled = [];  // Recently shuffled stacks
+let recentlyShuffled = false;  // Recently shuffled stacks
 
 export function loadCards(self) {
   frames = self.textures.get('cards').getFrameNames();
@@ -359,7 +359,7 @@ export function rotateObject(self, gameObject) {
 }
 
 function shuffleStack(self, object){
-  if(!recentlyShuffled.includes(object.objectId)){
+  if(!recentlyShuffled){
     if(object && object.length > 1  && object.objectId!=isDragging){
       self.socket.emit('shuffleStack', {
         objectId: object.objectId
@@ -375,10 +375,10 @@ function shuffleStack(self, object){
 
 async function delayReshuffle(tableObject){
   //set a timer to re-allow shuffling of the deck
-  recentlyShuffled.push(tableObject.objectId);
+  recentlyShuffled = true;
   setTimeout(function() { 
-    recentlyShuffled.pop(tableObject.objectId);
-  }, 1000);
+    recentlyShuffled = false;
+  }, 800);
 }
 
 function shuffleTween(self, object){
