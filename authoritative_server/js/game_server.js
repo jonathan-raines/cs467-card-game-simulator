@@ -35,10 +35,10 @@ const GAME_TICK_RATE = 50;              // (10hz) The game ticks at the rate of 
 const SLOW_TO_FAST_TICK = 100;          // (.1hz) How many fast ticks per slow ticks (for slow updates to client)
 const TABLE_CENTER_X = 0;
 const TABLE_CENTER_Y = 0;
-const TABLE_EDGE_FROM_CENTER = 600;     // Distance of the table edge from the center of the table (this makes a rectangle)
+const TABLE_EDGE_FROM_CENTER = 625;     // Distance of the table edge from the center of the table (this makes a rectangle)
 const TABLE_EDGE_CONSTANT = ((2+Math.pow(2,.5))/(1+Math.pow(2,.5))) * TABLE_EDGE_FROM_CENTER;
 const DISTANCE_FROM_CENTER = 550;       // Distance hands are from the center
-const DITANCE_FROM_HAND = 100;          // Distance the player indicator is from the hand
+const DISTANCE_FROM_HAND = 100;          // Distance the player indicator is from the hand
 const HAND_WIDTH = 400;
 const HAND_HEIGHT = 75;
 const HAND_SPACING = 50;
@@ -90,8 +90,8 @@ for(var i = 1; i <= 8; i++) {
   seats[numAsString] = {
     id: numAsString,
     name: 'Open',
-    x: TABLE_CENTER_X + (DISTANCE_FROM_CENTER+DITANCE_FROM_HAND) * Math.sin(Phaser.Math.DegToRad(angle)),
-    y: TABLE_CENTER_Y + (DISTANCE_FROM_CENTER+DITANCE_FROM_HAND) * Math.cos(Phaser.Math.DegToRad(angle)),
+    x: TABLE_CENTER_X + (DISTANCE_FROM_CENTER+DISTANCE_FROM_HAND) * Math.sin(Phaser.Math.DegToRad(angle)),
+    y: TABLE_CENTER_Y + (DISTANCE_FROM_CENTER+DISTANCE_FROM_HAND) * Math.cos(Phaser.Math.DegToRad(angle)),
     available: true,
     rotation: angle,
     transform: 0,
