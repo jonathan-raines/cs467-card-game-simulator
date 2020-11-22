@@ -49,7 +49,7 @@ function addHandObject(self, playerId, pos, angle, spriteId, x, y, isFaceUp) {
 export function addHand(self, playerId, xPos, yPos, angle) {
   // Inner zone which detects when a card is over it
   var snapZone = self.add.rectangle(xPos, yPos, HAND_ZONE_SIZE, HAND_ZONE_SIZE, 0xff4c4c);
-  snapZone.setVisible(false); // Set visible for debugging
+  //snapZone.setVisible(false); // Set visible for debugging
   snapZone.playerId = playerId;
   snapZone.angle = angle;
   snapZone.depth = HAND_DEPTH-1;
