@@ -5,7 +5,8 @@ import {
     isDragging, 
     stackVisualEffect, 
     wasDragging,
-    frames
+    frames,
+    waitUpdate
 } from './cards.js';
 
 // Updates all the objects on the table
@@ -25,26 +26,28 @@ export function updateTableObjects(self, objectsInfo) {
         }
 
         // Check if object is same as server's object
-        else if(object.objectId == id) {
-          updateObject(self, 
-                       objectsInfo[id].x, 
-                       objectsInfo[id].y, 
-                       objectsInfo[id].objectDepth, 
-                       objectsInfo[id].angle,
-                       objectsInfo[id].items,
-                       objectsInfo[id].isFaceUp,
-                       object);
+        else if(object.objectId == id ) {
+          if(!waitUpdate.includes(object.objectId)) {
+            updateObject(self, 
+                         objectsInfo[id].x, 
+                         objectsInfo[id].y, 
+                         objectsInfo[id].objectDepth, 
+                         objectsInfo[id].angle,
+                         objectsInfo[id].items,
+                         objectsInfo[id].isFaceUp,
+                         object);
+          }
+
           updatedAnObject = true;
           count++;
         } 
       });
 
-      if(count > 1)
-        console.log("Error: Found " + count + " of the same object id when updating from server");
-
       // If no object was updated, there is no local object and must be created
       if(!updatedAnObject && isDragging != id) {
-        addTableObject(self, objectsInfo[id].items, objectsInfo[id].x, objectsInfo[id].y, objectsInfo[id].isFaceUp);
+        var object = addTableObject(self, objectsInfo[id].items, objectsInfo[id].x, objectsInfo[id].y, objectsInfo[id].isFaceUp);
+        object.angle = objectsInfo[id].angle;
+        object.depth = objectsInfo[id].objectDepth;
       }
     }
   });

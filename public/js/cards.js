@@ -26,6 +26,7 @@ const STACK_SNAP_DISTANCE = 10;
 const LONG_PRESS_TIME = 300;
 export const CARD_WIDTH = 70;
 export const CARD_HEIGHT = 95;
+const WAIT_UPDATE_INTERVAL = 150;
 
 
 // GLOBAL VARIABLES
@@ -43,6 +44,7 @@ export var draggingObj = null;    // The pointer to the object being currently d
 export var drewAnObject = false;  // Keep track if you drew an item so you don't draw multiple
 var hoveringObj = null;       // Pointer to the object being hovered over (null if not)
 export var options = {};      // Options for the game
+export const waitUpdate = [];        // List of objects to wait updating
 
 export function loadCards(self) {
   frames = self.textures.get('cards').getFrameNames();
@@ -249,11 +251,8 @@ function onObjectDrop(self, gameObject) {
     }
 
     updateStackVisualEffect(self, closest);
+    setWaitObjUpdate(self, closest); 
 
-    // Delete top stack
-    gameObject.setVisible(false);
-    gameObject.removeAll(true);
-    gameObject.destroy();  
     return true;
   } 
   else return false;
@@ -285,6 +284,7 @@ function drawTopSprite(self){
   let drawnSpriteId = draggingObj.last.spriteId;
   draggingObj.last.setVisible(false);
   draggingObj.remove(draggingObj.last, true);
+  setWaitObjUpdate(self, draggingObj);
 
   draggingObj = addTableObject(self, [drawnSpriteId], draggingObj.x, draggingObj.y, [draggingObj.last.isFaceUp]);
   //rotateObject(self, draggingObj);
@@ -381,21 +381,18 @@ function flipTableObject(self, gameObject) {
     } 
     else {
       gameObject.objectId = gameObject.last.spriteId;
-      for (var i = 0; i < Math.floor(gameObject.length * 0.5); i++) {
-        var lowerSprite = gameObject.getAt(i);
-        var upperSprite = gameObject.getAt(gameObject.length - 1 - i);
-        var lowerSpriteId = lowerSprite.spriteId;
-        var upperSpriteId = upperSprite.spriteId;
-        var lowerOrientation = !lowerSprite.isFaceUp;
-        var upperOrientation = !upperSprite.isFaceUp;
+      var lowerSprite = gameObject.first;
+      var upperSprite = gameObject.last;
+      var lowerSpriteId = lowerSprite.spriteId;
+      var upperSpriteId = upperSprite.spriteId;
+      var lowerOrientation = !lowerSprite.isFaceUp;
+      var upperOrientation = !upperSprite.isFaceUp;
 
-        // Flip the values
-        updateSprite(lowerSprite, upperSpriteId, upperOrientation, frames);
-        updateSprite(upperSprite, lowerSpriteId, lowerOrientation, frames);
-
-        gameObject.getAt(i).isFaceUp = !gameObject.getAt(i).isFaceUp;
-      }
+      // Flip the values
+      updateSprite(lowerSprite, upperSpriteId, upperOrientation, frames);
+      updateSprite(upperSprite, lowerSpriteId, lowerOrientation, frames);
     }
+    setWaitObjUpdate(self, gameObject);
   }
 }
 
@@ -413,4 +410,11 @@ export function setDraggingObj(object) {
   isDragging = object.objectId;
   draggingObj.depth = MENU_DEPTH-1; // Bring to front
   return draggingObj;
+}
+
+async function setWaitObjUpdate(self, object) {
+  waitUpdate.push(object.objectId);
+  setTimeout(function() { 
+    waitUpdate.shift();
+  }, WAIT_UPDATE_INTERVAL);
 }
