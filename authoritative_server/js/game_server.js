@@ -28,7 +28,6 @@ const config = {
 
 // Global Constants
 //--------------------------------------------------------------------------------------------
-
 const ROOM_TIMEOUT_LENGTH = 1800000;    //(30min) Length of time the server will wait to close after all the players have left
 const CHECK_ROOM_INTERVAL = 300000;     // (5min) How often the server will check if there are any players
 const GAME_TICK_RATE = 50;              // (10hz) The game ticks at the rate of 1 tick per 100 milliseconds (10Hz)
@@ -54,6 +53,7 @@ const players = {};                     // Info of all the current players in th
 const cursorInfo = {};
 const options = {};                     // Options for the game
 const recentlyShuffled = [];            // Recently shuffled stacks
+options["debugMode"] = true;            // Runs the server and client in debug mode
 options["lockedHands"] = true;          // If true, players can only take cards from their own hand.
 options["flipWhenExitHand"] = false;    // If true, when leaving a hand, cards will automatically flip to hide.
 options["flipWhenEnterHand"] = true;    // If true, cards will flip up when inserted into a hand

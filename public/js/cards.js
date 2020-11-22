@@ -1,3 +1,4 @@
+import { debugTicker } from './debug.js';
 import { players,
     TABLE_CENTER_X,
     TABLE_CENTER_Y,
@@ -44,6 +45,7 @@ export var draggingObj = null;    // The pointer to the object being currently d
 export var drewAnObject = false;  // Keep track if you drew an item so you don't draw multiple
 var hoveringObj = null;       // Pointer to the object being hovered over (null if not)
 export var options = {};      // Options for the game
+var debugMode = false;
 export const waitUpdate = [];        // List of objects to wait updating
 
 export function loadCards(self) {
@@ -150,6 +152,10 @@ export function loadCards(self) {
 
   self.socket.on('options', function (optionsInfo) {
     options = optionsInfo;
+    if(options["debugMode"] == true & debugMode == false) {
+      debugMode = true;
+      debugTicker(self);
+    }
   });
 }
 

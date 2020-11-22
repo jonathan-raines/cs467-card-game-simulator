@@ -1,4 +1,3 @@
-import { debugTicker } from './debug.js';
 import { loadGameUI, playerRotation, seats, seatSelected } from './gameUI.js';
 import { 
     isDragging,
