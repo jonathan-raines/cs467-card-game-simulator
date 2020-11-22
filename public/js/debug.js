@@ -23,6 +23,7 @@ export function debugObjectContents(object) {
 }
   
 export function debugTicker(self) {
+  console.log("Debug Ticker Started");
   let tickInterval = setInterval(() => {
 
     var totalCards = 0;

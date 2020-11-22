@@ -79,6 +79,11 @@ function loadMenu(self) {
       $('#exit-menu').click(function() {
         $('#menu-area').hide();
       });
+
+      $('#reset-table').click(function() {
+        self.socket.emit('request', 'resetTable');
+        $('#menu-area').hide();
+      });
     });
 }
 
