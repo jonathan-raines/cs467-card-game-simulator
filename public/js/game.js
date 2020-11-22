@@ -20,8 +20,8 @@ export var config = {
     createContainer: true
   },
   // Initial dimensions based on window size
-  width: 1200,
-  height: 1200,
+  width: 1000,
+  height: 1000,
   scale: {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH
