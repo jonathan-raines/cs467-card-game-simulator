@@ -2,9 +2,7 @@ import { debugTicker } from './debug.js';
 import { loadGameUI, playerRotation, seats, seatSelected } from './gameUI.js';
 import { 
     isDragging,
-    cardNames,
     MENU_DEPTH,
-    options
  } from './cards.js';
 
  import {
@@ -20,8 +18,8 @@ export var config = {
     createContainer: true
   },
   // Initial dimensions based on window size
-  width: 1200,
-  height: 1200,
+  width: 1000,
+  height: 1000,
   scale: {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH
@@ -33,7 +31,6 @@ export var config = {
   }
 };
 
-const TABLE_DEFAULT_COLOR = 0x477148;
 export const TABLE_CENTER_X = 0;
 export const TABLE_CENTER_Y = 0;
 export const TABLE_EDGE_FROM_CENTER = 650; // Distance of the table edge from the center of the table
@@ -80,7 +77,6 @@ function create() {
 
   cam = this.cameras.main;
   self.add.image(0, 0, 'floor').setScale(3);
-  //cam.setBackgroundColor('#654321');
   setCameraBounds();
   setupTable(self);
   
@@ -101,7 +97,6 @@ function create() {
                       Math.sin(camAngle) * deltaY) / cam.zoom;
       cam.scrollY -= (Math.cos(camAngle) * deltaY -
                       Math.sin(camAngle) * deltaX) / cam.zoom;
-      //console.log("x: " + pointer.x + " y: " + pointer.y);
     }
     //update server with pointer location
     if(players[self.socket.id]){
@@ -208,7 +203,6 @@ function updatePlayers(self, playersInfo) {
       handSnapZone.destroy();
     }
   });
-
 }
 
 function updateCursors(self, players){

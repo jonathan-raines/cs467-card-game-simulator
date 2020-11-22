@@ -67,14 +67,12 @@ export function loadCards(self) {
       var object = currentlyOver[0];
       flipTableObject(self, object);
     }
-    //console.log("Clicking on: " + currentlyOver[0].spriteId);
   });
 
   // When the mouse starts dragging the object
   self.input.on('dragstart', function (pointer, gameObject) {
     isDragging = gameObject.objectId;
     draggingObj = gameObject;
-    //console.log("Dragging " + cardNames[draggingObj.first.spriteId]);
     if(!options["lockedHands"] || (!draggingObj.playerId || draggingObj.playerId == self.socket.id))
       draggingObj.depth = MENU_DEPTH-1;
     self.socket.emit('objectDepth', { // Tells the server to increase the object's depth
@@ -175,7 +173,6 @@ export function addObject(self, spriteIds, x, y, spriteOrientations) {
   object.setInteractive();         // Make interactive with mouse
   self.input.setDraggable(object);
 
-  //console.log("creating obj id=" + spriteIds[0] + " name=" + cardNames[spriteIds[0]] + " numSprites=" + spritesToAdd.length);
   return object;
 }
 

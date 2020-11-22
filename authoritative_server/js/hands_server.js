@@ -190,8 +190,8 @@ function moveAroundInHand(self, playerId, objectId, newPos) {
 }
 
 function removeAllFromHand(self, playerId) {
-  var x = 350;
-  var y = 500;
+  var x = 90;
+  var y = 0;
   const player = players[playerId];
   if(!player) {
     console.log("Cannot remove card from hand (playerId not found).");
@@ -200,7 +200,6 @@ function removeAllFromHand(self, playerId) {
   for(var i = 0; i < players[playerId].hand.length; i++) {
     var objectId = players[playerId].hand[i];
     var isFaceUp = players[playerId].isFaceUp[i];
-    //var isFaceUp = false; // Hide cards
 
     //re-define the stack and put its sprite back into it
     const sprite = createSprite(self, objectId, cardNames[objectId], isFaceUp, frames);
@@ -221,6 +220,13 @@ function removeAllFromHand(self, playerId) {
       y: y,
       objectDepth: incOverallDepth(),
       angle: -players[playerId].playerSpacing
+    }
+    // Merge cards into one stack
+    if(i == 0) 
+      var discardStack = object;
+    else if(discardStack) {
+      let topStack = object;
+      mergeStacks(topStack, discardStack);
     }
     x += 20;
   }
