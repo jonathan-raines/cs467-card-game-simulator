@@ -55,6 +55,8 @@ function preload() {
   this.load.html('menu', 'assets/menu.html');
   this.load.html('help', 'assets/help.html');
   this.load.html('avatar', 'assets/playerBanner.html');
+  this.load.image('floor', 'assets/tiledWood1.png');
+  this.load.image('tableTop', 'assets/tableFelt4.png');
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
   this.load.image('blue', 'assets/customCursors/blue.png');
   this.load.image('green', 'assets/customCursors/green.png');
@@ -77,7 +79,8 @@ function create() {
   this.tableParts = this.add.group();
 
   cam = this.cameras.main;
-  cam.setBackgroundColor('#654321');
+  self.add.image(0, 0, 'floor').setScale(1.75);
+  //cam.setBackgroundColor('#654321');
   setCameraBounds();
   setupTable(self);
   
@@ -295,15 +298,17 @@ function moveDummyCursors(self){
 }
 
 function setupTable(self) {
-  var table1 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), TABLE_DEFAULT_COLOR);
-  var table2 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), TABLE_DEFAULT_COLOR);
-  var table3 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), TABLE_DEFAULT_COLOR);
-  var table4 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), TABLE_DEFAULT_COLOR);
-  table2.angle = 45;
-  table3.angle = 90;
-  table4.angle = 135;
-  self.tableParts.add(table1);
-  self.tableParts.add(table2);
-  self.tableParts.add(table3);
-  self.tableParts.add(table4);
+  var tableTop = self.add.image(TABLE_CENTER_X, TABLE_CENTER_Y, 'tableTop');
+  tableTop.setScale(2.25);
+  //var table1 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), TABLE_DEFAULT_COLOR);
+  //var table2 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), TABLE_DEFAULT_COLOR);
+  //var table3 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), TABLE_DEFAULT_COLOR);
+  //var table4 = self.add.rectangle(TABLE_CENTER_X, TABLE_CENTER_Y, TABLE_EDGE_FROM_CENTER*2, TABLE_EDGE_FROM_CENTER*(2/(1+Math.pow(2,.5))), TABLE_DEFAULT_COLOR);
+  //table2.angle = 45;
+  //table3.angle = 90;
+  //table4.angle = 135;
+  //self.tableParts.add(table1);
+  //self.tableParts.add(table2);
+  //self.tableParts.add(table3);
+  //self.tableParts.add(table4);
 }
