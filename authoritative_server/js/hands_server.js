@@ -200,14 +200,13 @@ function removeAllFromHand(self, playerId) {
   for(var i = 0; i < players[playerId].hand.length; i++) {
     var objectId = players[playerId].hand[i];
     var isFaceUp = players[playerId].isFaceUp[i];
-    //var isFaceUp = false; // Hide cards
 
     //re-define the stack and put its sprite back into it
     const sprite = createSprite(self, objectId, cardNames[objectId], isFaceUp, frames);
     const object = getTableObject(self, objectId); //find the original stack that the sprite was created with
     object.active = true;
-    object.x = x;
-    object.y = y;
+    object.x = 150;
+    object.y = 0;
     object.angle = 0;
     object.objectId = objectId;
     object.add(sprite);
