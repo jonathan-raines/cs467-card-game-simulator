@@ -152,6 +152,7 @@ function startSocketUpdates(self, socket, frames) {
     players[seat.socket].playerSpacing = angle;
     players[seat.socket].x = TABLE_CENTER_X + DISTANCE_FROM_CENTER * Math.sin(Phaser.Math.DegToRad(angle));
     players[seat.socket].y = TABLE_CENTER_X + DISTANCE_FROM_CENTER * Math.cos(Phaser.Math.DegToRad(angle));
+    seats[seat.id].color = players[seat.socket].playerCursor;
     io.emit('seatAssignments', seats);
   });
 
