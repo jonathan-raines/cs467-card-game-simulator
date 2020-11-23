@@ -12,6 +12,7 @@ min-height: 100%;
 background-position: center;
 background-size: cover;
 position: relative;
+overflow: hidden;
 }
 
 input[type=text], select {
@@ -26,7 +27,7 @@ box-sizing: border-box;
 
 input[type=submit] {
 width: 100%;
-background-color: #4CAF50;
+background-color: #83781B;
 color: white;
 padding: 14px 20px;
 margin: 8px 0;
@@ -36,25 +37,33 @@ cursor: pointer;
 }
 
 .form-box {
+display: block;
+  margin-left: auto;
+  margin-right: auto;
 border-radius: 10px;
-background-color: #f2f2f2;
+background-color: #C4BBAF ;
 padding: 20px;
 }
 
 .center-div {
+	display:block;
+	margin-left: auto;
+  margin-right: auto; 
 margin: 1em auto;
 min-width: 20em;
 position: absolute;
-top: 50%;
-left: 50%;
-width: 30%;
+
+top: 30%;
+
+left: 40%;
+
+width: 50%;
 -ms-transform: translate(-50%, -50%);
 transform: translate(-50%, -50%);
 opacity: 1.0;
-background-color: #ffffff;
 }
 
-h1 {
+h2 {
 text-align: center;
 }
 
@@ -67,16 +76,20 @@ width:40%;
 display: flex;
 }
 
-.column-left {
-flex: 35%;
-padding: 10px;
-}
-
-.column-right {
-flex: 65%;
-padding: 10px;
-}
-
 table, th, td {
-border: 1px solid black;
+	text-align: center;
+	border:none;
+	min-width: 100px;
+}
+
+.logo {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: 50px;
+	margin-top: 100px;
+	width:80%;
+	max-width: 800px;
+	min-width: 400px;
+	border-radius: 50px;
 }
