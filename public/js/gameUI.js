@@ -140,17 +140,21 @@ function selectSeat(self) {
 }
 
 function addSeat(self, seat) {
-  self.add.dom(seat.x, seat.y).createFromCache('avatar');
+  var dom = self.add.dom(seat.x, seat.y).createFromCache('avatar');
   var openSeat = document.getElementById('player-button');
   openSeat.id = seat.id;
   openSeat.innerText = seat.name;
   openSeat.value = seat.available;
+  dom.updateSize();
+  dom.angle = -seat.rotation;
   
-  if(seat.color) {
+  if(seat.color && seat.color != '') {
     openSeat.style.backgroundColor = seat.color;
+    if(seat.color == 'white' || seat.color == 'pink')
+      openSeat.style.color = 'black';
   }
-  //openSeat.style.backgroundColor = players[seat.id].playerCursor || "#40434E";
-  openSeat.style.transform = 'rotate(' + (360 - seat.rotation).toString() + 'deg)';
+  else
+    openSeat.style.backgroundColor = "#40434E";
 }
 
 export function changeTableColor(self, color) {
