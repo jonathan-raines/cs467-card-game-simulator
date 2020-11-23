@@ -130,8 +130,8 @@ function create() {
 function update() {}
 
 function setCameraBounds(self) {
-  maxZoom = Math.min( window.innerHeight / (TABLE_EDGE_FROM_CENTER * 2 + 200), 
-                      window.innerWidth / (TABLE_EDGE_FROM_CENTER * 2 / 0.8 + 200));
+  maxZoom = Math.min( window.innerHeight / (TABLE_EDGE_FROM_CENTER * 2 + 400), 
+                      window.innerWidth / (TABLE_EDGE_FROM_CENTER * 2 / 0.8 + 400));
   cam.setZoom(maxZoom);
   cam.centerOn(0,0);
   var MaxXY = Math.min((TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER - game.config.width*1.5), (TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER - game.config.height*1.5));
