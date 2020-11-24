@@ -145,6 +145,11 @@ function addSeat(self, seat) {
   openSeat.id = seat.id;
   openSeat.innerText = seat.name;
   openSeat.value = seat.available;
+  
+  if(seat.color) {
+    openSeat.style.backgroundColor = seat.color;
+  }
+  //openSeat.style.backgroundColor = players[seat.id].playerCursor || "#40434E";
   openSeat.style.transform = 'rotate(' + (360 - seat.rotation).toString() + 'deg)';
 }
 

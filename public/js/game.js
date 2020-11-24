@@ -2,6 +2,7 @@ import { loadGameUI, playerRotation, seats, seatSelected } from './gameUI.js';
 import { 
     isDragging,
     MENU_DEPTH,
+    CARD_HEIGHT
  } from './cards.js';
 
  import {
@@ -32,7 +33,7 @@ export var config = {
 
 export const TABLE_CENTER_X = 0;
 export const TABLE_CENTER_Y = 0;
-export const TABLE_EDGE_FROM_CENTER = 650; // Distance of the table edge from the center of the table
+export const TABLE_EDGE_FROM_CENTER = 625 - CARD_HEIGHT/2; // Distance of the table edge from the center of the table
 export const TABLE_EDGE_CONSTANT = ((2+Math.pow(2,.5))/(1+Math.pow(2,.5))) * TABLE_EDGE_FROM_CENTER;
 
 
@@ -44,6 +45,7 @@ const roomCode = '/' + getParameterByName('roomCode');
 // Main camera for this player and Keyboard input catcher
 export var cam;
 var maxZoom;
+var floor;
 // Create Phaser3 Game
 var game = new Phaser.Game(config);
 
@@ -51,8 +53,8 @@ function preload() {
   this.load.html('menu', 'assets/menu.html');
   this.load.html('help', 'assets/help.html');
   this.load.html('avatar', 'assets/playerBanner.html');
-  this.load.image('floor', 'assets/tiledWood1.png');
-  this.load.image('tableTop', 'assets/tableFelt.png');
+  this.load.image('floor', 'assets/DarkWood.jpg');
+  this.load.image('tableTop', 'assets/cardTable.png');
   this.load.atlas('cards', 'assets/atlas/cards.png', 'assets/atlas/cards.json');
   this.load.image('blue', 'assets/customCursors/blue.png');
   this.load.image('green', 'assets/customCursors/green.png');
@@ -75,8 +77,8 @@ function create() {
   this.tableParts = this.add.group();
 
   cam = this.cameras.main;
-  self.add.image(0, 0, 'floor').setScale(3);
-  setCameraBounds();
+
+  setCameraBounds(self);
   setupTable(self);
   
   self.socket.on('defaultName', function(name) {
@@ -92,10 +94,17 @@ function create() {
       var camAngle = Phaser.Math.DegToRad(playerRotation); // in radians
       var deltaX = pointer.x - pointer.prevPosition.x;
       var deltaY = pointer.y - pointer.prevPosition.y;
-      cam.scrollX -= (Math.cos(camAngle) * deltaX +
+      var scrollX = (Math.cos(camAngle) * deltaX +
                       Math.sin(camAngle) * deltaY) / cam.zoom;
-      cam.scrollY -= (Math.cos(camAngle) * deltaY -
+      var scrollY = (Math.cos(camAngle) * deltaY -
                       Math.sin(camAngle) * deltaX) / cam.zoom;
+      cam.scrollX -= scrollX;
+      cam.scrollY -= scrollY;
+      // Update floor scrolling
+      floor.x = cam.scrollX + window.innerWidth/2.0;
+      floor.y = cam.scrollY + window.innerHeight/2.0;
+      floor.tilePositionX = cam.scrollX + window.innerWidth/2.0;
+      floor.tilePositionY = cam.scrollY + window.innerHeight/2.0;
     }
     //update server with pointer location
     if(players[self.socket.id]){
@@ -115,20 +124,27 @@ function create() {
   });
 
   // Whenever the window is resized
-  self.scale.on('resize', setCameraBounds);
+  self.scale.on('resize', setCameraBounds, self);
 }
 
 function update() {}
 
-function setCameraBounds() {
+function setCameraBounds(self) {
   maxZoom = Math.min( window.innerHeight / (TABLE_EDGE_FROM_CENTER * 2 + 200), 
                       window.innerWidth / (TABLE_EDGE_FROM_CENTER * 2 / 0.8 + 200));
   cam.setZoom(maxZoom);
-  cam.setBounds((TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER - game.config.width*.8), 
-              (TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER - game.config.height*.8), 
-              2*(TABLE_CENTER_X + TABLE_EDGE_FROM_CENTER + game.config.width*.8), 
-              2*(TABLE_CENTER_Y + TABLE_EDGE_FROM_CENTER + game.config.height*.8),
-              true);
+  cam.centerOn(0,0);
+  var MaxXY = Math.min((TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER - game.config.width*1.5), (TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER - game.config.height*1.5));
+  cam.setBounds(MaxXY, MaxXY, -2*MaxXY, -2*MaxXY);              
+  
+  if(floor) {
+    floor.x = 0;
+    floor.y = 0;
+    floor.tilePositionX = 0;
+    floor.tilePositionY = 0;
+    floor.setSize(window.innerWidth / cam.zoom + 200, window.innerHeight / cam.zoom + 200);
+  }
+  
 }
 
 // Gets url parameters/queries for a name and returns the value
@@ -291,6 +307,8 @@ function moveDummyCursors(self){
 }
 
 function setupTable(self) {
-  var tableTop = self.add.image(TABLE_CENTER_X + 32, TABLE_CENTER_Y, 'tableTop');
-  tableTop.setScale(2);
+  var maxFloor = Math.max(window.innerWidth / cam.zoom + 200, window.innerHeight / cam.zoom + 200) * 1.2;
+  floor = self.add.tileSprite(-100,-100, maxFloor, maxFloor, 'floor');
+  var tableTop = self.add.image(TABLE_CENTER_X, TABLE_CENTER_Y, 'tableTop');
+
 }

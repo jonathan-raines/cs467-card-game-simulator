@@ -32,17 +32,17 @@ const ROOM_TIMEOUT_LENGTH = 1800000;    //(30min) Length of time the server will
 const CHECK_ROOM_INTERVAL = 300000;     // (5min) How often the server will check if there are any players
 const GAME_TICK_RATE = 50;              // (10hz) The game ticks at the rate of 1 tick per 100 milliseconds (10Hz)
 const SLOW_TO_FAST_TICK = 100;          // (.1hz) How many fast ticks per slow ticks (for slow updates to client)
+const CARD_WIDTH = 70;
+const CARD_HEIGHT = 95;
 const TABLE_CENTER_X = 0;
 const TABLE_CENTER_Y = 0;
-const TABLE_EDGE_FROM_CENTER = 625;     // Distance of the table edge from the center of the table (this makes a rectangle)
+const TABLE_EDGE_FROM_CENTER = 625-CARD_HEIGHT;     // Distance of the table edge from the center of the table (this makes a rectangle)
 const TABLE_EDGE_CONSTANT = ((2+Math.pow(2,.5))/(1+Math.pow(2,.5))) * TABLE_EDGE_FROM_CENTER;
-const DISTANCE_FROM_CENTER = 550;       // Distance hands are from the center
+const DISTANCE_FROM_CENTER = 575;       // Distance hands are from the center
 const DISTANCE_FROM_HAND = 100;          // Distance the player indicator is from the hand
 const HAND_WIDTH = 400;
 const HAND_HEIGHT = 75;
 const HAND_SPACING = 50;
-const CARD_WIDTH = 70;
-const CARD_HEIGHT = 95;
 const MIN_DEPTH = 10;                   // Minimum depth for table objects
 const MAX_DEPTH = 850;                  // Maximum depth for table objects
 
@@ -152,6 +152,7 @@ function startSocketUpdates(self, socket, frames) {
     players[seat.socket].playerSpacing = angle;
     players[seat.socket].x = TABLE_CENTER_X + DISTANCE_FROM_CENTER * Math.sin(Phaser.Math.DegToRad(angle));
     players[seat.socket].y = TABLE_CENTER_X + DISTANCE_FROM_CENTER * Math.cos(Phaser.Math.DegToRad(angle));
+    seats[seat.id].color = players[seat.socket].playerCursor;
     io.emit('seatAssignments', seats);
   });
 
