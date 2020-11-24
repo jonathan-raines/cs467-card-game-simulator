@@ -71,7 +71,7 @@ app.get('/', function (req, res) {
 
 function lobbyRouter(requestedRoom, req, res) {
   // For regular requests to lobby
-  if(requestedRoom == '') {
+  if(!requestedRoom || requestedRoom == '') {
     renderHome(res).catch( e => { console.error(e) })
   // For specific rooms
   } 
@@ -101,9 +101,11 @@ async function renderHome(res){
     const client = await pool.connect();
     await client.query(query)
     .then((result) => {
-      if (result.rows.length == 0){
-        activeGameRooms = null;
-        console.log('no results')
+      Object.keys(activeGameRooms).forEach(key => {
+        delete activeGameRooms[key];
+      });
+      if (result.rows.length == 0) {
+        console.log('no results');
       }
       else{
         result.rows.forEach(row => {
