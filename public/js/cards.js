@@ -129,7 +129,7 @@ export function loadCards(self) {
     }, 300);
   });  
 
-  //shuffle stacToShuffle on R key
+  //shuffle stackToShuffle on R key
   self.input.keyboard.on('keyup_R', function () {
     if(hoveringObj && self.tableObjects.contains(hoveringObj)) {
       shuffleStack(self, hoveringObj);
@@ -365,8 +365,33 @@ function shuffleStack(self, object){
     self.socket.emit('shuffleStack', {
       objectId: object.objectId
     });
+    shuffleTween(self, object);
   }
 } 
+
+function shuffleTween(self, object){
+  let targets = [];
+  for (let i = 15; i > 0; i--){
+    let sprite = self.add.sprite(object.x, object.y, 'cards', frames.indexOf('back'));
+    sprite.removeInteractive();
+    sprite.displayWidth = CARD_WIDTH;
+    sprite.displayHeight = CARD_HEIGHT;
+    sprite.setDepth(object.depth + i);
+    targets.push(sprite);
+  }
+  let tween = self.tweens.add({
+    targets: targets,
+    angle: 360,
+    duration: 1500,
+    ease: 'Sine.easeInOut',
+    delay: self.tweens.stagger(100),
+    onComplete: ()=>{
+      targets.forEach((sprite)=>{
+        sprite.destroy();
+      });
+    }
+  });
+}
 
 function flipTableObject(self, gameObject) {
   if(gameObject) {
