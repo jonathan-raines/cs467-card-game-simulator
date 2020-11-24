@@ -155,6 +155,10 @@ export function loadCards(self) {
       debugTicker(self);
     }
   });
+
+  self.socket.on('shuffleAnim', (xy)=>{
+    shuffleTween(self, xy);
+  });
 }
 
 export function addTableObject(self, spriteIds, x, y, spriteOrientations) {
@@ -365,18 +369,18 @@ function shuffleStack(self, object){
     self.socket.emit('shuffleStack', {
       objectId: object.objectId
     });
-    shuffleTween(self, object);
   }
 } 
 
-function shuffleTween(self, object){
+function shuffleTween(self, xy){
   let targets = [];
   for (let i = 15; i > 0; i--){
-    let sprite = self.add.sprite(object.x, object.y, 'cards', frames.indexOf('back'));
+    let sprite = self.add.sprite(xy.x, xy.y, 'cards', frames.indexOf('back'));
+    sprite.setRotation(xy.angle);
     sprite.removeInteractive();
     sprite.displayWidth = CARD_WIDTH;
     sprite.displayHeight = CARD_HEIGHT;
-    sprite.setDepth(object.depth + i);
+    sprite.setDepth(CURSOR_DEPTH - i);
     targets.push(sprite);
   }
   let tween = self.tweens.add({

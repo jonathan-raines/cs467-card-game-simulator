@@ -197,6 +197,13 @@ function shuffleStack(self, originStack){
     //shuffle the container
     originStack.shuffle();
 
+    //tell all clients to play shuffle anim
+    io.emit('shuffleAnim', {
+      x: originStack.x,
+      y: originStack.y,
+      angle: originStack.angle
+    });
+
     //find the new bottom sprite of the container
     const shuffledBottomSprite = originStack.first;
 
