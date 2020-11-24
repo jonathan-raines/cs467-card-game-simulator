@@ -188,67 +188,73 @@ function createSprite(self, spriteId, spriteName, isFaceUp, frames) {
 function shuffleStack(self, originStack){
   // prevent fast repetitive shuffling
   if(!recentlyShuffled.includes(originStack.first.objectId)){
+    let stackFacing = originStack.last.isFaceUp;
+    
     // Can't shuffle a deck of 1
     if(originStack.length == 1)
       return;
+    
     //shuffle the container
     originStack.shuffle();
-
-    //set delay for re-shuffling
-    delayReshuffle(originStack.first.objectId).catch( e => { console.error(e) });
 
     //find the new bottom sprite of the container
     const shuffledBottomSprite = originStack.first;
 
     // error if the new bottom sprite is somehow lost
     if(!shuffledBottomSprite) {
-    console.log("Cannot shuffle stack #" + originStack.objectId);
-    return;
+      console.log("Cannot shuffle stack #" + originStack.objectId);
+      return;
     }
 
     //find the original stack for the new bottom sprite
     const shuffledStack = getTableObject(self, shuffledBottomSprite.spriteId);
 
-    //re-define the shuffledStack 
-    shuffledStack.active = true;
-    shuffledStack.x = originStack.x;
-    shuffledStack.y = originStack.y;
-    shuffledStack.angle = originStack.angle;
-    shuffledStack.objectId = shuffledBottomSprite.spriteId;
+    if (originStack != shuffledStack){
+      //re-define the shuffledStack 
+      shuffledStack.active = true;
+      shuffledStack.x = originStack.x;
+      shuffledStack.y = originStack.y;
+      shuffledStack.angle = originStack.angle;
+      shuffledStack.objectId = shuffledBottomSprite.spriteId;
 
-    //put all of the old originStack sprites into shuffledStack
-    const originSprites = originStack.getAll();
-    let tempItems = [];
-    let tempIsFaceUp = [];
-    for(var i = 0; i < originSprites.length; i++) {
-    shuffledStack.add(originSprites[i]);
-    tempItems.push(originSprites[i].spriteId);
-    tempIsFaceUp.push(originSprites[i].isFaceUp);
+      //put all of the old originStack sprites into shuffledStack
+      const originSprites = originStack.getAll();
+      let tempItems = [];
+      let tempIsFaceUp = [];
+      for(var i = 0; i < originSprites.length; i++) {
+        shuffledStack.add(originSprites[i]);
+        tempItems.push(originSprites[i].spriteId);
+        tempIsFaceUp.push(stackFacing);
+      }
+
+      //update clients telling them about the new stack
+      objectInfoToSend[shuffledStack.objectId] = {
+        objectId: shuffledStack.objectId,
+        items: tempItems,
+        x: originStack.x,
+        y: originStack.y,
+        objectDepth: objectInfoToSend[originStack.objectId].objectDepth,
+        isFaceUp: tempIsFaceUp,
+        angle: shuffledStack.angle
+      }
+
+      originStack.active = false;       // Keep for later use
+      objectInfoToSend[originStack.objectId] = null; // Don't send to client
     }
+    else{
+      //re-order the original stack
+      const originSprites = originStack.getAll();
+      let tempItems = [];
+      let tempIsFaceUp = [];
+      for(var i = 0; i < originSprites.length; i++) {
+        tempItems.push(originSprites[i].spriteId);
+        tempIsFaceUp.push(stackFacing);
+      }
 
-    //update clients telling them about the new stack
-    objectInfoToSend[shuffledStack.objectId] = {
-    objectId: shuffledStack.objectId,
-    items: tempItems,
-    x: originStack.x,
-    y: originStack.y,
-    objectDepth: objectInfoToSend[originStack.objectId].objectDepth,
-    isFaceUp: tempIsFaceUp,
-    angle: shuffledStack.angle
+      objectInfoToSend[shuffledStack.objectId].items = tempItems;
+      objectInfoToSend[shuffledStack.objectId].isFaceUp = tempIsFaceUp;
     }
-
-    originStack.active = false;       // Keep for later use
-    objectInfoToSend[originStack.objectId] = null; // Don't send to client
-
   }
-}
-
-async function delayReshuffle(tableObject){
-  //set a timer to re-allow shuffling of the deck
-  recentlyShuffled.push(tableObject);
-  setTimeout(function() { 
-    recentlyShuffled.pop(tableObject);
-  }, 1000);
 }
 
 function setTableObjectPosition(self, objectId, xPos, yPos) {
