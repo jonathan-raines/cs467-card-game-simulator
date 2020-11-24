@@ -216,6 +216,9 @@ function shuffleStack(self, originStack){
     //find the original stack for the new bottom sprite
     const shuffledStack = getTableObject(self, shuffledBottomSprite.spriteId);
 
+    //add new bottom to recentlyShuffled
+    delayReshuffle(shuffledStack);
+
     if (originStack != shuffledStack){
       //re-define the shuffledStack 
       shuffledStack.active = true;
@@ -262,6 +265,15 @@ function shuffleStack(self, originStack){
       objectInfoToSend[shuffledStack.objectId].isFaceUp = tempIsFaceUp;
     }
   }
+}
+
+//delays shuffling on objects that have recently been shuffled
+function delayReshuffle(tableObject){
+  //set a timer to re-allow shuffling of the deck
+  recentlyShuffled.push(tableObject.objectId);
+  setTimeout(function() { 
+    recentlyShuffled.splice(recentlyShuffled.indexOf(tableObject.objectId), 1);
+  }, 1500);
 }
 
 function setTableObjectPosition(self, objectId, xPos, yPos) {

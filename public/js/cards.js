@@ -47,6 +47,7 @@ var hoveringObj = null;       // Pointer to the object being hovered over (null 
 export var options = {};      // Options for the game
 var debugMode = false;
 export const waitUpdate = [];        // List of objects to wait updating
+var recentlyShuffled = false;
 
 export function loadCards(self) {
   frames = self.textures.get('cards').getFrameNames();
@@ -366,11 +367,23 @@ export function rotateObject(self, gameObject) {
 
 function shuffleStack(self, object){
   if(object && object.length > 1  && object.objectId!=isDragging){
-    self.socket.emit('shuffleStack', {
-      objectId: object.objectId
-    });
+    if(!recentlyShuffled){
+      delayShuffle();
+      self.socket.emit('shuffleStack', {
+        objectId: object.objectId
+      });
+    }
   }
 } 
+
+//delays shuffling again for 1.5 second to prevent spamming
+function delayShuffle (){
+  recentlyShuffled = true;
+  setTimeout(function() { 
+    recentlyShuffled= false;
+  }, 1500);
+}
+
 
 function shuffleTween(self, xy){
   let targets = [];
