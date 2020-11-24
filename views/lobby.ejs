@@ -8,8 +8,12 @@
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 <script src="../js/lobby.js"></script>
 <body>
-  <!-- <div class="center-div"> -->
+  <div class="center-div">
+    <div class="logo-div">
+      <img class="logo" src="/assets/logo.jpg" alt="Card Game Simulator">
+    </div>
     <div class="row">
+
       <!-- <div class="column-left">
         <div class="form-box">
           <h1>Join a Game</h1>
@@ -41,9 +45,8 @@
           </form>
         </div>
       </div> -->
-      <div class="column-right">
         <div class="form-box">
-          <h1>Active Game Rooms</h1>
+          <h2>Active Game Rooms</h2>
           <table style = "width:100%">
             <tr>
               <th>Your Nickname</th>
@@ -63,7 +66,7 @@
                   placeholder="Enter a nickname"
                   maxlength="20"
                 /></td>
-                <td>"<%=activeGameRooms[room].roomName%>"</td>
+                <td><%=activeGameRooms[room].roomName%></td>
                 <td><%=activeGameRooms[room].numPlayers%>/<%=activeGameRooms[room].maxPlayers%></td>
                 <td><%=activeGameRooms[room].roomCode%></td>
                 <td><%=activeGameRooms[room].roomOwner%></td>
@@ -114,9 +117,7 @@
           </tr>
           </table>
         </div>
-      </div>
     </div>
-  <!-- </div> -->
-  
+  </div>
 </body>
 </html>

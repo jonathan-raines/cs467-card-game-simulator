@@ -266,7 +266,7 @@ function initializeDatabase() {
     }
   })().catch( e => { console.error(e) }).then(() => {
     // -----------  For testing  ------------------
-    createRoom('testing', 8, "Test Room", "Admin", "Freestyle ".repeat(5)).catch( e => { console.error(e) });
+    createRoom('testing', 8, "Test Room", "Admin", "Freestyle ").catch( e => { console.error(e) });
     //createRoom('testing2', 8).catch( e => { console.error(e) });
     //----------------------------------------------
   });
