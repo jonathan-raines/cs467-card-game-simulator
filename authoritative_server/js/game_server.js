@@ -36,10 +36,10 @@ const CARD_WIDTH = 70;
 const CARD_HEIGHT = 95;
 const TABLE_CENTER_X = 0;
 const TABLE_CENTER_Y = 0;
-const TABLE_EDGE_FROM_CENTER = 625-CARD_HEIGHT;     // Distance of the table edge from the center of the table (this makes a rectangle)
+const TABLE_EDGE_FROM_CENTER = 625-CARD_HEIGHT/2;     // Distance of the table edge from the center of the table (this makes a rectangle)
 const TABLE_EDGE_CONSTANT = ((2+Math.pow(2,.5))/(1+Math.pow(2,.5))) * TABLE_EDGE_FROM_CENTER;
-const DISTANCE_FROM_CENTER = 575;       // Distance hands are from the center
-const DISTANCE_FROM_HAND = 100;          // Distance the player indicator is from the hand
+const DISTANCE_FROM_CENTER = 600;       // Distance hands are from the center
+const DISTANCE_FROM_HAND = 90;          // Distance the player indicator is from the hand
 const HAND_WIDTH = 400;
 const HAND_HEIGHT = 75;
 const HAND_SPACING = 50;
@@ -95,7 +95,8 @@ for(var i = 1; i <= 8; i++) {
     available: true,
     rotation: angle,
     transform: 0,
-    socket: 0
+    socket: 0,
+    color: ''
   };
 }
 
@@ -164,6 +165,7 @@ function startSocketUpdates(self, socket, frames) {
         seats[x].name = 'Open';
         seats[x].available = true;
         seats[x].socket = 0;
+        seats[x].color = '';
       }
     }
     io.emit('seatAssignments', seats); 
