@@ -197,13 +197,6 @@ function shuffleStack(self, originStack){
     //shuffle the container
     originStack.shuffle();
 
-    //tell all clients to play shuffle anim
-    io.emit('shuffleAnim', {
-      x: originStack.x,
-      y: originStack.y,
-      angle: originStack.angle
-    });
-
     //find the new bottom sprite of the container
     const shuffledBottomSprite = originStack.first;
 
@@ -216,10 +209,17 @@ function shuffleStack(self, originStack){
     //find the original stack for the new bottom sprite
     const shuffledStack = getTableObject(self, shuffledBottomSprite.spriteId);
 
-    //add new bottom to recentlyShuffled
+    //add new bottom to recentlyShuffled to delay reshuffling
     delayReshuffle(shuffledStack);
 
     if (originStack != shuffledStack){
+      //tell all clients to play shuffle anim
+      io.emit('shuffleAnim', {
+        x: originStack.x,
+        y: originStack.y,
+        objectId: shuffledStack.objectId
+      });
+
       //re-define the shuffledStack 
       shuffledStack.active = true;
       shuffledStack.x = originStack.x;
@@ -252,6 +252,12 @@ function shuffleStack(self, originStack){
       objectInfoToSend[originStack.objectId] = null; // Don't send to client
     }
     else{
+      //tell all clients to play shuffle anim
+      io.emit('shuffleAnim', {
+        x: originStack.x,
+        y: originStack.y,
+        objectId: originStack.objectId
+      });
       //re-order the original stack
       const originSprites = originStack.getAll();
       let tempItems = [];
@@ -273,7 +279,7 @@ function delayReshuffle(tableObject){
   recentlyShuffled.push(tableObject.objectId);
   setTimeout(function() { 
     recentlyShuffled.splice(recentlyShuffled.indexOf(tableObject.objectId), 1);
-  }, 1500);
+  }, SHUFFLE_WAIT_TIME);
 }
 
 function setTableObjectPosition(self, objectId, xPos, yPos) {

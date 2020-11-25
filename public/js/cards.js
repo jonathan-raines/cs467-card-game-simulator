@@ -28,6 +28,7 @@ const LONG_PRESS_TIME = 300;
 export const CARD_WIDTH = 70;
 export const CARD_HEIGHT = 95;
 const WAIT_UPDATE_INTERVAL = 150;
+const SHUFFLE_WAIT_TIME = 5000;
 
 
 // GLOBAL VARIABLES
@@ -157,8 +158,8 @@ export function loadCards(self) {
     }
   });
 
-  self.socket.on('shuffleAnim', (xy)=>{
-    shuffleTween(self, xy);
+  self.socket.on('shuffleAnim', (shuffledStack)=>{
+    shuffleTween(self, shuffledStack);
   });
 }
 
@@ -372,42 +373,79 @@ function shuffleStack(self, object){
       self.socket.emit('shuffleStack', {
         objectId: object.objectId
       });
+      shuffleTween(self, object);
     }
   }
 } 
 
-//delays shuffling again for 1.5 second to prevent spamming
+//delays shuffling again for SHUFFLE_WAIT_TIME to prevent spamming
 function delayShuffle (){
   recentlyShuffled = true;
   setTimeout(function() { 
     recentlyShuffled= false;
-  }, 1500);
+  }, SHUFFLE_WAIT_TIME);
 }
 
 
-function shuffleTween(self, xy){
-  let targets = [];
-  for (let i = 15; i > 0; i--){
-    let sprite = self.add.sprite(xy.x, xy.y, 'cards', frames.indexOf('back'));
-    sprite.setRotation(xy.angle);
-    sprite.removeInteractive();
-    sprite.displayWidth = CARD_WIDTH;
-    sprite.displayHeight = CARD_HEIGHT;
-    sprite.setDepth(CURSOR_DEPTH - i);
-    targets.push(sprite);
-  }
-  let tween = self.tweens.add({
-    targets: targets,
-    angle: 360,
-    duration: 1500,
-    ease: 'Sine.easeInOut',
-    delay: self.tweens.stagger(100),
-    onComplete: ()=>{
-      targets.forEach((sprite)=>{
-        sprite.destroy();
+function shuffleTween(self, shuffledStack){
+  console.log(shuffledStack.objectId + ' shuffled')
+  let targetStackSprites = []; //all of the target's sprites
+  let targets = []; //sprites to anim with
+  console.log('shuffleTween!')
+  console.log(shuffledStack.objectId);
+  //find the correct stack to anim on
+  self.tableObjects.getChildren().forEach((stack)=>{
+    console.log('stack')
+    console.log(stack)
+    if(stack.objectId == shuffledStack.objectId){
+      targetStackSprites = stack.getAll();
+      
+      //pick first 10 sprites to anim with
+      for (let i = 0; i < 10; i++){
+        if(targetStackSprites[i])
+          targets.push(targetStackSprites[i]);
+      }
+      console.log('targetSTackSprites')
+      console.log(targetStackSprites)
+      console.log('targets');
+      console.log(targets);
+      
+      //setWaitObjUpdate(self, shuffledStack, SHUFFLE_WAIT_TIME);
+
+      //animate chosen sprites
+      let tween = self.tweens.add({
+        targets: targets,
+        angle: 360,
+        duration: SHUFFLE_WAIT_TIME,
+        ease: 'Sine.easeInOut',
+        delay: self.tweens.stagger(100),
+        onComplete: ()=>{
+          console.log('finished tween');
+        }
       });
     }
   });
+
+  // for (let i = 10; i > 0; i--){
+  //   let sprite = self.add.sprite(shuffledStack.x, shuffledStack.y, 'cards', frames.indexOf('back'));
+  //   sprite.removeInteractive();
+  //   sprite.displayWidth = CARD_WIDTH;
+  //   sprite.displayHeight = CARD_HEIGHT;
+  //   sprite.setDepth(CURSOR_DEPTH - i);
+  //   targets.push(sprite);
+  // }
+  // let tween = self.tweens.add({
+  //   targets: targets,
+  //   angle: 360,
+  //   duration: SHUFFLE_WAIT_TIME,
+  //   ease: 'Sine.easeInOut',
+  //   delay: self.tweens.stagger(100),
+  //   onComplete: ()=>{
+  //     targets.forEach((sprite)=>{
+  //       sprite.destroy();
+  //     });
+  //   }
+  // });
 }
 
 function flipTableObject(self, gameObject) {
@@ -457,9 +495,11 @@ export function setDraggingObj(object) {
   return draggingObj;
 }
 
-async function setWaitObjUpdate(self, object) {
+async function setWaitObjUpdate(self, object, customInterval) {
   waitUpdate.push(object.objectId);
   setTimeout(function() { 
-    waitUpdate.shift();
-  }, WAIT_UPDATE_INTERVAL);
+    if(customInterval)
+      console.log(customInterval)
+    waitUpdate.splice(waitUpdate.indexOf(object.objectId));
+  }, customInterval || WAIT_UPDATE_INTERVAL);
 }
