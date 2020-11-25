@@ -75,7 +75,11 @@
                       name="roomCode"
                       value="<%=activeGameRooms[room].roomCode%>"
                     />
-                    <input type="submit" value="JOIN">
+                    <%if (activeGameRooms[room].numPlayers < activeGameRooms[room].maxPlayers) {%>
+                      <input type="submit" value="JOIN">!
+                    <%} else {%>
+                      <input class="full-button" type="button" value="FULL">
+                    <%}%>
                 </td>
               </form></tr>
             <%}%>
