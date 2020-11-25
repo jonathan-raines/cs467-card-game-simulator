@@ -53,7 +53,13 @@ function selectPlayerCursor(){
       break;
     }
   }
-  return playerCursor.path;
+  if(playerCursor){
+    return playerCursor.path;
+  }
+  else{
+    console.log('more players than cursors');
+    return customCursors[0].path;
+  }
 }
 
 function deselectPlayerCursor(playerCursor){
