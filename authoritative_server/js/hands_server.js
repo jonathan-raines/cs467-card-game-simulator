@@ -23,39 +23,53 @@ function moveObjectToHand(self, object, playerId, pos) {
 }
 
 // Go through all the cards in the hand and update the position
-function updateHandSpacing(playerId, ignorePos) {
+function updateHandSpacing(playerId, ignorePos, additionalPos) {
   if(!players[playerId]) {
     console.log("Cannot update hand spacing (playerId not found).");
     return;
   }
+
   if(ignorePos == null)
     ignorePos = -1;
   var rotation = Phaser.Math.DegToRad(-players[playerId].playerSpacing);
   var newLength = players[playerId].hand.length;
   var deltaLen = ignorePos == -1 ? newLength : newLength-1;
-  var deltaI = 0; 
-
-  var startPos, spacing = HAND_SPACING;
+  if(additionalPos && additionalPos != -1) {
+    newLength++;
+    deltaLen++;
+  }
+  var startPos, spacing = HAND_SPACING, deltaPos = 0, deltaI = 0; 
   if(spacing * deltaLen >= HAND_WIDTH - 30)
     spacing = (HAND_WIDTH-CARD_WIDTH) / deltaLen;
-  if(deltaLen % 2 == 1)
+  if(deltaLen % 2 == 1) // Even number of cards
     startPos = -spacing * Math.floor(deltaLen/2.0);
-  else
+  else  // Odd number of cards
     startPos = -spacing * Math.floor(deltaLen/2.0) + spacing/2;
 
   for(var i = 0; i < newLength; i++) {
-    if(i == ignorePos) 
-      deltaI = 1; // Shift i for every card after ignorePos
-    else {
-      // Compensate for rotation and translation
-      var handX = players[playerId].x + Math.cos(rotation) * (startPos + spacing * (i-deltaI));
-      var handY = players[playerId].y + Math.sin(rotation) * (startPos + spacing * (i-deltaI));
-      players[playerId].handX[i] = handX;
-      players[playerId].handY[i] = handY;
+    // Compensate for rotation and translation
+    var handX = players[playerId].x + Math.cos(rotation) * (startPos + spacing * (i+deltaPos));
+    var handY = players[playerId].y + Math.sin(rotation) * (startPos + spacing * (i+deltaPos));
+    
+    if(additionalPos != null && i == additionalPos) {
+      // Create a gap for a card to be added into
+      var additionalXY = [handX, handY];
+      deltaI--;
     }
+    else {
+      // Change card xy position
+      players[playerId].handX[i+deltaI] = handX;
+      players[playerId].handY[i+deltaI] = handY;
+    }
+    if(i == ignorePos) 
+      deltaPos--; // Shift i for every card after ignorePos
   }
+  if(additionalXY)
+    return additionalXY; // Return the position of card to be inserted
+  return null;
 }
 
+/*
 // Get the position of cards not accounting for rotation and translation
 function getHandSpacing(playerId, pos, length) {
   var rotation = Phaser.Math.DegToRad(-players[playerId].playerSpacing);
@@ -63,6 +77,7 @@ function getHandSpacing(playerId, pos, length) {
   var cardXPos = players[playerId].handX[pos];
   return (cardXPos - handXPos) / Math.cos(rotation);
 }
+*/
 
 
 function takeFromHand(self, socket, playerId, objectId, x, y) {
@@ -136,12 +151,89 @@ function setHandObjectPosition(self, socket, playerId, objectId, x, y) {
   }
   for(var i = 0; i < players[playerId].hand.length; i++) {
     if(players[playerId].hand[i] == objectId && (!options["lockedHands"] || (playerId == socket.id))) {
+      var originalPos = i;
       players[playerId].handX[i] = x;
       players[playerId].handY[i] = y;
-      updateHandSpacing(playerId, i); // Fan other cards in hand and ignore dragging card
       break;
     }
   }
+  var data = findPosToInsertInHand(objectId, x, y);
+
+  if(data && data[0] == playerId && originalPos) {
+    var pos = data[1];
+    var newXY = updateHandSpacing(playerId, originalPos, pos);
+
+    players[playerId].handX[i] = newXY[0];
+    players[playerId].handY[i] = newXY[1];
+  }
+  else
+    updateHandSpacing(playerId, originalPos); // Fan other cards in hand and ignore dragging card
+}
+
+function findPosToInsertInHand(objectId, x, y) {
+  var closest = null;           // Object id of the closest card in a hand
+  var dist = Math.pow(HAND_SNAP_DIST,2);
+  var secondClosest = null;
+  var dist2 = dist;
+
+  Object.keys(players).forEach(key => {
+    for(var i = 0; i < players[key].hand.length; i++) {
+      var tempX = players[key].handX[i];
+      var tempY = players[key].handY[i];
+      var tempDistance = Math.pow(x-tempX,2) + Math.pow(y-tempY,2);
+
+      if(players[key].hand[i] != objectId && tempDistance < dist) {
+        secondClosest = closest;
+        closest = {
+          objectId: players[key].hand[i],
+          playerId: key,
+          pos: i,
+          x: tempX,
+          y: tempY
+        };
+        dist2 = dist;
+        dist = tempDistance;
+      }
+      else if(players[key].hand[i] != objectId && tempDistance < dist2) {
+        secondClosest = {
+          objectId: players[key].hand[i],
+          playerId: key,
+          pos: i,
+          x: tempX,
+          y: tempY
+        };
+        dist2 = tempDistance;
+      }
+    }
+  });
+  
+  if(closest) {
+    var angle = Phaser.Math.DegToRad(-players[closest.playerId].playerSpacing);
+    var isLeftOfClosest = Math.cos(angle) * (x-closest.x) + 
+                          Math.sin(angle) * (y-closest.y) < 0;
+  
+    // Two handObjects are near
+    if(secondClosest && closest.playerId == secondClosest.playerId) {
+      var leftPos = Math.min(closest.pos, secondClosest.pos);
+      var rightPos = Math.max(closest.pos, secondClosest.pos);
+      var isLeftOfSecondClosest = Math.cos(angle) * (x-secondClosest.x) + 
+                                  Math.sin(angle) * (y-secondClosest.y) < 0;
+      
+      if(isLeftOfClosest && isLeftOfSecondClosest) 
+        return [closest.playerId, leftPos];        // Left of both cards
+      else if(!isLeftOfClosest && !isLeftOfSecondClosest)
+        return [closest.playerId, rightPos+1];     // Right of both cards
+      else 
+        return [closest.playerId, rightPos];       // Between the cards
+    }
+    else {  // Only one card thats near
+      if(isLeftOfClosest)
+        return [closest.playerId, closest.pos];    // Left of card
+      else
+        return [closest.playerId, closest.pos+1];  // Right of card
+    }
+  }
+  return null;
 }
 
 

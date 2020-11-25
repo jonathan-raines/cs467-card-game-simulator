@@ -43,6 +43,7 @@ const DISTANCE_FROM_HAND = 90;          // Distance the player indicator is from
 const HAND_WIDTH = 400;
 const HAND_HEIGHT = 75;
 const HAND_SPACING = 50;
+const HAND_SNAP_DIST = 100;
 const MIN_DEPTH = 10;                   // Minimum depth for table objects
 const MAX_DEPTH = 850;                  // Maximum depth for table objects
 
