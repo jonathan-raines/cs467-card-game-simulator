@@ -57,6 +57,7 @@ options["debugMode"] = true;            // Runs the server and client in debug m
 options["lockedHands"] = true;          // If true, players can only take cards from their own hand.
 options["flipWhenExitHand"] = false;    // If true, when leaving a hand, cards will automatically flip to hide.
 options["flipWhenEnterHand"] = true;    // If true, cards will flip up when inserted into a hand
+
 // Global Variables
 //--------------------------------------------------------------------------------------------
 /* Global Variables Set outside game.js (Needed to communicate to / from server.js)

@@ -7,6 +7,7 @@ const server = require('http').Server(app);
 const io = require('socket.io').listen(server);
 const Datauri = require('datauri');
 const querystring = require('querystring'); 
+var bodyParser = require('body-parser')
 
 const datauri = new Datauri();
 const { JSDOM } = jsdom;
@@ -38,6 +39,7 @@ initializeDatabase();
 
 app.set('view engine', 'ejs');
 app.use(express.static(__dirname + '/public'));
+app.use(bodyParser.urlencoded({ extended: false }))
 
 app.get('/', function (req, res) {  
   let requestedRoom = req.query.roomCode || '';
@@ -73,9 +75,9 @@ function lobbyRouter(requestedRoom, req, res) {
   // For regular requests to lobby
   if(!requestedRoom || requestedRoom == '') {
     renderHome(res).catch( e => { console.error(e) })
-  // For specific rooms
   } 
-  else if (activeGameRooms[requestedRoom]) {
+  // For specific rooms
+  else if (activeGameRooms[requestedRoom] && activeGameRooms[requestedRoom].numPlayers < activeGameRooms[requestedRoom].maxPlayers) {
     var nickname = req.query.nickname || '';
     if(nickname != '') {
       const query = querystring.stringify({
@@ -85,9 +87,8 @@ function lobbyRouter(requestedRoom, req, res) {
     } 
     else
       res.sendFile(__dirname + '/views/index.html');
-  // The gameroom is not active
   } 
-  else {
+  else {  // The gameroom is not active
     renderHome(res).catch( e => { console.error(e) })
   }
 }
@@ -125,16 +126,19 @@ async function renderHome(res){
   }
 }
 
-app.get('/host-a-game', function(req, res) {
+app.post('/host-a-game', function(req, res) {
   // Make a new roomCode
   var newRoomId = uniqueId();
   // Checks if we already have that room id
   while(activeGameRooms[newRoomId])
     newRoomId = uniqueId();
 
-  let nickname = req.query.nickname || '';
+  let nickname = req.body.nickname || '';
+  let maxPlayers = req.body.maxPlayers;
+  let roomName = req.body.roomName || nickname + "'s room";
+  let roomDesc = req.body.gameDesc || '';
 
-  createRoom(newRoomId, 8, nickname + "'s room", nickname, "Freestyle").catch( e => { console.error(e) });
+  createRoom(newRoomId, maxPlayers, roomName, nickname, roomDesc).catch( e => { console.error(e) });
 
   if(nickname != '')
   nickname = '&nickname=' + nickname;

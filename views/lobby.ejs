@@ -54,8 +54,7 @@
               <th>Players</th>
               <th>Room Code</th>
               <th>Owner</th>
-              <th>Game Type?</th>
-              <th>Join</th>
+              <th>Game Type</th>
             </tr>
           <% Object.keys(activeGameRooms).forEach(function(room){%>
             <%if (activeGameRooms[room] != null){%>
@@ -82,7 +81,7 @@
             <%}%>
           <%});%>
           <tr>
-            <form action="/host-a-game" method="GET" >
+            <form action="/host-a-game" method="POST" >
               <td><input required
                 type="text"
                 name="nickname"
@@ -101,6 +100,7 @@
                 placeholder="2-8"
                 min="2"
                 max="8"
+                value="8"
               /></td>
               <td>(Automatic)</td>
               <td>(You!)</td>
