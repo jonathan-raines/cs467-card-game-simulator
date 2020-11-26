@@ -299,11 +299,16 @@ function moveDummyCursors(self){
           if(dummyCursor.playerId == cursorUpdateInfo[curCursor].playerId){
             dummyCursor.x = cursorUpdateInfo[curCursor].actualXY.x 
             dummyCursor.y = cursorUpdateInfo[curCursor].actualXY.y
+            adjustDummyCursorZoom(dummyCursor);
           }
         });
       }
     });
   });
+}
+
+function adjustDummyCursorZoom(dummyCursor){
+  dummyCursor.setDisplaySize(dummyCursor.width*cam.zoom, dummyCursor.height*cam.zoom);
 }
 
 function setupTable(self) {
