@@ -222,7 +222,7 @@ function updatePlayers(self, playersInfo) {
 
 function updateCursors(self, players){
   //set the player's cursor 
-  let pointer = 'url(assets/customCursors/'+players[self.socket.id].playerCursor+'.png), pointer';
+  let pointer = 'url(assets/customCursors/'+players[self.socket.id].playerCursor+'.cur), pointer';
   self.input.setDefaultCursor(pointer);
 
   addNewDummyCursors(self, players);
@@ -308,7 +308,7 @@ function moveDummyCursors(self){
 }
 
 function adjustDummyCursorZoom(dummyCursor){
-  dummyCursor.setDisplaySize(dummyCursor.width*cam.zoom, dummyCursor.height*cam.zoom);
+  dummyCursor.setDisplaySize(dummyCursor.width*(cam.zoom+.5), dummyCursor.height*(cam.zoom+.5));
 }
 
 function setupTable(self) {
