@@ -32,17 +32,17 @@ const ROOM_TIMEOUT_LENGTH = 1800000;    //(30min) Length of time the server will
 const CHECK_ROOM_INTERVAL = 300000;     // (5min) How often the server will check if there are any players
 const GAME_TICK_RATE = 50;              // (10hz) The game ticks at the rate of 1 tick per 100 milliseconds (10Hz)
 const SLOW_TO_FAST_TICK = 100;          // (.1hz) How many fast ticks per slow ticks (for slow updates to client)
+const CARD_WIDTH = 70;
+const CARD_HEIGHT = 95;
 const TABLE_CENTER_X = 0;
 const TABLE_CENTER_Y = 0;
-const TABLE_EDGE_FROM_CENTER = 625;     // Distance of the table edge from the center of the table (this makes a rectangle)
+const TABLE_EDGE_FROM_CENTER = 625-CARD_HEIGHT/2;     // Distance of the table edge from the center of the table (this makes a rectangle)
 const TABLE_EDGE_CONSTANT = ((2+Math.pow(2,.5))/(1+Math.pow(2,.5))) * TABLE_EDGE_FROM_CENTER;
-const DISTANCE_FROM_CENTER = 550;       // Distance hands are from the center
-const DISTANCE_FROM_HAND = 100;          // Distance the player indicator is from the hand
+const DISTANCE_FROM_CENTER = 600;       // Distance hands are from the center
+const DISTANCE_FROM_HAND = 90;          // Distance the player indicator is from the hand
 const HAND_WIDTH = 400;
 const HAND_HEIGHT = 75;
 const HAND_SPACING = 50;
-const CARD_WIDTH = 70;
-const CARD_HEIGHT = 95;
 const MIN_DEPTH = 10;                   // Minimum depth for table objects
 const MAX_DEPTH = 850;                  // Maximum depth for table objects
 const SHUFFLE_WAIT_TIME = 1000;
@@ -54,10 +54,11 @@ const players = {};                     // Info of all the current players in th
 const cursorInfo = {};
 const options = {};                     // Options for the game
 const recentlyShuffled = [];            // Recently shuffled stacks
-options["debugMode"] = false;            // Runs the server and client in debug mode
+options["debugMode"] = IS_LOCAL;        // Runs the server and client in debug mode
 options["lockedHands"] = true;          // If true, players can only take cards from their own hand.
 options["flipWhenExitHand"] = false;    // If true, when leaving a hand, cards will automatically flip to hide.
 options["flipWhenEnterHand"] = true;    // If true, cards will flip up when inserted into a hand
+
 // Global Variables
 //--------------------------------------------------------------------------------------------
 /* Global Variables Set outside game.js (Needed to communicate to / from server.js)
@@ -96,7 +97,8 @@ for(var i = 1; i <= 8; i++) {
     available: true,
     rotation: angle,
     transform: 0,
-    socket: 0
+    socket: 0,
+    color: ''
   };
 }
 
@@ -153,6 +155,7 @@ function startSocketUpdates(self, socket, frames) {
     players[seat.socket].playerSpacing = angle;
     players[seat.socket].x = TABLE_CENTER_X + DISTANCE_FROM_CENTER * Math.sin(Phaser.Math.DegToRad(angle));
     players[seat.socket].y = TABLE_CENTER_X + DISTANCE_FROM_CENTER * Math.cos(Phaser.Math.DegToRad(angle));
+    seats[seat.id].color = players[seat.socket].playerCursor;
     io.emit('seatAssignments', seats);
   });
 
@@ -164,6 +167,7 @@ function startSocketUpdates(self, socket, frames) {
         seats[x].name = 'Open';
         seats[x].available = true;
         seats[x].socket = 0;
+        seats[x].color = '';
       }
     }
     io.emit('seatAssignments', seats); 

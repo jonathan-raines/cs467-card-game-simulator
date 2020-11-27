@@ -8,8 +8,12 @@
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 <script src="../js/lobby.js"></script>
 <body>
-  <!-- <div class="center-div"> -->
+  <div class="center-div">
+    <div class="logo-div">
+      <img class="logo" src="/assets/logo.jpg" alt="Card Game Simulator">
+    </div>
     <div class="row">
+
       <!-- <div class="column-left">
         <div class="form-box">
           <h1>Join a Game</h1>
@@ -41,9 +45,8 @@
           </form>
         </div>
       </div> -->
-      <div class="column-right">
         <div class="form-box">
-          <h1>Active Game Rooms</h1>
+          <h2>Active Game Rooms</h2>
           <table style = "width:100%">
             <tr>
               <th>Your Nickname</th>
@@ -51,8 +54,7 @@
               <th>Players</th>
               <th>Room Code</th>
               <th>Owner</th>
-              <th>Game Type?</th>
-              <th>Join</th>
+              <th>Game Type</th>
             </tr>
           <% Object.keys(activeGameRooms).forEach(function(room){%>
             <%if (activeGameRooms[room] != null){%>
@@ -63,7 +65,7 @@
                   placeholder="Enter a nickname"
                   maxlength="20"
                 /></td>
-                <td>"<%=activeGameRooms[room].roomName%>"</td>
+                <td><%=activeGameRooms[room].roomName%></td>
                 <td><%=activeGameRooms[room].numPlayers%>/<%=activeGameRooms[room].maxPlayers%></td>
                 <td><%=activeGameRooms[room].roomCode%></td>
                 <td><%=activeGameRooms[room].roomOwner%></td>
@@ -73,13 +75,17 @@
                       name="roomCode"
                       value="<%=activeGameRooms[room].roomCode%>"
                     />
-                    <input type="submit" value="JOIN">
+                    <%if (activeGameRooms[room].numPlayers < activeGameRooms[room].maxPlayers) {%>
+                      <input type="submit" value="JOIN">!
+                    <%} else {%>
+                      <input class="full-button" type="button" value="FULL">
+                    <%}%>
                 </td>
               </form></tr>
             <%}%>
           <%});%>
           <tr>
-            <form action="/host-a-game" method="GET" >
+            <form action="/host-a-game" method="POST" >
               <td><input required
                 type="text"
                 name="nickname"
@@ -98,6 +104,7 @@
                 placeholder="2-8"
                 min="2"
                 max="8"
+                value="8"
               /></td>
               <td>(Automatic)</td>
               <td>(You!)</td>
@@ -114,9 +121,7 @@
           </tr>
           </table>
         </div>
-      </div>
     </div>
-  <!-- </div> -->
-  
+  </div>
 </body>
 </html>
