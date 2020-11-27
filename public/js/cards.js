@@ -28,7 +28,7 @@ const LONG_PRESS_TIME = 300;
 export const CARD_WIDTH = 70;
 export const CARD_HEIGHT = 95;
 const WAIT_UPDATE_INTERVAL = 150;
-const SHUFFLE_WAIT_TIME = 5000;
+const SHUFFLE_WAIT_TIME = 1000;
 
 
 // GLOBAL VARIABLES
@@ -49,6 +49,7 @@ export var options = {};      // Options for the game
 var debugMode = false;
 export const waitUpdate = [];        // List of objects to wait updating
 var recentlyShuffled = false;
+var lockedStacks = [];
 
 export function loadCards(self) {
   frames = self.textures.get('cards').getFrameNames();
@@ -88,26 +89,28 @@ export function loadCards(self) {
   
   // While the mouse is dragging
   self.input.on('drag', function (pointer, gameObject, dragX, dragY) {
-    if( 
-        gameObject === draggingObj && 
-        !drewAnObject &&
-        draggingObj.length > 1 && 
-        pointer.moveTime - pointer.downTime < LONG_PRESS_TIME
-        // This makes the deck slightly drag when drawing from it
-        //&& pointer.getDistance() > 5
-    ) {
-      drawTopSprite(self);
-    } 
-    // Dragging table object
-    if(self.tableObjects.contains(draggingObj))
-      dragTableObject(self, draggingObj, dragX, dragY);
-    // Dragging hand object
-    else if(
-        self.handObjects.contains(draggingObj) && 
-        // Can't drag other players
-        (!options["lockedHands"] || (!draggingObj.playerId || draggingObj.playerId == self.socket.id))
-    ) {
-      checkForHandZone(self, draggingObj, dragX, dragY); 
+    if(!lockedStacks.includes(gameObject.objectId)){
+      if( 
+          gameObject === draggingObj && 
+          !drewAnObject &&
+          draggingObj.length > 1 && 
+          pointer.moveTime - pointer.downTime < LONG_PRESS_TIME
+          // This makes the deck slightly drag when drawing from it
+          //&& pointer.getDistance() > 5
+      ) {
+        drawTopSprite(self);
+      } 
+      // Dragging table object
+      if(self.tableObjects.contains(draggingObj))
+        dragTableObject(self, draggingObj, dragX, dragY);
+      // Dragging hand object
+      else if(
+          self.handObjects.contains(draggingObj) && 
+          // Can't drag other players
+          (!options["lockedHands"] || (!draggingObj.playerId || draggingObj.playerId == self.socket.id))
+      ) {
+        checkForHandZone(self, draggingObj, dragX, dragY); 
+      }
     }
   });
   
@@ -158,8 +161,8 @@ export function loadCards(self) {
     }
   });
 
-  self.socket.on('shuffleAnim', (shuffledStack)=>{
-    shuffleTween(self, shuffledStack);
+  self.socket.on('shuffleAnim', (objectInfo)=>{
+    shuffleTween(self, objectInfo);
   });
 }
 
@@ -373,7 +376,6 @@ function shuffleStack(self, object){
       self.socket.emit('shuffleStack', {
         objectId: object.objectId
       });
-      shuffleTween(self, object);
     }
   }
 } 
@@ -386,66 +388,51 @@ function delayShuffle (){
   }, SHUFFLE_WAIT_TIME);
 }
 
-
-function shuffleTween(self, shuffledStack){
-  console.log(shuffledStack.objectId + ' shuffled')
-  let targetStackSprites = []; //all of the target's sprites
-  let targets = []; //sprites to anim with
-  console.log('shuffleTween!')
-  console.log(shuffledStack.objectId);
+//play an animation to represent stack shuffling while disallowing movement of that stack
+function shuffleTween(self, objectInfo){
   //find the correct stack to anim on
   self.tableObjects.getChildren().forEach((stack)=>{
-    console.log('stack')
-    console.log(stack)
-    if(stack.objectId == shuffledStack.objectId){
+    let targetStackSprites = []; //all of the target's sprites
+    let targets = []; //sprites to anim with
+    if(stack.objectId == objectInfo.originId){
       targetStackSprites = stack.getAll();
       
       //pick first 10 sprites to anim with
-      for (let i = 0; i < 10; i++){
-        if(targetStackSprites[i])
-          targets.push(targetStackSprites[i]);
+      for (let i = targetStackSprites.length; i > targetStackSprites.length-10; i--){
+        if(targetStackSprites[i]){
+          let sprite = self.add.sprite(stack.x, stack.y, 'cards', frames[frames.indexOf(targetStackSprites[i].name)]);
+          sprite.removeInteractive();
+          sprite.setRotation(Phaser.Math.DegToRad(playerRotation))
+          sprite.displayWidth = CARD_WIDTH;
+          sprite.displayHeight = CARD_HEIGHT;
+          sprite.setDepth(stack.depth+1);
+          targets.push(sprite);  
+        }
       }
-      console.log('targetSTackSprites')
-      console.log(targetStackSprites)
-      console.log('targets');
-      console.log(targets);
-      
-      //setWaitObjUpdate(self, shuffledStack, SHUFFLE_WAIT_TIME);
 
-      //animate chosen sprites
+      //stop sending updates for shuffled stack
+      setWaitObjUpdate(self, stack, SHUFFLE_WAIT_TIME);
+      //lock origin/target stacks to prevent them being moved during animation
+      lockedStacks.push(objectInfo.originId);
+      lockedStacks.push(objectInfo.targetId);
+
+      //animate chosen sprites then remove origin/target stacks from lockedStacks
       let tween = self.tweens.add({
         targets: targets,
         angle: 360,
         duration: SHUFFLE_WAIT_TIME,
-        ease: 'Sine.easeInOut',
+        // ease: 'Sine.easeInOut',
         delay: self.tweens.stagger(100),
         onComplete: ()=>{
-          console.log('finished tween');
+          targets.forEach((sprite)=>{
+            sprite.destroy();
+          });
+          lockedStacks.splice(lockedStacks.indexOf(objectInfo.originId));
+          lockedStacks.splice(lockedStacks.indexOf(objectInfo.targetId));
         }
       });
     }
   });
-
-  // for (let i = 10; i > 0; i--){
-  //   let sprite = self.add.sprite(shuffledStack.x, shuffledStack.y, 'cards', frames.indexOf('back'));
-  //   sprite.removeInteractive();
-  //   sprite.displayWidth = CARD_WIDTH;
-  //   sprite.displayHeight = CARD_HEIGHT;
-  //   sprite.setDepth(CURSOR_DEPTH - i);
-  //   targets.push(sprite);
-  // }
-  // let tween = self.tweens.add({
-  //   targets: targets,
-  //   angle: 360,
-  //   duration: SHUFFLE_WAIT_TIME,
-  //   ease: 'Sine.easeInOut',
-  //   delay: self.tweens.stagger(100),
-  //   onComplete: ()=>{
-  //     targets.forEach((sprite)=>{
-  //       sprite.destroy();
-  //     });
-  //   }
-  // });
 }
 
 function flipTableObject(self, gameObject) {
@@ -498,8 +485,6 @@ export function setDraggingObj(object) {
 async function setWaitObjUpdate(self, object, customInterval) {
   waitUpdate.push(object.objectId);
   setTimeout(function() { 
-    if(customInterval)
-      console.log(customInterval)
     waitUpdate.splice(waitUpdate.indexOf(object.objectId));
   }, customInterval || WAIT_UPDATE_INTERVAL);
 }
