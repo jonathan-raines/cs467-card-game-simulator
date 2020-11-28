@@ -400,7 +400,13 @@ function shuffleTween(self, objectInfo){
       //pick first 10 sprites to anim with
       for (let i = targetStackSprites.length; i > targetStackSprites.length-10; i--){
         if(targetStackSprites[i]){
-          let sprite = self.add.sprite(stack.x, stack.y, 'cards', frames[frames.indexOf(targetStackSprites[i].name)]);
+          let sprite;
+          if(targetStackSprites[i].isFaceUp){
+            sprite = self.add.sprite(stack.x, stack.y, 'cards', frames[frames.indexOf(targetStackSprites[i].name)]);
+          }
+          else{
+            sprite = self.add.sprite(stack.x, stack.y, 'cards', frames[frames.indexOf("back")]);
+          }
           sprite.removeInteractive();
           sprite.setRotation(Phaser.Math.DegToRad(playerRotation))
           sprite.displayWidth = CARD_WIDTH;
