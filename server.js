@@ -61,7 +61,6 @@ app.get('/', function (req, res) {
           console.log('requestedRoom does not exist');
           activeGameRooms[requestedRoom] = null;
         }
-        console.log('lobbyRouter remote')
         lobbyRouter(requestedRoom, req, res);
         client.release();
       });

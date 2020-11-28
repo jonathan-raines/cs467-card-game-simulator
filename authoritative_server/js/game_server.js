@@ -296,7 +296,7 @@ var timer = setInterval(function() {
       if(numPlayers <= 0) {
         clearInterval(timer);
         console.log('Server ' + roomCode + ' stopped.');
-        ;(async function() {
+        (async function() {
           if(!IS_LOCAL) {
             const query = {
               text: "DELETE FROM rooms WHERE room_code = $1",
@@ -325,16 +325,16 @@ function addPlayerToDB(){
       const client = await pool.connect();
       await client.query(query)
         .then(res =>{
-          let curSize = res.rows[0].num_players;
-          (async function() {
-            let query = {
-              text: "UPDATE rooms SET num_players = $1 WHERE room_code = $2",
-              values: [curSize+1, roomCode]
-            };
-            const client = await pool.connect();
-            await client.query(query).catch(e => console.error(e.stack));
-            client.release();
-          })().catch( e => { console.error(e) });
+          if(res.rows[0]){
+            let curSize = res.rows[0].num_players;
+            (async function() {
+              let query = {
+                text: "UPDATE rooms SET num_players = $1 WHERE room_code = $2",
+                values: [curSize+1, roomCode]
+              };
+              await client.query(query).catch(e => console.error(e.stack));
+            })().catch( e => { console.error(e) });
+          }
         }).catch(e => console.error(e.stack));
       client.release();
     })().catch( e => { console.error(e) });
@@ -351,16 +351,16 @@ function removePlayerFromDB(){
       const client = await pool.connect();
       await client.query(query)
         .then(res =>{
-          let curSize = res.rows[0].num_players;
-          (async function() {
-            let query = {
-              text: "UPDATE rooms SET num_players = $1 WHERE room_code = $2",
-              values: [curSize-1, roomCode]
-            };
-            const client = await pool.connect();
-            await client.query(query).catch(e => console.error(e.stack));
-            client.release();
-          })().catch( e => { console.error(e) });
+          if(res.rows[0]){
+            let curSize = res.rows[0].num_players;
+            (async function() {
+              let query = {
+                text: "UPDATE rooms SET num_players = $1 WHERE room_code = $2",
+                values: [curSize-1, roomCode]
+              };
+              await client.query(query).catch(e => console.error(e.stack));
+            })().catch( e => { console.error(e) });
+          }
         }).catch(e => console.error(e.stack));
       client.release();
     })().catch( e => { console.error(e) });
