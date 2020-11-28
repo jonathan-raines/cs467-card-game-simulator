@@ -62,7 +62,7 @@
                 <td><input required
                   type="text"
                   name="nickname"
-                  placeholder="Enter a nickname"
+                  placeholder="nickname"
                   maxlength="20"
                 /></td>
                 <td><%=activeGameRooms[room].roomName%></td>
@@ -76,7 +76,7 @@
                       value="<%=activeGameRooms[room].roomCode%>"
                     />
                     <%if (activeGameRooms[room].numPlayers < activeGameRooms[room].maxPlayers) {%>
-                      <input type="submit" value="JOIN">!
+                      <input type="submit" value="JOIN">
                     <%} else {%>
                       <input class="full-button" type="button" value="FULL">
                     <%}%>
@@ -89,13 +89,13 @@
               <td><input required
                 type="text"
                 name="nickname"
-                placeholder="Enter a nickname"
+                placeholder="nickname"
                 maxlength="20"
               /></td>   
               <td><input required
                 type="text"
                 name="roomName"
-                placeholder="Enter a room name"
+                placeholder="room"
                 maxlength="20"
               /></td>
               <td><input
@@ -111,7 +111,7 @@
               <td><input
                 type="text"
                 name="gameDesc"
-                placeholder="Describe your game room"
+                placeholder="Poker?"
                 maxlength="100"
               /></td>
               <td>
