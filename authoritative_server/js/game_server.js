@@ -45,6 +45,7 @@ const HAND_HEIGHT = 75;
 const HAND_SPACING = 50;
 const MIN_DEPTH = 10;                   // Minimum depth for table objects
 const MAX_DEPTH = 850;                  // Maximum depth for table objects
+const SHUFFLE_WAIT_TIME = 1000;
 
 // Global Objects
 //--------------------------------------------------------------------------------------------

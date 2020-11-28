@@ -207,35 +207,38 @@ function shuffleStack(self, originStack){
     }
 
     //find the original stack for the new bottom sprite
-    const shuffledStack = getTableObject(self, shuffledBottomSprite.spriteId);
+    const targetStack = getTableObject(self, shuffledBottomSprite.spriteId);
 
-    if (originStack != shuffledStack){
+    //add new bottom to recentlyShuffled to delay reshuffling
+    delayReshuffle(targetStack);
+
+    if (originStack != targetStack){
       //re-define the shuffledStack 
-      shuffledStack.active = true;
-      shuffledStack.x = originStack.x;
-      shuffledStack.y = originStack.y;
-      shuffledStack.angle = originStack.angle;
-      shuffledStack.objectId = shuffledBottomSprite.spriteId;
+      targetStack.active = true;
+      targetStack.x = originStack.x;
+      targetStack.y = originStack.y;
+      targetStack.angle = originStack.angle;
+      targetStack.objectId = shuffledBottomSprite.spriteId;
 
-      //put all of the old originStack sprites into shuffledStack
+      //put all of the old originStack sprites into targetStack
       const originSprites = originStack.getAll();
       let tempItems = [];
       let tempIsFaceUp = [];
       for(var i = 0; i < originSprites.length; i++) {
-        shuffledStack.add(originSprites[i]);
+        targetStack.add(originSprites[i]);
         tempItems.push(originSprites[i].spriteId);
         tempIsFaceUp.push(stackFacing);
       }
 
       //update clients telling them about the new stack
-      objectInfoToSend[shuffledStack.objectId] = {
-        objectId: shuffledStack.objectId,
+      objectInfoToSend[targetStack.objectId] = {
+        objectId: targetStack.objectId,
         items: tempItems,
         x: originStack.x,
         y: originStack.y,
         objectDepth: objectInfoToSend[originStack.objectId].objectDepth,
         isFaceUp: tempIsFaceUp,
-        angle: shuffledStack.angle
+        angle: targetStack.angle
       }
 
       originStack.active = false;       // Keep for later use
@@ -251,10 +254,25 @@ function shuffleStack(self, originStack){
         tempIsFaceUp.push(stackFacing);
       }
 
-      objectInfoToSend[shuffledStack.objectId].items = tempItems;
-      objectInfoToSend[shuffledStack.objectId].isFaceUp = tempIsFaceUp;
+      objectInfoToSend[targetStack.objectId].items = tempItems;
+      objectInfoToSend[targetStack.objectId].isFaceUp = tempIsFaceUp;
     }
+
+    //tell all clients to play shuffle anim
+    io.emit('shuffleAnim', {
+      originId: originStack.objectId,
+      targetId: targetStack.objectId
+    });
   }
+}
+
+//delays shuffling on objects that have recently been shuffled
+function delayReshuffle(tableObject){
+  //set a timer to re-allow shuffling of the deck
+  recentlyShuffled.push(tableObject.objectId);
+  setTimeout(function() { 
+    recentlyShuffled.splice(recentlyShuffled.indexOf(tableObject.objectId), 1);
+  }, SHUFFLE_WAIT_TIME);
 }
 
 function setTableObjectPosition(self, objectId, xPos, yPos) {

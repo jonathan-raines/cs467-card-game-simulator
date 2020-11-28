@@ -28,6 +28,7 @@ const LONG_PRESS_TIME = 300;
 export const CARD_WIDTH = 70;
 export const CARD_HEIGHT = 95;
 const WAIT_UPDATE_INTERVAL = 150;
+const SHUFFLE_WAIT_TIME = 1000;
 
 
 // GLOBAL VARIABLES
@@ -47,6 +48,8 @@ var hoveringObj = null;       // Pointer to the object being hovered over (null 
 export var options = {};      // Options for the game
 var debugMode = false;
 export const waitUpdate = [];        // List of objects to wait updating
+var recentlyShuffled = false;
+var lockedStacks = [];
 
 export function loadCards(self) {
   frames = self.textures.get('cards').getFrameNames();
@@ -86,26 +89,28 @@ export function loadCards(self) {
   
   // While the mouse is dragging
   self.input.on('drag', function (pointer, gameObject, dragX, dragY) {
-    if( 
-        gameObject === draggingObj && 
-        !drewAnObject &&
-        draggingObj.length > 1 && 
-        pointer.moveTime - pointer.downTime < LONG_PRESS_TIME
-        // This makes the deck slightly drag when drawing from it
-        //&& pointer.getDistance() > 5
-    ) {
-      drawTopSprite(self);
-    } 
-    // Dragging table object
-    if(self.tableObjects.contains(draggingObj))
-      dragTableObject(self, draggingObj, dragX, dragY);
-    // Dragging hand object
-    else if(
-        self.handObjects.contains(draggingObj) && 
-        // Can't drag other players
-        (!options["lockedHands"] || (!draggingObj.playerId || draggingObj.playerId == self.socket.id))
-    ) {
-      checkForHandZone(self, draggingObj, dragX, dragY); 
+    if(!lockedStacks.includes(gameObject.objectId)){
+      if( 
+          gameObject === draggingObj && 
+          !drewAnObject &&
+          draggingObj.length > 1 && 
+          pointer.moveTime - pointer.downTime < LONG_PRESS_TIME
+          // This makes the deck slightly drag when drawing from it
+          //&& pointer.getDistance() > 5
+      ) {
+        drawTopSprite(self);
+      } 
+      // Dragging table object
+      if(self.tableObjects.contains(draggingObj))
+        dragTableObject(self, draggingObj, dragX, dragY);
+      // Dragging hand object
+      else if(
+          self.handObjects.contains(draggingObj) && 
+          // Can't drag other players
+          (!options["lockedHands"] || (!draggingObj.playerId || draggingObj.playerId == self.socket.id))
+      ) {
+        checkForHandZone(self, draggingObj, dragX, dragY); 
+      }
     }
   });
   
@@ -129,7 +134,7 @@ export function loadCards(self) {
     }, 300);
   });  
 
-  //shuffle stacToShuffle on R key
+  //shuffle stackToShuffle on R key
   self.input.keyboard.on('keyup_R', function () {
     if(hoveringObj && self.tableObjects.contains(hoveringObj)) {
       shuffleStack(self, hoveringObj);
@@ -154,6 +159,10 @@ export function loadCards(self) {
       debugMode = true;
       debugTicker(self);
     }
+  });
+
+  self.socket.on('shuffleAnim', (objectInfo)=>{
+    shuffleTween(self, objectInfo);
   });
 }
 
@@ -362,11 +371,75 @@ export function rotateObject(self, gameObject) {
 
 function shuffleStack(self, object){
   if(object && object.length > 1  && object.objectId!=isDragging){
-    self.socket.emit('shuffleStack', {
-      objectId: object.objectId
-    });
+    if(!recentlyShuffled){
+      delayShuffle();
+      self.socket.emit('shuffleStack', {
+        objectId: object.objectId
+      });
+    }
   }
 } 
+
+//delays shuffling again for SHUFFLE_WAIT_TIME to prevent spamming
+function delayShuffle (){
+  recentlyShuffled = true;
+  setTimeout(function() { 
+    recentlyShuffled= false;
+  }, SHUFFLE_WAIT_TIME);
+}
+
+//play an animation to represent stack shuffling while disallowing movement of that stack
+function shuffleTween(self, objectInfo){
+  //find the correct stack to anim on
+  self.tableObjects.getChildren().forEach((stack)=>{
+    let targetStackSprites = []; //all of the target's sprites
+    let targets = []; //sprites to anim with
+    if(stack.objectId == objectInfo.originId){
+      targetStackSprites = stack.getAll();
+      
+      //pick first 10 sprites to anim with
+      for (let i = targetStackSprites.length; i > targetStackSprites.length-10; i--){
+        if(targetStackSprites[i]){
+          let sprite;
+          if(targetStackSprites[i].isFaceUp){
+            sprite = self.add.sprite(stack.x, stack.y, 'cards', frames[frames.indexOf(targetStackSprites[i].name)]);
+          }
+          else{
+            sprite = self.add.sprite(stack.x, stack.y, 'cards', frames[frames.indexOf("back")]);
+          }
+          sprite.removeInteractive();
+          sprite.setRotation(Phaser.Math.DegToRad(playerRotation))
+          sprite.displayWidth = CARD_WIDTH;
+          sprite.displayHeight = CARD_HEIGHT;
+          sprite.setDepth(stack.depth+1);
+          targets.push(sprite);  
+        }
+      }
+
+      //stop sending updates for shuffled stack
+      setWaitObjUpdate(self, stack, SHUFFLE_WAIT_TIME);
+      //lock origin/target stacks to prevent them being moved during animation
+      lockedStacks.push(objectInfo.originId);
+      lockedStacks.push(objectInfo.targetId);
+
+      //animate chosen sprites then remove origin/target stacks from lockedStacks
+      let tween = self.tweens.add({
+        targets: targets,
+        angle: 360,
+        duration: SHUFFLE_WAIT_TIME,
+        // ease: 'Sine.easeInOut',
+        delay: self.tweens.stagger(100),
+        onComplete: ()=>{
+          targets.forEach((sprite)=>{
+            sprite.destroy();
+          });
+          lockedStacks.splice(lockedStacks.indexOf(objectInfo.originId));
+          lockedStacks.splice(lockedStacks.indexOf(objectInfo.targetId));
+        }
+      });
+    }
+  });
+}
 
 function flipTableObject(self, gameObject) {
   if(gameObject) {
@@ -415,9 +488,9 @@ export function setDraggingObj(object) {
   return draggingObj;
 }
 
-async function setWaitObjUpdate(self, object) {
+async function setWaitObjUpdate(self, object, customInterval) {
   waitUpdate.push(object.objectId);
   setTimeout(function() { 
-    waitUpdate.shift();
-  }, WAIT_UPDATE_INTERVAL);
+    waitUpdate.splice(waitUpdate.indexOf(object.objectId));
+  }, customInterval || WAIT_UPDATE_INTERVAL);
 }
