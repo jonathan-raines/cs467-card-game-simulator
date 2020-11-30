@@ -225,8 +225,13 @@ function startSocketUpdates(self, socket, frames) {
   });
 
   socket.on('shuffleStack', function(inputData){
-    const originStack = self.tableObjects.getChildren()[inputData.objectId-1];
+    const originStack = getTableObject(inputData.objectId);
     shuffleStack(self, originStack);
+  });
+
+  socket.on('autoDeal', function(inputData){
+    const originStack = getTableObject(inputData.objectId);
+    autoDeal(self, originStack);
   });
 
   socket.on('objectToHand', function(inputData){

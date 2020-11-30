@@ -343,3 +343,12 @@ function resetTable(self) {
   overallDepth = MIN_DEPTH;
   loadCards(self);
 }
+
+function autoDeal(self, originStack){
+  //for each player in players
+    //check the number of cards in their hand
+    //if less than set number
+      //draw a card from stack
+      //move card to hand location
+      //update local info on where cards are
+}
