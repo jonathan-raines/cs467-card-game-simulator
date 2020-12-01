@@ -502,6 +502,7 @@ async function setWaitObjUpdate(self, object, customInterval) {
 function autoDeal(self, object){
   if(object && object.length > 1  && object.objectId!=isDragging){
     if(!recentlyShuffled){
+      console.log('autodealing ' + object.objectId)
       self.socket.emit('autoDeal', {
         objectId: object.objectId
       });
