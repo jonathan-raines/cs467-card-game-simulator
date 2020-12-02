@@ -1,5 +1,5 @@
 import { loadCards } from './cards.js';
-import { cam, getParameterByName, playerNickname } from './game.js';
+import { cam, getParameterByName, playerNickname, setCameraBounds } from './game.js';
 
 export var playerRotation = 0, seatSelected = false;
 var tableColor;
@@ -120,6 +120,7 @@ function selectSeat(self) {
           seatX = seats[x].x;
           seatY = seats[x].y;
           cam.setAngle(playerRotation);
+          setCameraBounds(self);
         }
       }
 

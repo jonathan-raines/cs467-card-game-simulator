@@ -129,7 +129,7 @@ function create() {
 
 function update() {}
 
-function setCameraBounds(self) {
+export function setCameraBounds(self) {
   maxZoom = Math.min( window.innerHeight / (TABLE_EDGE_FROM_CENTER * 2 + 400), 
                       window.innerWidth / (TABLE_EDGE_FROM_CENTER * 2 / 0.8 + 400));
   cam.setZoom(maxZoom);
@@ -138,11 +138,13 @@ function setCameraBounds(self) {
   cam.setBounds(MaxXY, MaxXY, -2*MaxXY, -2*MaxXY);              
   
   if(floor) {
+    var floorWidth = (Math.cos(cam.rotation) * window.innerWidth + Math.sin(cam.rotation) * window.innerHeight) / cam.zoom;
+    var floorHeight = (Math.cos(cam.rotation) * window.innerHeight + Math.sin(cam.rotation) * window.innerWidth) / cam.zoom;
+    floor.setSize(floorWidth, floorHeight);
     floor.x = 0;
     floor.y = 0;
     floor.tilePositionX = 0;
     floor.tilePositionY = 0;
-    floor.setSize(window.innerWidth / cam.zoom + 200, window.innerHeight / cam.zoom + 200);
   }
   
 }
