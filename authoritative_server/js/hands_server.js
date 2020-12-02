@@ -90,13 +90,15 @@ function takeFromHand(self, socket, playerId, objectId, x, y) {
   else if(options["lockedHands"] && (playerId != socket.id)) {
     return;
   }
-  var isFaceUp;
+  var isFaceUp = false;
   var pos = -1;
   for(var i = 0; i < players[playerId].hand.length; i++) {
     if(players[playerId].hand[i] == objectId) {
       pos = i;
       players[playerId].hand.splice(i, 1); // Remove from hand
-      isFaceUp = players[playerId].isFaceUp.splice(i, 1);
+      if(!options["flipWhenExitHand"])
+        isFaceUp = players[playerId].isFaceUp[i];
+      players[playerId].isFaceUp.splice(i, 1);
       break;
     }
   }
@@ -104,8 +106,6 @@ function takeFromHand(self, socket, playerId, objectId, x, y) {
     console.log("Cannot take " + cardNames[objectId] + " from " + player.name + "'s hand.");
     return;
   }
-  else if(options["flipWhenExitHand"]) 
-     isFaceUp = false;
   updateHandSpacing(playerId, -1);      // Adjust spacing in hand
 
   //re-define the stack and put its sprite back into it
