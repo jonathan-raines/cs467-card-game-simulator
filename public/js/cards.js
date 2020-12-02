@@ -134,10 +134,16 @@ export function loadCards(self) {
     }, 300);
   });  
 
-  //shuffle stackToShuffle on R key
+  //shuffle hoveringObj on R key
   self.input.keyboard.on('keyup_R', function () {
     if(hoveringObj && self.tableObjects.contains(hoveringObj)) {
       shuffleStack(self, hoveringObj);
+    }
+  });
+
+  self.input.keyboard.on('keyup_D', function(){
+    if(hoveringObj && self.tableObjects.contains(hoveringObj)) {
+      autoDeal(self, hoveringObj);
     }
   });
 
@@ -306,8 +312,6 @@ function drawTopSprite(self){
   
   drewAnObject = true;
 }
-
-
 
 function dragTableObject(self, gameObject, dragX, dragY){
   if(gameObject) {    
@@ -493,4 +497,15 @@ async function setWaitObjUpdate(self, object, customInterval) {
   setTimeout(function() { 
     waitUpdate.splice(waitUpdate.indexOf(object.objectId));
   }, customInterval || WAIT_UPDATE_INTERVAL);
+}
+
+function autoDeal(self, object){
+  if(object && object.length > 1  && object.objectId!=isDragging){
+    if(!recentlyShuffled){
+      console.log('autodealing ' + object.objectId)
+      self.socket.emit('autoDeal', {
+        objectId: object.objectId
+      });
+    }
+  }
 }

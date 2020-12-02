@@ -343,3 +343,45 @@ function resetTable(self) {
   overallDepth = MIN_DEPTH;
   loadCards(self);
 }
+
+//deals up to DEFAULT_HAND_SIZE cards to all hands without DEFAULT_HAND_SIZE cards
+function autoDeal(self, originStack){
+  for (let i = 0; i < DEFAULT_HAND_SIZE; i++) {
+    Object.keys(players).forEach(key => {
+      if(players[key].hand.length < DEFAULT_HAND_SIZE){
+        let card = dealTopSprite(self, originStack); //get top card from originStack
+        if (card){
+          moveObjectToHand(self, card, players[key].playerId, players[key].hand.length)
+        }
+      }
+    });
+  }
+} 
+ 
+//returns the top sprite of the object passed as a new object 
+function dealTopSprite(self, bottomStack) {
+  if(!bottomStack || !bottomStack.last) {
+    console.log("Can't draw card");
+    return;
+  }
+  const topSprite = bottomStack.last;                        //select the top sprite in the stack
+  const topStack = getTableObject(self, topSprite.spriteId); //find the original stack that the sprite was created with
+  
+  //re-define the stack and put its original sprite back into it
+  topStack.active = true;
+  topStack.x = bottomStack.x;
+  topStack.y = bottomStack.y;
+  topStack.objectId = topSprite.spriteId;
+  topStack.add(topSprite);
+
+  //update clients telling them to create the new stack
+  objectInfoToSend[topStack.objectId]={
+    objectId: topStack.objectId,
+    items: [ objectInfoToSend[bottomStack.objectId].items.pop() ],
+    x: bottomStack.x,
+    y: bottomStack.y,
+    objectDepth: incOverallDepth(),
+    isFaceUp: [ objectInfoToSend[bottomStack.objectId].isFaceUp.pop() ]
+  }
+  return topStack; 
+}

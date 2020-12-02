@@ -47,6 +47,7 @@ const HAND_SNAP_DIST = 100;
 const MIN_DEPTH = 10;                   // Minimum depth for table objects
 const MAX_DEPTH = 850;                  // Maximum depth for table objects
 const SHUFFLE_WAIT_TIME = 1000;
+const DEFAULT_HAND_SIZE = 7;
 
 // Global Objects
 //--------------------------------------------------------------------------------------------
@@ -226,8 +227,13 @@ function startSocketUpdates(self, socket, frames) {
   });
 
   socket.on('shuffleStack', function(inputData){
-    const originStack = self.tableObjects.getChildren()[inputData.objectId-1];
+    const originStack = getTableObject(self, inputData.objectId);
     shuffleStack(self, originStack);
+  });
+
+  socket.on('autoDeal', function(inputData){
+    const originStack = getTableObject(self, inputData.objectId);
+    autoDeal(self, originStack);
   });
 
   socket.on('objectToHand', function(inputData){
