@@ -129,20 +129,26 @@ function create() {
 
 function update() {}
 
-function setCameraBounds(self) {
+export function setCameraBounds(self) {
   maxZoom = Math.min( window.innerHeight / (TABLE_EDGE_FROM_CENTER * 2 + 400), 
                       window.innerWidth / (TABLE_EDGE_FROM_CENTER * 2 / 0.8 + 400));
   cam.setZoom(maxZoom);
   cam.centerOn(0,0);
-  var MaxXY = Math.min((TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER - game.config.width*1.5), (TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER - game.config.height*1.5));
+  var MaxXY = Math.min((TABLE_CENTER_X - TABLE_EDGE_FROM_CENTER - game.config.width*1.5), 
+                       (TABLE_CENTER_Y - TABLE_EDGE_FROM_CENTER - game.config.height*1.5));
   cam.setBounds(MaxXY, MaxXY, -2*MaxXY, -2*MaxXY);              
   
   if(floor) {
+    var camAngle = Phaser.Math.DegToRad(playerRotation); // in radians
+    var floorSize = 200 + Math.max(
+                      Math.abs((Math.cos(camAngle) * window.innerWidth  + Math.sin(camAngle) * window.innerHeight)) / cam.zoom,
+                      Math.abs((Math.cos(camAngle) * window.innerHeight - Math.sin(camAngle) * window.innerWidth)) / cam.zoom
+                    );
+    floor.setSize(floorSize, floorSize);
     floor.x = 0;
     floor.y = 0;
     floor.tilePositionX = 0;
     floor.tilePositionY = 0;
-    floor.setSize(window.innerWidth / cam.zoom + 200, window.innerHeight / cam.zoom + 200);
   }
   
 }

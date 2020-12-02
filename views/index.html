@@ -13,17 +13,38 @@
         <script type="module" src="../js/game.js"></script> 
         <script src="/socket.io/socket.io.js"></script>
         <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        
         <script> 
         document.addEventListener('contextmenu',  
                         event => event.preventDefault());
-                    </script>
+        // For copy text popup. When the user clicks on <div>, open the popup
+        function textPopup() {
+          var popup = document.getElementById("myPopup");
+          popup.classList.toggle("show");
+          let text = document.getElementById('room-id').value;
+          navigator.clipboard.writeText(text);
+        }
+        </script>
+
         <div class="row">
             <div class="column" id="game-area">
-                <div id="menu-button">Menu</div>
-                <div id="help-button">Help</div>
+                <div class="disable-select" id="menu-button">Menu</div>
+                <div class="disable-select" id="help-button">Help</div>
                 <div class="menu-area" id="menu-area">
                     <div class='menu-title'>Customization</div>
                     <br>
+                    <form id="no-submit-form" action=''>
+                        <label for='room-id'>Invite Code: </label>
+                        <input type="text" id='room-id' name='room-id' disabled>
+
+                        <div class="popup" onclick="textPopup()">
+                          <button class='menu-button' id="copy-text">Copy</button>
+                          <span class="popuptext" id="myPopup">
+                            Invite code copied to clipboard!
+                          </span>
+                        </div> 
+                        <br><br>
+                    </form>
                     <form id="menu-form" action=''>
                         <label for="background">Background Color: </label>
                         <input type="color" id='background' name='background' value='#477148'>
@@ -31,10 +52,7 @@
                         <label for='user-name'>Change Display Name: </label>
                         <input type="text" id='user-name' name='user-name'>
                         <br><br>
-                        <label for='room-id'>Invite Code: </label>
-                        <input type="text" id='room-id' name='room-id' disabled>
-                        <button class='menu-button' id="copy-text">Copy</button>
-                        <br><br>
+                        
                         <div class='button-div'>
                             <button class='menu-button' id="reset-table">Reset Table</button>
                             <button class='menu-button' id="exit-menu">Exit Menu</button> 
