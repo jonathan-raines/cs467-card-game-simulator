@@ -1,8 +1,16 @@
+.column {
+    height: 100%;
+    position: relative;
+}
+
 .menu-area {
+    margin: 0;
     position: absolute;
     display: none;
-    margin-top: 40%;
-    margin-left: 40%;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
     background-color: white; 
     height: 400px; 
     width: 400px; 
