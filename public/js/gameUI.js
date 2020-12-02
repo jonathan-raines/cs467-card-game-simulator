@@ -68,7 +68,7 @@ function loadMenu(self) {
         
         $('#menu-form').submit(function(e) {
           e.preventDefault();
-          changeTableColor(self, parseInt($('#background').val().replace(/^#/, ''), 16));
+          //changeTableColor(self, parseInt($('#background').val().replace(/^#/, ''), 16));
           if(playerNickname != $('#user-name').val()) {
             self.socket.emit('playerNickname', $('#user-name').val());
           }
