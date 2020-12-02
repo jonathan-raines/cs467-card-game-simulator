@@ -33,13 +33,7 @@
                 <div class="menu-area" id="menu-area">
                     <div class='menu-title'>Customization</div>
                     <br>
-                    <form id="menu-form" action=''>
-                        <label for="background">Background Color: </label>
-                        <input type="color" id='background' name='background' value='#477148'>
-                        <br><br>
-                        <label for='user-name'>Change Display Name: </label>
-                        <input type="text" id='user-name' name='user-name'>
-                        <br><br>
+                    <form id="no-submit-form" action=''>
                         <label for='room-id'>Invite Code: </label>
                         <input type="text" id='room-id' name='room-id' disabled>
 
@@ -48,10 +42,17 @@
                           <span class="popuptext" id="myPopup">
                             Invite code copied to clipboard!
                           </span>
-                        </div>
-
-                        
+                        </div> 
                         <br><br>
+                    </form>
+                    <form id="menu-form" action=''>
+                        <label for="background">Background Color: </label>
+                        <input type="color" id='background' name='background' value='#477148'>
+                        <br><br>
+                        <label for='user-name'>Change Display Name: </label>
+                        <input type="text" id='user-name' name='user-name'>
+                        <br><br>
+                        
                         <div class='button-div'>
                             <button class='menu-button' id="reset-table">Reset Table</button>
                             <button class='menu-button' id="exit-menu">Exit Menu</button> 

@@ -57,6 +57,7 @@ function loadHelp(self) {
 }
 
 function loadMenu(self) {
+    $('#no-submit-form').submit(false);
     // jQuery to  interact with Menu HTML element
     $('#menu-button').click(function() {
       if($('#menu-area').css("display") == "none") {
