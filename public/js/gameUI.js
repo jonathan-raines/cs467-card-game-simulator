@@ -37,53 +37,67 @@ function loadChat(self) {
 function loadHelp(self) {
   // jQuery to intereact with Help HTML element
   $('#help-button').click(function() {
-    $('#help-area').show();
+    if($('#help-area').css("display") == "none") {
+      $('#help-area').show();
 
-    self.input.keyboard.on('keyup-ESC', function (event) {
-      $('#help-area').hide();
-    });
+      self.input.keyboard.on('keyup-ESC', function (event) {
+        $('#help-area').hide();
+      });
 
-    $('#exit-help').click(function() {
+      $('#exit-help').click(function() {
+        $('#help-area').hide();
+      });
+    }
+    else {
       $('#help-area').hide();
-    });
+    }
+
+    
   });
 }
 
 function loadMenu(self) {
     // jQuery to  interact with Menu HTML element
     $('#menu-button').click(function() {
-      // Show menu element
-      $('#menu-area').show();
-      $('#user-name').val(playerNickname);
-      $('#room-id').val(getParameterByName('roomCode'));
+      if($('#menu-area').css("display") == "none") {
+        // Show menu element
+        $('#menu-area').show();
+        $('#user-name').val(playerNickname);
+        $('#room-id').val(getParameterByName('roomCode'));
 
-      $('#copy-text').click(function(e) {
-        let text = document.getElementById('room-id').value;
-        navigator.clipboard.writeText(text).then(() => {
-          alert('Invite copied to clipboard!');
-        })
-      });
-      
-      $('#menu-form').submit(function(e) {
-        e.preventDefault();
-        changeTableColor(self, parseInt($('#background').val().replace(/^#/, ''), 16));
-        if(playerNickname != $('#user-name').val()) {
-          self.socket.emit('playerNickname', $('#user-name').val());
-        }
-      });
-  
-      self.input.keyboard.on('keyup-ESC', function (event) {
-        $('#menu-area').hide();
-      });
-  
-      $('#exit-menu').click(function() {
-        $('#menu-area').hide();
-      });
+        $('#copy-text').click(function(e) {
+          let text = document.getElementById('room-id').value;
+          navigator.clipboard.writeText(text).then(() => {
+            alert('Invite copied to clipboard!');
+          })
+        });
+        
+        $('#menu-form').submit(function(e) {
+          e.preventDefault();
+          changeTableColor(self, parseInt($('#background').val().replace(/^#/, ''), 16));
+          if(playerNickname != $('#user-name').val()) {
+            self.socket.emit('playerNickname', $('#user-name').val());
+          }
+        });
+    
+        self.input.keyboard.on('keyup-ESC', function (event) {
+          $('#menu-area').hide();
+        });
+    
+        $('#exit-menu').click(function() {
+          $('#menu-area').hide();
+        });
 
-      $('#reset-table').click(function() {
-        self.socket.emit('request', 'resetTable');
+        $('#reset-table').click(function() {
+          self.socket.emit('request', 'resetTable');
+          $('#menu-area').hide();
+        });
+      }
+      else {
+        // Close menu
         $('#menu-area').hide();
-      });
+      }
+
     });
 }
 
