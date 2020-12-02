@@ -119,8 +119,13 @@ function create() {
 
   self.input.on('wheel', function(pointer, currentlyOver, deltaX, deltaY, deltaZ, event) { 
     var newZoom = cam.zoom + deltaY * -.0005;
-    if(newZoom > maxZoom && newZoom < 2) 
+    if(newZoom > maxZoom && newZoom < 2) {
       cam.zoom = newZoom;
+      //console.log("zoom:" + newZoom);
+      self.dummyCursors.getChildren().forEach(function(dummyCursor){
+        dummyCursor.scale = 0.5 / newZoom;
+      });
+    }
   });
 
   // Whenever the window is resized
@@ -250,6 +255,7 @@ function addNewDummyCursors(self, players){
         if(!playerCursor){//create a new cursor
           //add cursor sprite
           playerCursor = self.add.sprite(-1000, -1000, players[player].playerCursor);
+          playerCursor.scale = 0.5 / cam.zoom;
           playerCursor.playerId = players[player].playerId;
           playerCursor.depth = MENU_DEPTH;
           playerCursor.setOrigin(0,0); // Make the top left of sprite the point of rotation
@@ -299,16 +305,11 @@ function moveDummyCursors(self){
           if(dummyCursor.playerId == cursorUpdateInfo[curCursor].playerId){
             dummyCursor.x = cursorUpdateInfo[curCursor].actualXY.x 
             dummyCursor.y = cursorUpdateInfo[curCursor].actualXY.y
-            adjustDummyCursorZoom(dummyCursor);
           }
         });
       }
     });
   });
-}
-
-function adjustDummyCursorZoom(dummyCursor){
-  dummyCursor.setDisplaySize(dummyCursor.width*(cam.zoom+.5), dummyCursor.height*(cam.zoom+.5));
 }
 
 function setupTable(self) {
