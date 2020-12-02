@@ -64,13 +64,6 @@ function loadMenu(self) {
         $('#menu-area').show();
         $('#user-name').val(playerNickname);
         $('#room-id').val(getParameterByName('roomCode'));
-
-        $('#copy-text').click(function(e) {
-          let text = document.getElementById('room-id').value;
-          navigator.clipboard.writeText(text).then(() => {
-            alert('Invite copied to clipboard!');
-          })
-        });
         
         $('#menu-form').submit(function(e) {
           e.preventDefault();

@@ -13,14 +13,23 @@
         <script type="module" src="../js/game.js"></script> 
         <script src="/socket.io/socket.io.js"></script>
         <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        
         <script> 
         document.addEventListener('contextmenu',  
                         event => event.preventDefault());
-                    </script>
+        // For copy text popup. When the user clicks on <div>, open the popup
+        function myFunction() {
+          var popup = document.getElementById("myPopup");
+          popup.classList.toggle("show");
+          let text = document.getElementById('room-id').value;
+          navigator.clipboard.writeText(text);
+        }
+        </script>
+
         <div class="row">
             <div class="column" id="game-area">
-                <div id="menu-button">Menu</div>
-                <div id="help-button">Help</div>
+                <div class="disable-select" id="menu-button">Menu</div>
+                <div class="disable-select" id="help-button">Help</div>
                 <div class="menu-area" id="menu-area">
                     <div class='menu-title'>Customization</div>
                     <br>
@@ -33,7 +42,15 @@
                         <br><br>
                         <label for='room-id'>Invite Code: </label>
                         <input type="text" id='room-id' name='room-id' disabled>
-                        <button class='menu-button' id="copy-text">Copy</button>
+
+                        <div class="popup" onclick="myFunction()">
+                          <button class='menu-button' id="copy-text">Copy</button>
+                          <span class="popuptext" id="myPopup">
+                            Invite code copied to clipboard!
+                          </span>
+                        </div>
+
+                        
                         <br><br>
                         <div class='button-div'>
                             <button class='menu-button' id="reset-table">Reset Table</button>
