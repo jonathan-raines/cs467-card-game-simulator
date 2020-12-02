@@ -18,7 +18,7 @@
         document.addEventListener('contextmenu',  
                         event => event.preventDefault());
         // For copy text popup. When the user clicks on <div>, open the popup
-        function myFunction() {
+        function textPopup() {
           var popup = document.getElementById("myPopup");
           popup.classList.toggle("show");
           let text = document.getElementById('room-id').value;
@@ -37,7 +37,7 @@
                         <label for='room-id'>Invite Code: </label>
                         <input type="text" id='room-id' name='room-id' disabled>
 
-                        <div class="popup" onclick="myFunction()">
+                        <div class="popup" onclick="textPopup()">
                           <button class='menu-button' id="copy-text">Copy</button>
                           <span class="popuptext" id="myPopup">
                             Invite code copied to clipboard!
