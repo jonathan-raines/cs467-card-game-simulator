@@ -169,7 +169,7 @@ function addObject(self, spriteIds, x, y, spriteOrientations, frames) {
   object.setSize(CARD_WIDTH, CARD_HEIGHT);
   object.active = true;
 
-  self.tableObjects.add(object);  // Add it to the object group
+  ////self.tableObjects.add(object);  // Add it to the object group
 }
 
 // **This might not be needed. We could just keep track of sprite ids in objectInfoToSend

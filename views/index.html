@@ -1,95 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <title>Card Game Simulator</title>
-        <meta name="description" content="Multiplayer Card Game Simulator" />
-        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" rel="stylesheet"/>
-        <link rel="stylesheet" href="/assets/css/style.css">
-    </head>
-    <body>
-        <script src="/socket.io/socket.io.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/phaser@3.24.1/dist/phaser.min.js"></script>
-        <script type="module" src="../js/game.js"></script> 
-        <script src="/socket.io/socket.io.js"></script>
-        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-        
-        <script> 
-        document.addEventListener('contextmenu',  
-                        event => event.preventDefault());
+
+<head>
+    <meta charset="utf-8">
+    <title>Card Game Simulator</title>
+    <meta name="description" content="Multiplayer Card Game Simulator" />
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+
+<body>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.24.1/dist/phaser.min.js"></script>
+    <script type="module" src="../js/game.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+
+    <script>
+        document.addEventListener('contextmenu',
+            event => event.preventDefault());
         // For copy text popup. When the user clicks on <div>, open the popup
         function textPopup() {
-          var popup = document.getElementById("myPopup");
-          popup.classList.toggle("show");
-          let text = document.getElementById('room-id').value;
-          navigator.clipboard.writeText(text);
+            var popup = document.getElementById("myPopup");
+            popup.classList.toggle("show");
+            let text = document.getElementById('room-id').value;
+            navigator.clipboard.writeText(text);
         }
-        </script>
+    </script>
 
-        <div class="row">
-            <div class="column" id="game-area">
-                <div class="disable-select" id="menu-button">Menu</div>
-                <div class="disable-select" id="help-button">Help</div>
-                <div class="menu-area" id="menu-area">
-                    <div class='menu-title'>Customization</div>
-                    <br>
-                    <form id="no-submit-form" action=''>
-                        <label for='room-id'>Invite Code: </label>
-                        <input type="text" id='room-id' name='room-id' disabled>
+    <div class="row">
+        <div class="column" id="game-area">
+            <div class="disable-select" id="menu-button">Menu</div>
+            <div class="disable-select" id="help-button">Help</div>
+            <div class="menu-area" id="menu-area">
+                <div class='menu-title'>Customization</div>
+                <br>
+                <form id="no-submit-form" action=''>
+                    <label for='room-id'>Invite Code: </label>
+                    <input type="text" id='room-id' name='room-id' disabled>
 
-                        <div class="popup" onclick="textPopup()">
-                          <button class='menu-button' id="copy-text">Copy</button>
-                          <span class="popuptext" id="myPopup">
+                    <div class="popup" onclick="textPopup()">
+                        <button class='menu-button' id="copy-text">Copy</button>
+                        <span class="popuptext" id="myPopup">
                             Invite code copied to clipboard!
-                          </span>
-                        </div> 
-                        <br><br>
-                    </form>
-                    <form id="menu-form" action=''>
-                        <!-- <label for="background">Background Color: </label>
+                        </span>
+                    </div>
+                    <br><br>
+                </form>
+                <form id="menu-form" action=''>
+                    <!-- <label for="background">Background Color: </label>
                         <input type="color" id='background' name='background' value='#477148'>
                         <br><br> -->
-                        <label for='user-name'>Change Display Name: </label>
-                        <input type="text" id='user-name' name='user-name'>
-                        <br><br>
-                        
-                        <div class='button-div'>
-                            <button class='menu-button' id="reset-table">Reset Table</button>
-                            <button class='menu-button' id="exit-menu">Exit Menu</button> 
-                            <button class='menu-button'>Apply</button>
-                        </div>
-                    </form>
-                </div>
-                <div class="menu-area" id="help-area">
-                    <div class="menu-title">Game Controls</div>
-                    <br>
+                    <label for='user-name'>Change Display Name: </label>
+                    <input type="text" id='user-name' name='user-name'>
+                    <br><br>
+
+                    <div class='button-div'>
+                        <button class='menu-button' id="reset-table">Reset Table</button>
+                        <button class='menu-button' id="exit-menu">Exit Menu</button>
+                        <button class='menu-button'>Apply</button>
+                    </div>
+                </form>
+            </div>
+            <div class="menu-area" id="help-area">
+                <div class="menu-title">Game Controls</div>
+                <br>
+                <div>
                     <div>
-                        <div>
-                            <h5>Camera</h3>
+                        <h5>Camera</h3>
                             <div>Zoom In - Mouse Scroll Up</div>
                             <div>Zoom Out - Mouse Scroll Down</div>
                             <div>Pan - Hold Middle Button + Move Mouse</div>
-                        </div>
-                        <br>
-                        <div>
-                            <h5>Card</h5>
-                            <div>Drag Card - Hold Left Click on Card</div>
-                            <div>Flip Card - Hover Mouse Over Card + F</div>
-                            <div>Shuffle - Hover Mouse Over Cards + R</div>
-                        </div>
                     </div>
-                    <div class='button-div'>
-                        <button id="exit-help" class="menu-button">Exit Help</button>
+                    <br>
+                    <div>
+                        <h5>Card</h5>
+                        <div>Drag Card - Hold Left Click on Card</div>
+                        <div>Flip Card - Hover Mouse Over Card + F</div>
+                        <div>Shuffle - Hover Mouse Over Cards + R</div>
                     </div>
                 </div>
-            </div>
-            <div class="column" id='chat-area'>
-                <ul id="messages"></ul>
-                <form id='chat-form' action="">
-                    <input id="chat-msg"/><button id='chat-send'>Send</button>
-                </form>
+                <div class='button-div'>
+                    <button id="exit-help" class="menu-button">Exit Help</button>
+                </div>
             </div>
         </div>
-    </body>
+        <div class="column" id='chat-area'>
+            <ul id="messages"></ul>
+            <form id='chat-form' action="">
+                <input id="chat-msg" /><button id='chat-send'>Send</button>
+            </form>
+        </div>
+    </div>
+</body>
 
 </html>
