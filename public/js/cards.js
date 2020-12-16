@@ -11,7 +11,6 @@ import {
 import {
   updateTableObjects,
   updateSprite,
-  updateObject
 } from './update.js';
 
 import {
